@@ -64,6 +64,37 @@ for recipeID, rawRecipe in pairs(data.raw["recipe"]) do
 	processRecipe(recipeID, rawRecipe);
 end
 
+---@type table<data.RecipeID,data.TechnologyID>
+local RecipeTechnologyLookup = {}
+---Parses `data.raw.technology` items
+---@param technologyID data.TechnologyID
+---@param technologyPrototype data.TechnologyPrototype
+local function processTechnology(technologyID, technologyPrototype)
+	---@type data.TechnologyPrototype|data.TechnologyData
+	local technologyData = technologyPrototype
+
+	if technologyData.effects == nil then
+---@diagnostic disable-next-line: cast-local-type
+		technologyData = technologyData.normal or technologyData.expensive
+		if not technologyData then
+			print(technologyID.." didn't result in anything")
+			-- print(serpent.line(technologyPrototype))
+			return;
+		end
+	end
+
+	for _, modifier in pairs(technologyData.effects) do
+		if modifier.type == "unlock-recipe" then
+			appendToArrayInTable(RecipeTechnologyLookup, modifier.recipe, technologyID)
+		end
+		-- Theoretically, it can give an item. Should we make that
+		-- item inherit the tier of the technology that gives it?
+	end
+end
+for technologyID, technologyData in pairs(data.raw["technology"]) do
+	processTechnology(technologyID, technologyData)
+end
+
 ---Determine the tier of the given prototype
 ---@param prototypeID string
 ---@param value data.ItemPrototype|data.FluidPrototype
@@ -78,7 +109,7 @@ local function determineTier(prototypeID, value)
 	-- Get Machine Requirements (min)
 	local machineTier;
 
-	-- Get Technology Requirements (max)
+	-- Get Technology Requirements (min)
 	local technologyTier
 
 	-- Determine tier, increment, and cache.
