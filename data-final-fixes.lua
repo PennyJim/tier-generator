@@ -199,6 +199,9 @@ end
 for EntityID, furnacePrototype in pairs(data.raw["furnace"]) do
 	processCraftingMachine(EntityID, furnacePrototype)
 end
+for EntityID, RocektSiloPrototype in pairs(data.raw["rocket-silo"]) do
+	processCraftingMachine(EntityID, RocektSiloPrototype)
+end
 --#endregion
 --#region Item Type Processing
 
@@ -224,6 +227,7 @@ end
 print("Finished Pre-Processing")
 --#endregion
 
+--#region Tier calculation
 --@type table<string,fun(string,data.PrototypeBase)>
 local tierSwitch = setmetatable({}, {
 	__call = function(self, prototypeID, value)
@@ -390,6 +394,7 @@ end
 for subtype in pairs(defines.prototypes["item"]) do
 	tierSwitch[subtype] = tierSwitch["fluid"]
 end
+--#endregion
 
 --#region TESTING
 local function itemTest(itemID)
@@ -410,6 +415,12 @@ print(itemTest("stone-furnace"))
 print(itemTest("advanced-circuit"))
 print(itemTest("electric-furnace"))
 
+--(second to) Final Test
+print(itemTest("rocket-part"))
+print(itemTest("satellite"))
+-- TODO: figure out how to get the 'recipe' of space science!
+-- I know that it is made in the rocket silo, but I
+-- would like to not hard-code it if I don't have to.
 
 print("Done Testing")
 
