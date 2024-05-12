@@ -1,7 +1,10 @@
 local tierArray = {};
 local TierMaps = {
-	["items"] = {},
-	["fluids"] = {},
+	["recipe-category"] = {},
+	["technology"] = {},
+	["recipe"] = {},
+	["item"] = {},
+	["fluid"] = {},
 };
 
 ---Appends to an array within a table
@@ -44,6 +47,7 @@ local function alwaysRecipeData(table)
 	local recipeData = {
 		ingredients = table.ingredients or oldRecipeData.ingredients,
 		results = alwaysPluralResults(table) or alwaysPluralResults(oldRecipeData),
+		enabled = (table and table.enabled) or (oldRecipeData and oldRecipeData.enabled) or true
 	}
 
 	return recipeData
@@ -61,6 +65,10 @@ local function alwaysTechnologyData(table)
 	}
 	return technologyData
 end
+--#endregion
+
+--#region Process functions & loops
+--#region Recipe Processing
 
 ---@type table<data.ItemID,data.RecipeID[]>
 local ItemRecipeLookup = {}
@@ -96,10 +104,11 @@ local function processRecipe(recipeID, recipePrototype)
 	::continue::
 	end
 end
-
 for recipeID, rawRecipe in pairs(data.raw["recipe"]) do
 	processRecipe(recipeID, rawRecipe);
 end
+--#endregion
+--#region Technology Proesssing
 
 ---@type table<data.RecipeID,data.TechnologyID[]>
 local RecipeTechnologyLookup = {}
@@ -131,6 +140,8 @@ end
 for technologyID, technologyData in pairs(data.raw["technology"]) do
 	processTechnology(technologyID, technologyData)
 end
+--#endregion
+--#region Category Processing
 
 ---@alias data.CraftingMachineID string
 ---@type table<data.RecipeCategoryID, data.ItemID[]>
@@ -163,17 +174,20 @@ local function processCraftingMachine(EntityID, machinePrototype)
 		appendToArrayInTable(CategoryItemLookup, category, machineItem)
 	end
 end
+appendToArrayInTable(CategoryItemLookup, "crafting", "hand")
 for EntityID, machinePrototype in pairs(data.raw["assembling-machine"]) do
 	processCraftingMachine(EntityID, machinePrototype)
 end
 for EntityID, furnacePrototype in pairs(data.raw["furnace"]) do
 	processCraftingMachine(EntityID, furnacePrototype)
 end
+--#endregion
+--#endregion
 
 --@type table<string,fun(string,data.PrototypeBase)>
 local tierSwitch = setmetatable({}, {
 	__call = function(self, prototypeID, value)
-		self["base"](prototypeID, value)
+		return self["base"](prototypeID, value)
 	end
 })
 ---Determine the tier of the given prototype
@@ -193,7 +207,7 @@ end
 ---@param category data.RecipeCategory
 ---@return integer
 tierSwitch["recipe-category"] = function (CategoryID, category)
-	local machines = CategoryItemLookup(CategoryID)
+	local machines = CategoryItemLookup[CategoryID]
 	local categoryTier = math.huge;
 	for _, item in pairs(machines) do
 		local itemTier = tierSwitch(item, data.raw["item"][item])
@@ -208,8 +222,10 @@ end
 local function getIngredientsTier(ingredients)
 	local ingredientsTier = 0;
 	for _, ingredient in pairs(ingredients) do
-		local nextValue = data.raw[ingredient.type][ingredient.name].value
-		local nextTier = tierSwitch(ingredient.name, nextValue)
+		local nextType = ingredient.type or "item"
+		local nextName = ingredient.name or ingredient[1]
+		local nextValue = data.raw[nextType][nextName]
+		local nextTier = tierSwitch(nextName, nextValue)
 		ingredientsTier = math.max(ingredientsTier, nextTier)
 	end
 	return ingredientsTier
@@ -247,8 +263,6 @@ tierSwitch["recipe"] = function (recipeID, recipe)
 	local ingredientsTier = getIngredientsTier(recipeData.ingredients)
 
 	-- Get category tier
-	local category = data.raw["recipe-category"][recipe.category]
-	local machineTier = tierSwitch(recipe.category, category)
 
 	-- Get technology tier
 	local technologyTier = math.huge
@@ -256,6 +270,8 @@ tierSwitch["recipe"] = function (recipeID, recipe)
 		local nextValue = data.raw["technology"][technology]
 		local nextTier = tierSwitch(technology, nextValue)
 		technologyTier = math.min(technologyTier, nextTier)
+	local category = data.raw["recipe-category"][recipe.category or "crafting"]
+	local machineTier = tierSwitch(category.name, category)
 	end
 
 	return math.max(ingredientsTier, machineTier, technologyTier)
@@ -273,6 +289,11 @@ tierSwitch["item"] = function (ItemID, value)
 		recipes = FluidRecipeLookup[ItemID]
 	end
 
+	-- No recipes create it, then it's a base resource
+	-- TODO: take into account whether it generates?
+	-- if it doesn't generate, maybe check if a technology gives it
+	if not recipes then return 0 end
+
 	local recipeTier = math.huge
 	for _, recipe in pairs(recipes) do
 		local recipePrototype = data.raw["recipe"][recipe]
@@ -283,4 +304,14 @@ tierSwitch["item"] = function (ItemID, value)
 end
 tierSwitch["fluid"] = tierSwitch["item"]
 
-tierSwitch("iron-ore", data.raw["item"]["iron-ore"])
+
+--#region TESTING
+local function itemTest(itemID)
+	return itemID..": Tier "..tierSwitch(itemID, data.raw["item"][itemID])
+end
+
+print(itemTest("iron-ore"))
+print(itemTest("iron-plate"))
+
+print("Done Testing")
+
