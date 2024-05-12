@@ -3,16 +3,12 @@ TierMaps = {
 	["recipe-category"] = {},
 	["technology"] = {},
 	["recipe"] = {},
-	["item"] = {},
 	["fluid"] = {},
 };
-calculating = {
-	["recipe-category"] = {},
-	["technology"] = {},
-	["recipe"] = {},
-	["item"] = {},
-	["fluid"] = {},
-}
+for subtype in pairs(defines.prototypes["item"]) do
+	TierMaps[subtype] = {}
+end
+calculating = table.deepcopy(TierMaps)
 
 --#region Helper functions
 
@@ -249,7 +245,11 @@ tierSwitch["recipe-category"] = function (CategoryID, category)
 		-- I'm currently just adding "hand" to the "crafting" category
 		if item == "hand" then return 0 end
 		local itemTier = tierSwitch(item, data.raw["item"][item])
-		categoryTier = math.min(categoryTier, itemTier)
+		-- Don't consider the machine if it takes something being calculated.
+		-- It must mean that it uses something a tier too high, Right..?
+		if itemTier >= 0 then
+			categoryTier = math.min(categoryTier, itemTier)
+		end
 	end
 	return categoryTier
 end
@@ -260,12 +260,12 @@ end
 local function getIngredientsTier(ingredients)
 	local ingredientsTier = 0;
 	for _, ingredient in pairs(ingredients) do
-		local nextType = ingredient.type or "item" -- FIXME: fallback isn't always "item". Figure out how it knows if it's different.
 		local nextName = ingredient.name or ingredient[1]
+		local nextType = ingredient.type or ItemTypeLookup[nextName]
 		local nextValue = data.raw[nextType][nextName]
 		local nextTier = tierSwitch(nextName, nextValue)
 		-- Skip if machine takes an item being calculated
-		if nextTier < 0 then nextTier = 0 end
+		if nextTier < 0 then return nextTier end
 		ingredientsTier = math.max(ingredientsTier, nextTier)
 	end
 	return ingredientsTier
@@ -324,9 +324,10 @@ tierSwitch["recipe"] = function (recipeID, recipe)
 		for _, technology in pairs(technologies) do
 			local nextValue = data.raw["technology"][technology]
 			local nextTier = tierSwitch(technology, nextValue)
-			-- Exit early if child-tier isn't currently calculable
-			if nextTier < 0 then return nextTier end
-			technologyTier = math.min(technologyTier, nextTier)
+			-- Assume currently calculating technology to be of higher tier
+			if nextTier >= 0 then
+				technologyTier = math.min(technologyTier, nextTier)
+			end
 		end
 	end
 
@@ -337,7 +338,7 @@ end
 ---@param ItemID data.ItemID|data.FluidID
 ---@param value data.ItemPrototype|data.FluidPrototype
 ---@return integer
-tierSwitch["item"] = function (ItemID, value)
+tierSwitch["fluid"] = function (ItemID, value)
 	local recipes
 	if value.type == "item" then
 		recipes = ItemRecipeLookup[ItemID]
@@ -361,8 +362,9 @@ tierSwitch["item"] = function (ItemID, value)
 
 	return recipeTier + 1
 end
-tierSwitch["fluid"] = tierSwitch["item"]
-
+for subtype in pairs(defines.prototypes["item"]) do
+	tierSwitch[subtype] = tierSwitch["fluid"]
+end
 
 --#region TESTING
 local function itemTest(itemID)
@@ -379,6 +381,7 @@ print(itemTest("iron-ore"))
 print(itemTest("iron-plate"))
 print(itemTest("steel-plate"))
 print(itemTest("stone-furnace"))
+print(itemTest("advanced-circuit"))
 print(itemTest("electric-furnace"))
 
 
