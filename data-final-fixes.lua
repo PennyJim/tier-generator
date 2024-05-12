@@ -40,13 +40,26 @@ end
 local function alwaysRecipeData(table)
 	---@type data.RecipeData
 ---@diagnostic disable-next-line: assign-type-mismatch
-	local oldRecipeData = table.normal or table.expensive 
+	local oldRecipeData = table.normal or table.expensive
 	local recipeData = {
 		ingredients = table.ingredients or oldRecipeData.ingredients,
 		results = alwaysPluralResults(table) or alwaysPluralResults(oldRecipeData),
 	}
 
 	return recipeData
+end
+---Always returns TechnologyData
+---@param table data.TechnologyPrototype
+---@return data.TechnologyData
+local function alwaysTechnologyData(table)
+	---@type data.TechnologyData
+---@diagnostic disable-next-line: assign-type-mismatch
+	local oldTechnologyData = table.normal or table.expensive
+	local technologyData = {
+		unit = table.unit or oldTechnologyData.unit,
+		prerequisites = table.prerequisites or table.prerequisites
+	}
+	return technologyData
 end
 
 ---@type table<data.ItemID,data.RecipeID[]>
@@ -185,6 +198,36 @@ tierSwitch["recipe-category"] = function (CategoryID, category)
 	return categoryTier
 end
 
+---Return the highest tier from the ingredients
+---@param ingredients data.IngredientPrototype[]
+---@return integer
+local function getIngredientsTier(ingredients)
+	local ingredientsTier = 0;
+	for _, ingredient in pairs(ingredients) do
+		local nextValue = data.raw[ingredient.type][ingredient.name].value
+		local nextTier = tierSwitch[nil](ingredient.name, nextValue)
+		ingredientsTier = math.max(ingredientsTier, nextTier)
+	end
+	return ingredientsTier
+end
+
+---Determine the tier of the given technology
+---@param technologyID data.TechnologyID
+---@param technology data.TechnologyPrototype
+---@return integer
+tierSwitch["technology"] = function (technologyID, technology)
+	local techData = alwaysTechnologyData(technology)
+	local ingredientsTier = getIngredientsTier(techData.unit.ingredients)
+
+	local prereqTier = 0;
+	for _, prerequisite in pairs(techData.prerequisites) do
+		local preValue = data.raw["technology"][prerequisite]
+		prereqTier = math.max(prereqTier, tierSwitch[nil](prerequisite, preValue))
+	end
+
+	return math.max(ingredientsTier, prereqTier)
+end
+
 ---Determine the tier of the given recipe
 ---@param recipeID data.RecipeID
 ---@param recipe data.RecipePrototype
@@ -196,13 +239,8 @@ tierSwitch["recipe"] = function (recipeID, recipe)
 		error(serpent.line(recipeData.ingredients))
 	end
 
-	-- Get max recipe ingredients tier
-	local ingredientsTier = 0;
-	for _, ingredient in pairs(recipeData.ingredients) do
-		local nextValue = data.raw[ingredient.type][ingredient.name].value
-		local nextTier = tierSwitch[nil](ingredient.name, nextValue)
-		ingredientsTier = math.max(ingredientsTier, nextTier)
-	end
+	-- Get recipe ingredients tier
+	local ingredientsTier = getIngredientsTier(recipeData.ingredients)
 
 	-- Get category tier
 	local category = data.raw["recipe-category"][recipe.category]
