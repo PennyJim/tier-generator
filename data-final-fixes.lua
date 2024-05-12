@@ -52,8 +52,12 @@ local function alwaysRecipeData(table)
 	local recipeData = {
 		ingredients = table.ingredients or oldRecipeData.ingredients,
 		results = alwaysPluralResults(table) or alwaysPluralResults(oldRecipeData),
-		enabled = (table and table.enabled) or (oldRecipeData and oldRecipeData.enabled) or true
+		enabled = (table and table.enabled) or (oldRecipeData and oldRecipeData.enabled)
 	}
+	-- has to check if it's nil specifically, as it'll just always be true otherwise
+	if recipeData.enabled == nil then
+		recipeData.enabled = true;
+	end
 
 	return recipeData
 end
@@ -63,10 +67,10 @@ end
 local function alwaysTechnologyData(table)
 	---@type data.TechnologyData
 ---@diagnostic disable-next-line: assign-type-mismatch
-	local oldTechnologyData = table.normal or table.expensive
+	local oldTechnologyData = table.normal or table.expensive or {}
 	local technologyData = {
 		unit = table.unit or oldTechnologyData.unit,
-		prerequisites = table.prerequisites or table.prerequisites
+		prerequisites = table.prerequisites or oldTechnologyData.prerequisites or {}
 	}
 	return technologyData
 end
