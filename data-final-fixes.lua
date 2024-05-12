@@ -96,6 +96,12 @@ local function processRecipe(recipeID, recipePrototype)
 		return
 	end
 
+	-- Ignore unbarreling recipes
+	if recipePrototype.subgroup == "empty-barrel" then
+		print("\t"..recipeID.." is unbarreling. Ignoring...")
+		return
+	end
+
 	for _, rawResult in pairs(recipeData.results) do
 		-- Get resultID
 		local result = rawResult[1] or rawResult.name;
@@ -344,10 +350,10 @@ end
 ---@return integer
 tierSwitch["fluid"] = function (ItemID, value)
 	local recipes
-	if value.type == "item" then
-		recipes = ItemRecipeLookup[ItemID]
-	else
+	if value.type == "fluid" then
 		recipes = FluidRecipeLookup[ItemID]
+	else
+		recipes = ItemRecipeLookup[ItemID]
 	end
 
 	-- No recipes create it, then it's a base resource
@@ -359,9 +365,18 @@ tierSwitch["fluid"] = function (ItemID, value)
 	for _, recipe in pairs(recipes) do
 		local recipePrototype = data.raw["recipe"][recipe]
 		local tempTier = tierSwitch(recipe, recipePrototype)
-		-- Exit early if child-tier isn't currently calculable
-		if tempTier < 0 then return tempTier end
-		recipeTier = math.min(recipeTier, tempTier)
+		-- Skip recipe if it's using something being calculated
+		if tempTier >= 0 then
+			recipeTier = math.min(recipeTier, tempTier)
+		end
+	end
+
+	-- It left the loop without a valid tier or returning an invalid one.
+	-- That must mean there was no valid recipe. We've discarded barreling
+	-- in the recipe processing, and skipped it if it there were *no* recipes.
+	-- This _must_ mean that there's something being calculated in the chain.
+	if recipeTier == math.huge then
+		return -1
 	end
 
 	return recipeTier + 1
@@ -372,10 +387,11 @@ end
 
 --#region TESTING
 local function itemTest(itemID)
+	local itemType = ItemTypeLookup[itemID]
 	local tier = -1
 	local rounds = 0
 	while tier < 0 do
-		tier = tierSwitch(itemID, data.raw["item"][itemID])
+		tier = tierSwitch(itemID, data.raw[itemType][itemID])
 		rounds = rounds + 1
 	end
 	return itemID..": Tier "..tier.." after "..rounds.." attempt(s)"
