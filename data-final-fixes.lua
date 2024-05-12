@@ -171,12 +171,16 @@ for EntityID, furnacePrototype in pairs(data.raw["furnace"]) do
 end
 
 --@type table<string,fun(string,data.PrototypeBase)>
-local tierSwitch = {}
+local tierSwitch = setmetatable({}, {
+	__call = function(self, prototypeID, value)
+		self["base"](prototypeID, value)
+	end
+})
 ---Determine the tier of the given prototype
 ---@param prototypeID string
 ---@param value data.PrototypeBase
 ---@return integer
-tierSwitch[nil] = function(prototypeID, value)
+tierSwitch["base"] = function(prototypeID, value)
 	local tier = TierMaps[value.type][prototypeID]
 	if tier ~= nil then return tier end
 	tier = tierSwitch[value.type](prototypeID, value);
@@ -192,7 +196,7 @@ tierSwitch["recipe-category"] = function (CategoryID, category)
 	local machines = CategoryItemLookup(CategoryID)
 	local categoryTier = math.huge;
 	for _, item in pairs(machines) do
-		local itemTier = tierSwitch[nil](item, data.raw["item"][item])
+		local itemTier = tierSwitch(item, data.raw["item"][item])
 		categoryTier = math.min(categoryTier, itemTier)
 	end
 	return categoryTier
@@ -205,7 +209,7 @@ local function getIngredientsTier(ingredients)
 	local ingredientsTier = 0;
 	for _, ingredient in pairs(ingredients) do
 		local nextValue = data.raw[ingredient.type][ingredient.name].value
-		local nextTier = tierSwitch[nil](ingredient.name, nextValue)
+		local nextTier = tierSwitch(ingredient.name, nextValue)
 		ingredientsTier = math.max(ingredientsTier, nextTier)
 	end
 	return ingredientsTier
@@ -222,7 +226,7 @@ tierSwitch["technology"] = function (technologyID, technology)
 	local prereqTier = 0;
 	for _, prerequisite in pairs(techData.prerequisites) do
 		local preValue = data.raw["technology"][prerequisite]
-		prereqTier = math.max(prereqTier, tierSwitch[nil](prerequisite, preValue))
+		prereqTier = math.max(prereqTier, tierSwitch(prerequisite, preValue))
 	end
 
 	return math.max(ingredientsTier, prereqTier)
@@ -244,13 +248,13 @@ tierSwitch["recipe"] = function (recipeID, recipe)
 
 	-- Get category tier
 	local category = data.raw["recipe-category"][recipe.category]
-	local machineTier = tierSwitch[nil](recipe.category, category)
+	local machineTier = tierSwitch(recipe.category, category)
 
 	-- Get technology tier
 	local technologyTier = math.huge
 	for _, technology in pairs(RecipeTechnologyLookup[recipeID]) do
 		local nextValue = data.raw["technology"][technology]
-		local nextTier = tierSwitch[nil](technology, nextValue)
+		local nextTier = tierSwitch(technology, nextValue)
 		technologyTier = math.min(technologyTier, nextTier)
 	end
 
@@ -272,17 +276,11 @@ tierSwitch["item"] = function (ItemID, value)
 	local recipeTier = math.huge
 	for _, recipe in pairs(recipes) do
 		local recipePrototype = data.raw["recipe"][recipe]
-		recipeTier = math.min(recipeTier, tierSwitch[nil](recipe, recipePrototype))
+		recipeTier = math.min(recipeTier, tierSwitch(recipe, recipePrototype))
 	end
 
 	return recipeTier + 1
 end
 tierSwitch["fluid"] = tierSwitch["item"]
 
--- for item, value in pairs(data.raw["item"]) do
--- 	tierArray[determineTier(item, value)] = item;
--- end
-
--- for fluid, value in pairs(data.raw["fluid"]) do
--- 	tierArray[determineTier(fluid, value)] = fluid;
--- end
+tierSwitch("iron-ore", data.raw["item"]["iron-ore"])
