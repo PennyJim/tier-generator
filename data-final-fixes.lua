@@ -25,7 +25,7 @@ local function alwaysPluralResults(table)
 		results = {{
 			type = "item",
 			name = table.result,
-			amount = table.result_count or table.count
+			amount = table.result_count or table.count or 1
 		}}
 	end
 	return results
@@ -110,6 +110,44 @@ local function processTechnology(technologyID, technologyPrototype)
 end
 for technologyID, technologyData in pairs(data.raw["technology"]) do
 	processTechnology(technologyID, technologyData)
+end
+
+---@alias data.CraftingMachineID string
+---@type table<data.RecipeCategoryID, data.ItemID[]>
+local CategoryItemLookup = {}
+---Parses `data.raw.assembling` and `data.raw. items
+---@param EntityID data.EntityID
+---@param machinePrototype data.CraftingMachinePrototype
+local function processCraftingMachine(EntityID, machinePrototype)
+	local machineItem
+	if machinePrototype.placeable_by then
+		machineItem = machinePrototype.placeable_by.item
+	elseif machinePrototype.minable then
+		local items = alwaysPluralResults(machinePrototype.minable)
+
+		for _, item in pairs(items) do
+			if data.raw["item"][item.name].place_result == EntityID then
+				machineItem = item.name
+			end
+		end
+
+		if not machineItem then
+			print(EntityID.."'s items aren't placable. Ignoring...")
+		end
+	else
+		print(EntityID.." Isn't placable _or_ mineable. Ignoring...")
+		return
+	end
+
+	for _, category in pairs(machinePrototype.crafting_categories) do
+		appendToArrayInTable(CategoryItemLookup, category, machineItem)
+	end
+end
+for EntityID, machinePrototype in pairs(data.raw["assembling-machine"]) do
+	processCraftingMachine(EntityID, machinePrototype)
+end
+for EntityID, furnacePrototype in pairs(data.raw["furnace"]) do
+	processCraftingMachine(EntityID, furnacePrototype)
 end
 
 ---Determine the tier of the given prototype
