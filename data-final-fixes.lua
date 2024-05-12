@@ -171,7 +171,30 @@ tierSwitch[nil] = function(prototypeID, value)
 	return tier
 end
 
+---Determine the tier of the given recipe
+---@param recipeID string
+---@param recipe data.RecipePrototype
+---@return integer
+tierSwitch["recipe"] = function (recipeID, recipe)
+	local recipeData = alwaysRecipeData(recipe)
+	if not recipeData.ingredients then
+		print(recipeID.." didn't require anything? Means it's a t0?")
+		error(serpent.line(recipeData.ingredients))
+	end
 
+	-- Get max recipe ingredients tier
+	local ingredientsTier = 0;
+	for _, ingredient in pairs(recipeData.ingredients) do
+		local nextValue = data.raw[ingredient.type][ingredient.name].value
+		local nextTier = tierSwitch[nil](ingredient.name, nextValue)
+		ingredientsTier = math.max(ingredientsTier, nextTier)
+	end
+
+	-- Get category tier
+	local category = data.raw["recipe-category"][recipe.category]
+	local machineTier = tierSwitch[nil](recipe.category, category)
+
+	return math.max(ingredientsTier, machineTier)
 
 
 end
