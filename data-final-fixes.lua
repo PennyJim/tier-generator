@@ -91,7 +91,7 @@ local function processRecipe(recipeID, recipePrototype)
 	local recipeData = alwaysRecipeData(recipePrototype);
 
 	if not recipeData.results then
-		print(recipeID.." didn't result in anything?")
+		print("\t"..recipeID.." didn't result in anything?")
 		print(serpent.line(recipeData))
 		return
 	end
@@ -106,7 +106,7 @@ local function processRecipe(recipeID, recipePrototype)
 		-- Get resultID
 		local result = rawResult[1] or rawResult.name;
 		if result == nil then
-			print("Couldn't find ingredientID:\n")
+			print("\tCouldn't find ingredientID:")
 			print(serpent.line(rawResult))
 			goto continue
 		end
@@ -119,6 +119,7 @@ local function processRecipe(recipeID, recipePrototype)
 	::continue::
 	end
 end
+print("Processing recipes")
 for recipeID, rawRecipe in pairs(data.raw["recipe"]) do
 	processRecipe(recipeID, rawRecipe);
 end
@@ -138,7 +139,7 @@ local function processTechnology(technologyID, technologyPrototype)
 ---@diagnostic disable-next-line: cast-local-type
 		technologyData = technologyData.normal or technologyData.expensive
 		if not technologyData then
-			print(technologyID.." didn't unlock anything")
+			print("\t"..technologyID.." didn't unlock anything")
 			-- print(serpent.line(technologyPrototype))
 			return;
 		end
@@ -152,6 +153,7 @@ local function processTechnology(technologyID, technologyPrototype)
 		-- item inherit the tier of the technology that gives it?
 	end
 end
+print("Processing technology")
 for technologyID, technologyData in pairs(data.raw["technology"]) do
 	processTechnology(technologyID, technologyData)
 end
@@ -178,10 +180,10 @@ local function processCraftingMachine(EntityID, machinePrototype)
 		end
 
 		if not machineItem then
-			print(EntityID.."'s items aren't placable. Ignoring...")
+			print("\t"..EntityID.."'s mined items aren't placable. Ignoring...")
 		end
 	else
-		print(EntityID.." Isn't placable _or_ mineable. Ignoring...")
+		print("\t"..EntityID.." Isn't placable _or_ mineable. Ignoring...")
 		return
 	end
 
@@ -189,6 +191,7 @@ local function processCraftingMachine(EntityID, machinePrototype)
 		appendToArrayInTable(CategoryItemLookup, category, machineItem)
 	end
 end
+print("Processing crafting categories")
 appendToArrayInTable(CategoryItemLookup, "crafting", "hand")
 for EntityID, machinePrototype in pairs(data.raw["assembling-machine"]) do
 	processCraftingMachine(EntityID, machinePrototype)
@@ -213,9 +216,12 @@ local function processItemSubtype(SubgroupID)
 		ItemTypeLookup[ItemID] = itemPrototype.type
 	end
 end
+print("Processing items")
 for subtype in pairs(defines.prototypes["item"]) do
 	processItemSubtype(subtype)
 end
+--#endregion
+print("Finished Pre-Processing")
 --#endregion
 
 --@type table<string,fun(string,data.PrototypeBase)>
@@ -261,7 +267,7 @@ tierSwitch["recipe-category"] = function (CategoryID, category)
 			categoryTier = math.min(categoryTier, itemTier)
 		end
 	end
-	return categoryTier
+	return categoryTier - 1 -- subtract one to reduce the amount of tiers
 end
 
 ---Return the highest tier from the ingredients
@@ -311,7 +317,7 @@ end
 tierSwitch["recipe"] = function (recipeID, recipe)
 	local recipeData = alwaysRecipeData(recipe)
 	if not recipeData.ingredients then
-		print(recipeID.." didn't require anything? Means it's a t0?")
+		print("\t"..recipeID.." didn't require anything? Means it's a t0?")
 		error(serpent.line(recipeData.ingredients))
 	end
 
@@ -394,7 +400,7 @@ local function itemTest(itemID)
 		tier = tierSwitch(itemID, data.raw[itemType][itemID])
 		rounds = rounds + 1
 	end
-	return itemID..": Tier "..tier.." after "..rounds.." attempt(s)"
+	return "\t"..itemID..": Tier "..tier.." after "..rounds.." attempt(s)"
 end
 
 print(itemTest("iron-ore"))
