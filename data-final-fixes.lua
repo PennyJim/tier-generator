@@ -12,6 +12,13 @@ calculating = table.deepcopy(TierMaps)
 
 --#region Helper functions
 
+local _print = print
+local function print(...)
+	if settings.startup["tiergen-debug-print"].value then
+		return _print(...)
+	end
+end
+
 ---Appends to an array within a table
 ---@param table table
 ---@param key any
@@ -248,6 +255,9 @@ tierSwitch["base"] = function(prototypeID, value)
 	calculating[value.type][prototypeID] = nil
 	if tier >= 0 then -- Discard negative values
 		TierMaps[value.type][prototypeID] = tier
+		if value.type == "fluid" or defines.prototypes["item"][value.type] == 0 then
+			appendToArrayInTable(tierArray, tier+1, prototypeID)
+		end
 	end
 	return tier
 end
@@ -271,7 +281,10 @@ tierSwitch["recipe-category"] = function (CategoryID, category)
 			categoryTier = math.min(categoryTier, itemTier)
 		end
 	end
-	return categoryTier - 1 -- subtract one to reduce the amount of tiers
+	if settings.startup["tiergen-reduce-category"].value then
+		categoryTier = categoryTier - 1
+	end
+	return categoryTier
 end
 
 ---Return the highest tier from the ingredients
@@ -408,13 +421,6 @@ local function itemTest(itemID)
 	return "\t"..itemID..": Tier "..tier.." after "..rounds.." attempt(s)"
 end
 
-print(itemTest("iron-ore"))
-print(itemTest("iron-plate"))
-print(itemTest("steel-plate"))
-print(itemTest("stone-furnace"))
-print(itemTest("advanced-circuit"))
-print(itemTest("electric-furnace"))
-
 --(second to) Final Test
 print(itemTest("rocket-part"))
 print(itemTest("satellite"))
@@ -423,4 +429,6 @@ print(itemTest("satellite"))
 -- would like to not hard-code it if I don't have to.
 
 print("Done Testing")
+--#endregion
 
+_print(serpent.dump(tierArray))
