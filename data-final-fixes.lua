@@ -171,8 +171,22 @@ tierSwitch[nil] = function(prototypeID, value)
 	return tier
 end
 
+---Determine the tier of the given recipe category
+---@param CategoryID data.RecipeCategoryID
+---@param category data.RecipeCategory
+---@return integer
+tierSwitch["recipe-category"] = function (CategoryID, category)
+	local machines = CategoryItemLookup(CategoryID)
+	local categoryTier = math.huge;
+	for _, item in pairs(machines) do
+		local itemTier = tierSwitch[nil](item, data.raw["item"][item])
+		categoryTier = math.min(categoryTier, itemTier)
+	end
+	return categoryTier
+end
+
 ---Determine the tier of the given recipe
----@param recipeID string
+---@param recipeID data.RecipeID
 ---@param recipe data.RecipePrototype
 ---@return integer
 tierSwitch["recipe"] = function (recipeID, recipe)
