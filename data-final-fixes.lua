@@ -209,9 +209,29 @@ tierSwitch["recipe"] = function (recipeID, recipe)
 	local machineTier = tierSwitch[nil](recipe.category, category)
 
 	return math.max(ingredientsTier, machineTier)
-
-
 end
+
+---Determine the tier of the given item or fluid
+---@param ItemID data.ItemID|data.FluidID
+---@param value data.ItemPrototype|data.FluidPrototype
+---@return integer
+tierSwitch["item"] = function (ItemID, value)
+	local recipes
+	if value.type == "item" then
+		recipes = ItemRecipeLookup[ItemID]
+	else
+		recipes = FluidRecipeLookup[ItemID]
+	end
+
+	local recipeTier = math.huge
+	for _, recipe in pairs(recipes) do
+		local recipePrototype = data.raw["recipe"][recipe]
+		recipeTier = math.min(recipeTier, tierSwitch[nil](recipe, recipePrototype))
+	end
+
+	return recipeTier + 1
+end
+tierSwitch["fluid"] = tierSwitch["item"]
 
 -- for item, value in pairs(data.raw["item"]) do
 -- 	tierArray[determineTier(item, value)] = item;
