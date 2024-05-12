@@ -6,6 +6,15 @@ local TierMaps = {
 	["item"] = {},
 	["fluid"] = {},
 };
+local calculating = {
+	["recipe-category"] = {},
+	["technology"] = {},
+	["recipe"] = {},
+	["item"] = {},
+	["fluid"] = {},
+}
+
+--#region Helper functions
 
 ---Appends to an array within a table
 ---@param table table
@@ -197,8 +206,14 @@ local tierSwitch = setmetatable({}, {
 tierSwitch["base"] = function(prototypeID, value)
 	local tier = TierMaps[value.type][prototypeID]
 	if tier ~= nil then return tier end
+	if calculating[value.type][prototypeID] then return -math.huge end
+
+	calculating[value.type][prototypeID] = true
 	tier = tierSwitch[value.type](prototypeID, value);
-	TierMaps[value.type][prototypeID] = tier
+	calculating[value.type][prototypeID] = nil
+	if tier >= 0 then -- Discard negative values
+		TierMaps[value.type][prototypeID] = tier
+	end
 	return tier
 end
 
@@ -210,6 +225,10 @@ tierSwitch["recipe-category"] = function (CategoryID, category)
 	local machines = CategoryItemLookup[CategoryID]
 	local categoryTier = math.huge;
 	for _, item in pairs(machines) do
+		-- If it's craftable by hand, it's a base recipe.
+		-- TODO: figure out how to *properly* check this
+		-- I'm currently just adding "hand" to the "crafting" category
+		if item == "hand" then return 0 end
 		local itemTier = tierSwitch(item, data.raw["item"][item])
 		categoryTier = math.min(categoryTier, itemTier)
 	end
@@ -226,6 +245,8 @@ local function getIngredientsTier(ingredients)
 		local nextName = ingredient.name or ingredient[1]
 		local nextValue = data.raw[nextType][nextName]
 		local nextTier = tierSwitch(nextName, nextValue)
+		-- Exit early if child-tier isn't currently calculable
+		if nextTier < 0 then return nextTier end
 		ingredientsTier = math.max(ingredientsTier, nextTier)
 	end
 	return ingredientsTier
@@ -242,7 +263,10 @@ tierSwitch["technology"] = function (technologyID, technology)
 	local prereqTier = 0;
 	for _, prerequisite in pairs(techData.prerequisites) do
 		local preValue = data.raw["technology"][prerequisite]
-		prereqTier = math.max(prereqTier, tierSwitch(prerequisite, preValue))
+		local preTier = tierSwitch(prerequisite, preValue)
+		-- Exit early if child-tier isn't currently calculable
+		if preTier < 0 then return preTier end
+		prereqTier = math.max(prereqTier, preTier)
 	end
 
 	return math.max(ingredientsTier, prereqTier)
@@ -263,15 +287,23 @@ tierSwitch["recipe"] = function (recipeID, recipe)
 	local ingredientsTier = getIngredientsTier(recipeData.ingredients)
 
 	-- Get category tier
-
-	-- Get technology tier
-	local technologyTier = math.huge
-	for _, technology in pairs(RecipeTechnologyLookup[recipeID]) do
-		local nextValue = data.raw["technology"][technology]
-		local nextTier = tierSwitch(technology, nextValue)
-		technologyTier = math.min(technologyTier, nextTier)
 	local category = data.raw["recipe-category"][recipe.category or "crafting"]
 	local machineTier = tierSwitch(category.name, category)
+	-- Exit early if child-tier isn't currently calculable
+	if machineTier < 0 then return machineTier end
+
+	-- Get technology tier if it isn't enabled to start with
+	local technologyTier = 0
+	if not recipeData.enabled then
+		technologyTier = math.huge
+		local technologies = RecipeTechnologyLookup[recipeID]
+		for _, technology in pairs(technologies) do
+			local nextValue = data.raw["technology"][technology]
+			local nextTier = tierSwitch(technology, nextValue)
+			-- Exit early if child-tier isn't currently calculable
+			if nextTier < 0 then return nextTier end
+			technologyTier = math.min(technologyTier, nextTier)
+		end
 	end
 
 	return math.max(ingredientsTier, machineTier, technologyTier)
@@ -297,7 +329,10 @@ tierSwitch["item"] = function (ItemID, value)
 	local recipeTier = math.huge
 	for _, recipe in pairs(recipes) do
 		local recipePrototype = data.raw["recipe"][recipe]
-		recipeTier = math.min(recipeTier, tierSwitch(recipe, recipePrototype))
+		local tempTier = tierSwitch(recipe, recipePrototype)
+		-- Exit early if child-tier isn't currently calculable
+		if tempTier < 0 then return tempTier end
+		recipeTier = math.min(recipeTier, tempTier)
 	end
 
 	return recipeTier + 1
@@ -312,6 +347,10 @@ end
 
 print(itemTest("iron-ore"))
 print(itemTest("iron-plate"))
+print(itemTest("steel-plate"))
+print(itemTest("stone-furnace"))
+print(itemTest("electric-furnace"))
+
 
 print("Done Testing")
 
