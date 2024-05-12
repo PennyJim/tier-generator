@@ -30,16 +30,17 @@ local function alwaysPluralResults(table)
 	if results[1].name or results[1][1] then
 		return results
 	else
+---@diagnostic disable-next-line: return-type-mismatch
 		return false
 	end
 end
-
 ---Always return RecipeData
 ---@param table data.RecipePrototype
 ---@return data.RecipeData
 local function alwaysRecipeData(table)
 	---@type data.RecipeData
-	local oldRecipeData = table.normal or table.expensive
+---@diagnostic disable-next-line: assign-type-mismatch
+	local oldRecipeData = table.normal or table.expensive 
 	local recipeData = {
 		ingredients = table.ingredients or oldRecipeData.ingredients,
 		results = alwaysPluralResults(table) or alwaysPluralResults(oldRecipeData),
@@ -56,7 +57,6 @@ local FluidRecipeLookup = {}
 ---@param recipeID data.RecipeID
 ---@param recipePrototype data.RecipePrototype
 local function processRecipe(recipeID, recipePrototype)
-
 	---@type data.RecipePrototype|data.RecipeData
 	local recipeData = alwaysRecipeData(recipePrototype);
 
@@ -122,7 +122,7 @@ end
 ---@alias data.CraftingMachineID string
 ---@type table<data.RecipeCategoryID, data.ItemID[]>
 local CategoryItemLookup = {}
----Parses `data.raw.assembling` and `data.raw. items
+---Parses `data.raw.assembling` and `data.raw.furnace` items
 ---@param EntityID data.EntityID
 ---@param machinePrototype data.CraftingMachinePrototype
 local function processCraftingMachine(EntityID, machinePrototype)
@@ -157,28 +157,23 @@ for EntityID, furnacePrototype in pairs(data.raw["furnace"]) do
 	processCraftingMachine(EntityID, furnacePrototype)
 end
 
+--@type table<string,fun(string,data.PrototypeBase)>
+local tierSwitch = {}
 ---Determine the tier of the given prototype
 ---@param prototypeID string
----@param value data.ItemPrototype|data.FluidPrototype
----@return unknown
-local function determineTier(prototypeID, value)
+---@param value data.PrototypeBase
+---@return integer
+tierSwitch[nil] = function(prototypeID, value)
 	local tier = TierMaps[value.type][prototypeID]
 	if tier ~= nil then return tier end
-
-	-- Get Recipes (max)
-	local recipeTier;
-
-	-- Get Machine Requirements (min)
-	local machineTier;
-
-	-- Get Technology Requirements (min)
-	local technologyTier
-
-	-- Determine tier, increment, and cache.
-	tier = math.max(recipeTier, machineTier, technologyTier)+1
-	appendToArrayInTable(tierArray, tier, prototypeID)
+	tier = tierSwitch[value.type](prototypeID, value);
 	TierMaps[value.type][prototypeID] = tier
 	return tier
+end
+
+
+
+
 end
 
 -- for item, value in pairs(data.raw["item"]) do
