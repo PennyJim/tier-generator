@@ -1,12 +1,12 @@
 local tierArray = {};
-local TierMaps = {
+TierMaps = {
 	["recipe-category"] = {},
 	["technology"] = {},
 	["recipe"] = {},
 	["item"] = {},
 	["fluid"] = {},
 };
-local calculating = {
+calculating = {
 	["recipe-category"] = {},
 	["technology"] = {},
 	["recipe"] = {},
@@ -241,12 +241,12 @@ end
 local function getIngredientsTier(ingredients)
 	local ingredientsTier = 0;
 	for _, ingredient in pairs(ingredients) do
-		local nextType = ingredient.type or "item"
+		local nextType = ingredient.type or "item" -- FIXME: fallback isn't always "item". Figure out how it knows if it's different.
 		local nextName = ingredient.name or ingredient[1]
 		local nextValue = data.raw[nextType][nextName]
 		local nextTier = tierSwitch(nextName, nextValue)
-		-- Exit early if child-tier isn't currently calculable
-		if nextTier < 0 then return nextTier end
+		-- Skip if machine takes an item being calculated
+		if nextTier < 0 then nextTier = 0 end
 		ingredientsTier = math.max(ingredientsTier, nextTier)
 	end
 	return ingredientsTier
@@ -264,11 +264,14 @@ tierSwitch["technology"] = function (technologyID, technology)
 	for _, prerequisite in pairs(techData.prerequisites) do
 		local preValue = data.raw["technology"][prerequisite]
 		local preTier = tierSwitch(prerequisite, preValue)
-		-- Exit early if child-tier isn't currently calculable
-		if preTier < 0 then return preTier end
+		-- Skip if technology takes an item being calculated
+		if preTier < 0 then preTier = 0 end
 		prereqTier = math.max(prereqTier, preTier)
 	end
 
+	if ingredientsTier == 0 and prereqTier == 0 then
+		error("I don't think a technology should every be t0")
+	end
 	return math.max(ingredientsTier, prereqTier)
 end
 
@@ -285,6 +288,8 @@ tierSwitch["recipe"] = function (recipeID, recipe)
 
 	-- Get recipe ingredients tier
 	local ingredientsTier = getIngredientsTier(recipeData.ingredients)
+	-- Exit early if child-tier isn't currently calculable
+	if ingredientsTier < 0 then return ingredientsTier end
 
 	-- Get category tier
 	local category = data.raw["recipe-category"][recipe.category or "crafting"]
@@ -342,7 +347,13 @@ tierSwitch["fluid"] = tierSwitch["item"]
 
 --#region TESTING
 local function itemTest(itemID)
-	return itemID..": Tier "..tierSwitch(itemID, data.raw["item"][itemID])
+	local tier = -1
+	local rounds = 0
+	while tier < 0 do
+		tier = tierSwitch(itemID, data.raw["item"][itemID])
+		rounds = rounds + 1
+	end
+	return itemID..": Tier "..tier.." after "..rounds.." attempt(s)"
 end
 
 print(itemTest("iron-ore"))
