@@ -191,6 +191,25 @@ for EntityID, furnacePrototype in pairs(data.raw["furnace"]) do
 	processCraftingMachine(EntityID, furnacePrototype)
 end
 --#endregion
+--#region Item Type Processing
+
+---@type table<data.ItemID, data.ItemSubGroupID>
+local ItemTypeLookup = {}
+---Parses all item-subtypes
+---@param SubgroupID data.ItemSubGroupID
+local function processItemSubtype(SubgroupID)
+	for ItemID, itemPrototype in pairs(data.raw[SubgroupID]) do
+		if ItemTypeLookup[ItemID] then
+			error(ItemID.." already assigned a type??")
+		end
+
+---@diagnostic disable-next-line: assign-type-mismatch
+		ItemTypeLookup[ItemID] = itemPrototype.type
+	end
+end
+for subtype in pairs(defines.prototypes["item"]) do
+	processItemSubtype(subtype)
+end
 --#endregion
 
 --@type table<string,fun(string,data.PrototypeBase)>
