@@ -25,10 +25,27 @@ local function alwaysPluralResults(table)
 		results = {{
 			type = "item",
 			name = table.result,
-			amount = table.result_count or table.count or 1
 		}}
 	end
-	return results
+	if results[1].name or results[1][1] then
+		return results
+	else
+		return false
+	end
+end
+
+---Always return RecipeData
+---@param table data.RecipePrototype
+---@return data.RecipeData
+local function alwaysRecipeData(table)
+	---@type data.RecipeData
+	local oldRecipeData = table.normal or table.expensive
+	local recipeData = {
+		ingredients = table.ingredients or oldRecipeData.ingredients,
+		results = alwaysPluralResults(table) or alwaysPluralResults(oldRecipeData),
+	}
+
+	return recipeData
 end
 
 ---@type table<data.ItemID,data.RecipeID[]>
@@ -39,27 +56,17 @@ local FluidRecipeLookup = {}
 ---@param recipeID data.RecipeID
 ---@param recipePrototype data.RecipePrototype
 local function processRecipe(recipeID, recipePrototype)
+
 	---@type data.RecipePrototype|data.RecipeData
-	local recipeData = recipePrototype;
+	local recipeData = alwaysRecipeData(recipePrototype);
 
-	if recipeData.result == nil and recipeData.results == nil then
----@diagnostic disable-next-line: cast-local-type
-		recipeData = recipeData.normal or recipeData.expensive
-		if not recipeData then
-			print(recipeID.." didn't result in anything?")
-			print(serpent.line(recipeData))
-			return;
-		end
-	end
-
-	local results = alwaysPluralResults(recipeData)
-	if not results then
+	if not recipeData.results then
 		print(recipeID.." didn't result in anything?")
 		print(serpent.line(recipeData))
 		return
 	end
 
-	for _, rawResult in pairs(results) do
+	for _, rawResult in pairs(recipeData.results) do
 		-- Get resultID
 		local result = rawResult[1] or rawResult.name;
 		if result == nil then
@@ -94,7 +101,7 @@ local function processTechnology(technologyID, technologyPrototype)
 ---@diagnostic disable-next-line: cast-local-type
 		technologyData = technologyData.normal or technologyData.expensive
 		if not technologyData then
-			print(technologyID.." didn't result in anything")
+			print(technologyID.." didn't unlock anything")
 			-- print(serpent.line(technologyPrototype))
 			return;
 		end
