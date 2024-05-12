@@ -26,8 +26,9 @@ local function processRecipe(recipeID, recipePrototype)
 	local recipeData = recipePrototype;
 
 	if recipeData.result == nil and recipeData.results == nil then
+---@diagnostic disable-next-line: cast-local-type
 		recipeData = recipeData.normal or recipeData.expensive
-		if recipeData == nil then
+		if not recipeData then
 			print(recipeID.." didn't result in anything?")
 			print(serpent.line(recipeData))
 			return;
