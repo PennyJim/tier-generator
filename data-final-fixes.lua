@@ -1,5 +1,8 @@
 local tierArray = {};
-local itemTierMap = {};
+local TierMaps = {
+	["items"] = {},
+	["fluids"] = {},
+};
 
 ---Appends to an array within a table
 ---@param table table
@@ -65,7 +68,7 @@ end
 ---@param value data.ItemPrototype|data.FluidPrototype
 ---@return unknown
 local function determineTier(prototypeID, value)
-	local tier = itemTierMap[prototypeID]
+	local tier = TierMaps[value.type][prototypeID]
 	if tier ~= nil then return tier end
 
 	-- Get Recipes (max)
@@ -80,7 +83,7 @@ local function determineTier(prototypeID, value)
 	-- Determine tier, increment, and cache.
 	tier = math.max(recipeTier, machineTier, technologyTier)+1
 	appendToArrayInTable(tierArray, tier, prototypeID)
-	itemTierMap[prototypeID] = tier
+	TierMaps[value.type][prototypeID] = tier
 	return tier
 end
 
