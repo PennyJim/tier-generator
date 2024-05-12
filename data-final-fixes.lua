@@ -88,7 +88,7 @@ for recipeID, rawRecipe in pairs(data.raw["recipe"]) do
 	processRecipe(recipeID, rawRecipe);
 end
 
----@type table<data.RecipeID,data.TechnologyID>
+---@type table<data.RecipeID,data.TechnologyID[]>
 local RecipeTechnologyLookup = {}
 ---Parses `data.raw.technology` items
 ---@param technologyID data.TechnologyID
@@ -208,7 +208,15 @@ tierSwitch["recipe"] = function (recipeID, recipe)
 	local category = data.raw["recipe-category"][recipe.category]
 	local machineTier = tierSwitch[nil](recipe.category, category)
 
-	return math.max(ingredientsTier, machineTier)
+	-- Get technology tier
+	local technologyTier = math.huge
+	for _, technology in pairs(RecipeTechnologyLookup[recipeID]) do
+		local nextValue = data.raw["technology"][technology]
+		local nextTier = tierSwitch[nil](technology, nextValue)
+		technologyTier = math.min(technologyTier, nextTier)
+	end
+
+	return math.max(ingredientsTier, machineTier, technologyTier)
 end
 
 ---Determine the tier of the given item or fluid
