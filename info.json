@@ -1,0 +1,8 @@
+{
+	"name": "tier-generator",
+	"title": "Tier Generator",
+	"description": "Generates a tier list for each recipe",
+	"version": "0.0.0",
+	"author": "PennyJim",
+	"factorio_version": "1.1"
+}
