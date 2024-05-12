@@ -14,6 +14,23 @@ local function appendToArrayInTable(table, key, newValue)
 	table[key] = array;
 end
 
+---Always return plural results
+---Absolutely no gurantees it works for everything
+---@param table data.RecipePrototype|data.MinableProperties|any
+---@return data.ProductPrototype[]
+local function alwaysPluralResults(table)
+	---@type data.ProductPrototype[]
+	local results = table.results
+	if not results then
+		results = {{
+			type = "item",
+			name = table.result,
+			amount = table.result_count or table.count
+		}}
+	end
+	return results
+end
+
 ---@type table<data.ItemID,data.RecipeID[]>
 local ItemRecipeLookup = {}
 ---@type table<data.FluidID,data.RecipeID[]>
@@ -35,28 +52,28 @@ local function processRecipe(recipeID, recipePrototype)
 		end
 	end
 
-	if recipeData.result ~= nil then
-		appendToArrayInTable(ItemRecipeLookup, recipeData.result, recipeID)
-	elseif recipeData.results ~= nil then
-		for _, rawResult in pairs(recipeData.results) do
-			-- Get resultID
-				local result = rawResult[1] or rawResult.name;
-				if result == nil then
-					print("Couldn't find ingredientID:\n")
-					print(serpent.line(rawResult))
-					goto continue
-				end
-
-				if rawResult.type == "fluid" then
-					appendToArrayInTable(FluidRecipeLookup, result, recipeID)
-				else
-					appendToArrayInTable(ItemRecipeLookup, result, recipeID)
-				end
-			::continue::
-		end
-	else
+	local results = alwaysPluralResults(recipeData)
+	if not results then
 		print(recipeID.." didn't result in anything?")
 		print(serpent.line(recipeData))
+		return
+	end
+
+	for _, rawResult in pairs(results) do
+		-- Get resultID
+		local result = rawResult[1] or rawResult.name;
+		if result == nil then
+			print("Couldn't find ingredientID:\n")
+			print(serpent.line(rawResult))
+			goto continue
+		end
+
+		if rawResult.type == "fluid" then
+			appendToArrayInTable(FluidRecipeLookup, result, recipeID)
+		else
+			appendToArrayInTable(ItemRecipeLookup, result, recipeID)
+		end
+	::continue::
 	end
 end
 
