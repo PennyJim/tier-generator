@@ -12,10 +12,10 @@ calculating = table.deepcopy(TierMaps)
 
 --#region Helper functions
 
-local _print = print
-local function print(...)
-	if settings.startup["tiergen-debug-print"].value then
-		return _print(...)
+local _log = log
+local function log(...)
+	if settings.startup["tiergen-debug-log"].value then
+		return _log(...)
 	end
 end
 
@@ -98,14 +98,14 @@ local function processRecipe(recipeID, recipePrototype)
 	local recipeData = alwaysRecipeData(recipePrototype);
 
 	if not recipeData.results then
-		print("\t"..recipeID.." didn't result in anything?")
-		print(serpent.line(recipeData))
+		log("\t"..recipeID.." didn't result in anything?")
+		log(serpent.line(recipeData))
 		return
 	end
 
 	-- Ignore unbarreling recipes
 	if recipePrototype.subgroup == "empty-barrel" then
-		print("\t"..recipeID.." is unbarreling. Ignoring...")
+		log("\t"..recipeID.." is unbarreling. Ignoring...")
 		return
 	end
 
@@ -113,8 +113,8 @@ local function processRecipe(recipeID, recipePrototype)
 		-- Get resultID
 		local result = rawResult[1] or rawResult.name;
 		if result == nil then
-			print("\tCouldn't find ingredientID:")
-			print(serpent.line(rawResult))
+			log("\tCouldn't find ingredientID:")
+			log(serpent.line(rawResult))
 			goto continue
 		end
 
@@ -126,7 +126,7 @@ local function processRecipe(recipeID, recipePrototype)
 	::continue::
 	end
 end
-print("Processing recipes")
+log("Processing recipes")
 for recipeID, rawRecipe in pairs(data.raw["recipe"]) do
 	processRecipe(recipeID, rawRecipe);
 end
@@ -146,8 +146,8 @@ local function processTechnology(technologyID, technologyPrototype)
 ---@diagnostic disable-next-line: cast-local-type
 		technologyData = technologyData.normal or technologyData.expensive
 		if not technologyData then
-			print("\t"..technologyID.." didn't unlock anything")
-			-- print(serpent.line(technologyPrototype))
+			log("\t"..technologyID.." didn't unlock anything")
+			-- log(serpent.line(technologyPrototype))
 			return;
 		end
 	end
@@ -160,7 +160,7 @@ local function processTechnology(technologyID, technologyPrototype)
 		-- item inherit the tier of the technology that gives it?
 	end
 end
-print("Processing technology")
+log("Processing technology")
 for technologyID, technologyData in pairs(data.raw["technology"]) do
 	processTechnology(technologyID, technologyData)
 end
@@ -187,10 +187,10 @@ local function processCraftingMachine(EntityID, machinePrototype)
 		end
 
 		if not machineItem then
-			print("\t"..EntityID.."'s mined items aren't placable. Ignoring...")
+			log("\t"..EntityID.."'s mined items aren't placable. Ignoring...")
 		end
 	else
-		print("\t"..EntityID.." Isn't placable _or_ mineable. Ignoring...")
+		log("\t"..EntityID.." Isn't placable _or_ mineable. Ignoring...")
 		return
 	end
 
@@ -198,7 +198,7 @@ local function processCraftingMachine(EntityID, machinePrototype)
 		appendToArrayInTable(CategoryItemLookup, category, machineItem)
 	end
 end
-print("Processing crafting categories")
+log("Processing crafting categories")
 appendToArrayInTable(CategoryItemLookup, "crafting", "hand")
 for EntityID, machinePrototype in pairs(data.raw["assembling-machine"]) do
 	processCraftingMachine(EntityID, machinePrototype)
@@ -226,12 +226,12 @@ local function processItemSubtype(SubgroupID)
 		ItemTypeLookup[ItemID] = itemPrototype.type
 	end
 end
-print("Processing items")
+log("Processing items")
 for subtype in pairs(defines.prototypes["item"]) do
 	processItemSubtype(subtype)
 end
 --#endregion
-print("Finished Pre-Processing")
+log("Finished Pre-Processing")
 --#endregion
 
 --#region Tier calculation
@@ -334,7 +334,7 @@ end
 tierSwitch["recipe"] = function (recipeID, recipe)
 	local recipeData = alwaysRecipeData(recipe)
 	if not recipeData.ingredients then
-		print("\t"..recipeID.." didn't require anything? Means it's a t0?")
+		log("\t"..recipeID.." didn't require anything? Means it's a t0?")
 		error(serpent.line(recipeData.ingredients))
 	end
 
@@ -422,13 +422,13 @@ local function itemTest(itemID)
 end
 
 --(second to) Final Test
-print(itemTest("rocket-part"))
-print(itemTest("satellite"))
+log(itemTest("rocket-part"))
+log(itemTest("satellite"))
 -- TODO: figure out how to get the 'recipe' of space science!
 -- I know that it is made in the rocket silo, but I
 -- would like to not hard-code it if I don't have to.
 
-print("Done Testing")
+log("Done Testing")
 --#endregion
 
-_print(serpent.dump(tierArray))
+_log(serpent.dump(tierArray))
