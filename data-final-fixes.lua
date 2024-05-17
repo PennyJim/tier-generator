@@ -8,16 +8,32 @@ TierMaps = {
 for subtype in pairs(defines.prototypes["item"]) do
 	TierMaps[subtype] = {}
 end
-calculating = table.deepcopy(TierMaps)
+local calculating = table.deepcopy(TierMaps)
+local debug_printing = settings.startup["tiergen-debug-log"].value
 
 --#region Helper functions
 
 local _log = log
 local function log(...)
-	if settings.startup["tiergen-debug-log"].value then
+	if debug_printing then
 		return _log(...)
 	end
 end
+---Splits a string at 'sep'
+---@param s string
+---@param sep string
+---@return string[]
+function split(s, sep)
+	local fields = {}
+	
+	local sep = sep or " "
+	local pattern = string.format("([^%s]+)", sep)
+---@diagnostic disable-next-line: discard-returns
+	string.gsub(s, pattern, function(c) fields[#fields + 1] = c end)
+	
+	return fields
+end
+
 
 ---Appends to an array within a table
 ---@param table table
@@ -409,26 +425,33 @@ for subtype in pairs(defines.prototypes["item"]) do
 end
 --#endregion
 
---#region TESTING
 local function itemTest(itemID)
 	local itemType = ItemTypeLookup[itemID]
+	if not itemType then
+		error("Could not find item type of given item: "..itemID)
+	end
 	local tier = -1
 	local rounds = 0
-	while tier < 0 do
+	while tier < 0 and rounds < 5 do
 		tier = tierSwitch(itemID, data.raw[itemType][itemID])
 		rounds = rounds + 1
 	end
-	return "\t"..itemID..": Tier "..tier.." after "..rounds.." attempt(s)"
+	if rounds == 5 then
+		_log("Gave up trying to calculate "..itemID.."'s tier")
+	else
+		return "\t"..itemID..": Tier "..tier.." after "..rounds.." attempt(s)"
+	end
 end
-
---(second to) Final Test
-log(itemTest("rocket-part"))
-log(itemTest("satellite"))
 -- TODO: figure out how to get the 'recipe' of space science!
 -- I know that it is made in the rocket silo, but I
 -- would like to not hard-code it if I don't have to.
 
-log("Done Testing")
---#endregion
+local items = settings.startup["tiergen-item-calculation"].value --[[@as string]]
+for _, itemID in pairs(split(items, ",")) do
+	-- Trim whitespace
+	itemID = itemID:match("^%s*(.-)%s*$")
+
+	log(itemTest(itemID))
+end
 
 _log(serpent.dump(tierArray))
