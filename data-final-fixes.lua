@@ -124,6 +124,7 @@ end
 --#endregion
 
 --#region Process functions & loops
+log("Processing data.raw")
 --#region Recipe Processing
 
 ---Parses `data.raw.recipe` items
@@ -134,14 +135,14 @@ local function processRecipe(recipeID, recipePrototype)
 	local recipeData = alwaysRecipeData(recipePrototype);
 
 	if not recipeData.results then
-		log("\t"..recipeID.." didn't result in anything?")
+		log("\t\t"..recipeID.." didn't result in anything?")
 		log(serpent.line(recipeData))
 		return
 	end
 
 	-- Ignore unbarreling recipes
 	if recipePrototype.subgroup == "empty-barrel" then
-		log("\t"..recipeID.." is unbarreling. Ignoring...")
+		log("\t\t"..recipeID.." is unbarreling. Ignoring...")
 		return
 	end
 
@@ -149,7 +150,7 @@ local function processRecipe(recipeID, recipePrototype)
 		-- Get resultID
 		local result = rawResult[1] or rawResult.name;
 		if result == nil then
-			log("\tCouldn't find ingredientID:")
+			log("\t\tCouldn't find ingredientID:")
 			log(serpent.line(rawResult))
 			goto continue
 		end
@@ -162,7 +163,7 @@ local function processRecipe(recipeID, recipePrototype)
 	::continue::
 	end
 end
-log("Processing recipes")
+log("\tProcessing recipes")
 for recipeID, rawRecipe in pairs(data.raw["recipe"]) do
 	processRecipe(recipeID, rawRecipe);
 end
@@ -180,7 +181,7 @@ local function processTechnology(technologyID, technologyPrototype)
 ---@diagnostic disable-next-line: cast-local-type
 		technologyData = technologyData.normal or technologyData.expensive
 		if not technologyData then
-			log("\t"..technologyID.." didn't unlock anything")
+			log("\t\t"..technologyID.." didn't unlock anything")
 			-- log(serpent.line(technologyPrototype))
 			return;
 		end
@@ -194,7 +195,7 @@ local function processTechnology(technologyID, technologyPrototype)
 		-- item inherit the tier of the technology that gives it?
 	end
 end
-log("Processing technology")
+log("\tProcessing technology")
 for technologyID, technologyData in pairs(data.raw["technology"]) do
 	processTechnology(technologyID, technologyData)
 end
@@ -218,10 +219,10 @@ local function processCraftingMachine(EntityID, machinePrototype)
 		end
 
 		if not machineItem then
-			log("\t"..EntityID.."'s mined items aren't placable. Ignoring...")
+			log("\t\t"..EntityID.."'s mined items aren't placable. Ignoring...")
 		end
 	else
-		log("\t"..EntityID.." Isn't placable _or_ mineable. Ignoring...")
+		log("\t\t"..EntityID.." Isn't placable _or_ mineable. Ignoring...")
 		return
 	end
 
@@ -229,7 +230,7 @@ local function processCraftingMachine(EntityID, machinePrototype)
 		appendToArrayInTable(CategoryItemLookup, category, machineItem)
 	end
 end
-log("Processing crafting categories")
+log("\tProcessing crafting categories")
 appendToArrayInTable(CategoryItemLookup, "crafting", "hand")
 for EntityID, machinePrototype in pairs(data.raw["assembling-machine"]) do
 	processCraftingMachine(EntityID, machinePrototype)
@@ -260,7 +261,6 @@ for subtype in pairs(defines.prototypes["item"]) do
 	processItemSubtype(subtype)
 end
 --#endregion
-log("Finished Pre-Processing")
 --#endregion
 
 --#region Tier calculation
