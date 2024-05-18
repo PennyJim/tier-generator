@@ -100,9 +100,13 @@ local function alwaysRecipeData(table)
 	local oldRecipeData = table.normal or table.expensive
 	local recipeData = {
 		ingredients = table.ingredients or oldRecipeData.ingredients,
-		results = alwaysPluralResults(table) or alwaysPluralResults(oldRecipeData),
-		enabled = (table and table.enabled) or (oldRecipeData and oldRecipeData.enabled)
+		results = alwaysPluralResults(table) or alwaysPluralResults(oldRecipeData)
 	}
+	if table then
+		recipeData.enabled = table.enabled
+	elseif oldRecipeData then
+		recipeData.enabled = oldRecipeData.enabled
+	end
 	-- has to check if it's nil specifically, as it'll just always be true otherwise
 	if recipeData.enabled == nil then
 		recipeData.enabled = true;
