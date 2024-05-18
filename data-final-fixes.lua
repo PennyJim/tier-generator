@@ -10,6 +10,8 @@ for subtype in pairs(defines.prototypes["item"]) do
 end
 local calculating = table.deepcopy(TierMaps)
 local debug_printing = settings.startup["tiergen-debug-log"].value --[[@as boolean]]
+---@type table<data.RecipeID, boolean>
+local ignored_recipes = {}
 
 --#region processedTables
 
@@ -123,6 +125,15 @@ local function alwaysTechnologyData(table)
 end
 --#endregion
 
+
+local ignoredRecipes = settings.startup["tiergen-ignored-recipes"].value --[[@as string]]
+-- Turn array into lookup table
+for index, recipeID in ipairs(split(ignoredRecipes, ",")) do
+	-- Remove whitespace
+	recipeID = recipeID:match("^%s*(.-)%s*$")
+	ignored_recipes[recipeID] = true
+end
+
 --#region Process functions & loops
 log("Processing data.raw")
 --#region Recipe Processing
@@ -131,6 +142,11 @@ log("Processing data.raw")
 ---@param recipeID data.RecipeID
 ---@param recipePrototype data.RecipePrototype
 local function processRecipe(recipeID, recipePrototype)
+	if ignored_recipes[recipeID] then
+		log("\t\t"..recipeID.." was in ignored settings. Ignoring...")
+		return
+	end
+
 	---@type data.RecipePrototype|data.RecipeData
 	local recipeData = alwaysRecipeData(recipePrototype);
 

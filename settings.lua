@@ -22,6 +22,14 @@ data:extend{
 		order = "startup-c"
 	},
 	{
+		type = "string-setting",
+		name = "tiergen-ignored-recipes",
+		setting_type = "startup",
+		default_value = "",
+		allow_blank = true,
+		order = "startup-d"
+	},
+	{
 		type = "bool-setting",
 		name = "tiergen-debug-log",
 		setting_type = "startup",
