@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.2
-Date: ????
+Date: 2024-05-18
   Bugfixes:
     - Now has a pcall so it should just log an error instead of halting startup
     - Should now gracefully handle recipes that can't be unlocked (at least via research)
