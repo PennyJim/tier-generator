@@ -9,7 +9,21 @@ for subtype in pairs(defines.prototypes["item"]) do
 	TierMaps[subtype] = {}
 end
 local calculating = table.deepcopy(TierMaps)
-local debug_printing = settings.startup["tiergen-debug-log"].value
+local debug_printing = settings.startup["tiergen-debug-log"].value --[[@as boolean]]
+
+--#region processedTables
+
+---@type table<data.ItemID,data.RecipeID[]>
+local ItemRecipeLookup = {}
+---@type table<data.FluidID,data.RecipeID[]>
+local FluidRecipeLookup = {}
+---@type table<data.RecipeID,data.TechnologyID[]>
+local RecipeTechnologyLookup = {}
+---@type table<data.RecipeCategoryID, data.ItemID[]>
+local CategoryItemLookup = {}
+---@type table<data.ItemID, data.ItemSubGroupID>
+local ItemTypeLookup = {}
+--#endregion
 
 --#region Helper functions
 
@@ -34,6 +48,16 @@ function split(s, sep)
 	return fields
 end
 
+---Resolves the type of an item, and errors if one is not found
+---@param itemID string
+---@return string
+local function resolveItemType(itemID)
+	local itemType = ItemTypeLookup[itemID]
+	if not itemType then
+		error("Could not find item type of given item: "..itemID)
+	end
+	return itemType
+end
 
 ---Appends to an array within a table
 ---@param table table
@@ -102,10 +126,6 @@ end
 --#region Process functions & loops
 --#region Recipe Processing
 
----@type table<data.ItemID,data.RecipeID[]>
-local ItemRecipeLookup = {}
----@type table<data.FluidID,data.RecipeID[]>
-local FluidRecipeLookup = {}
 ---Parses `data.raw.recipe` items
 ---@param recipeID data.RecipeID
 ---@param recipePrototype data.RecipePrototype
@@ -149,8 +169,6 @@ end
 --#endregion
 --#region Technology Proesssing
 
----@type table<data.RecipeID,data.TechnologyID[]>
-local RecipeTechnologyLookup = {}
 ---Parses `data.raw.technology` items
 ---@param technologyID data.TechnologyID
 ---@param technologyPrototype data.TechnologyPrototype
@@ -183,9 +201,6 @@ end
 --#endregion
 --#region Category Processing
 
----@alias data.CraftingMachineID string
----@type table<data.RecipeCategoryID, data.ItemID[]>
-local CategoryItemLookup = {}
 ---Parses `data.raw.assembling` and `data.raw.furnace` items
 ---@param EntityID data.EntityID
 ---@param machinePrototype data.CraftingMachinePrototype
@@ -228,8 +243,6 @@ end
 --#endregion
 --#region Item Type Processing
 
----@type table<data.ItemID, data.ItemSubGroupID>
-local ItemTypeLookup = {}
 ---Parses all item-subtypes
 ---@param SubgroupID data.ItemSubGroupID
 local function processItemSubtype(SubgroupID)
@@ -242,7 +255,7 @@ local function processItemSubtype(SubgroupID)
 		ItemTypeLookup[ItemID] = itemPrototype.type
 	end
 end
-log("Processing items")
+log("\tProcessing items")
 for subtype in pairs(defines.prototypes["item"]) do
 	processItemSubtype(subtype)
 end
@@ -423,13 +436,12 @@ end
 for subtype in pairs(defines.prototypes["item"]) do
 	tierSwitch[subtype] = tierSwitch["fluid"]
 end
---#endregion
 
-local function itemTest(itemID)
-	local itemType = ItemTypeLookup[itemID]
-	if not itemType then
-		error("Could not find item type of given item: "..itemID)
-	end
+---Calculates the tier of a given itemID
+---@param itemID string
+---@return string?
+local function calculateTier(itemID)
+	local itemType = resolveItemType(itemID)
 	local tier = -1
 	local rounds = 0
 	while tier < 0 and rounds < 5 do
@@ -442,16 +454,35 @@ local function itemTest(itemID)
 		return "\t"..itemID..": Tier "..tier.." after "..rounds.." attempt(s)"
 	end
 end
+
+---Directly set the tier of a given itemID
+---@param itemID string
+local function setTier(itemID)
+	local itemType = resolveItemType(itemID)
+	TierMaps[itemType][itemID] = 0
+end
+
 -- TODO: figure out how to get the 'recipe' of space science!
 -- I know that it is made in the rocket silo, but I
 -- would like to not hard-code it if I don't have to.
+--#endregion
 
+log("Setting base item overrides")
+local baseItems = settings.startup["tiergen-base-items"].value --[[@as string]]
+for _, itemID in pairs(split(baseItems, ",")) do
+	-- Trim whitespace
+	itemID = itemID:match("^%s*(.-)%s*$")
+	log("\tSetting "..itemID.." to tier 0")
+	setTier(itemID)
+end
+log("Calculating items")
 local items = settings.startup["tiergen-item-calculation"].value --[[@as string]]
 for _, itemID in pairs(split(items, ",")) do
 	-- Trim whitespace
 	itemID = itemID:match("^%s*(.-)%s*$")
-
-	log(itemTest(itemID))
+	log(calculateTier(itemID))
 end
+
+log("Done!\n")
 
 _log(serpent.dump(tierArray))

@@ -14,6 +14,14 @@ data:extend{
 		order = "startup-b"
 	},
 	{
+		type = "string-setting",
+		name = "tiergen-base-items",
+		setting_type = "startup",
+		default_value = "",
+		allow_blank = true,
+		order = "startup-c"
+	},
+	{
 		type = "bool-setting",
 		name = "tiergen-debug-log",
 		setting_type = "startup",
