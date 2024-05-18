@@ -1,4 +1,14 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.1
+Date: 2024-05-17
+  Features:
+    - Add setting to define what items gets their tiers calculated
+    - Add setting to directly set values as base items
+    - Add setting to ignore problematic recipes
+  Bugfixes:
+    - Properly determine if a recipe is enabled by default
+    - Output to log instead of only stdout
+---------------------------------------------------------------------------------------------------
 Version: 0.1.0
 Date: 2024-05-12
   Major Features:
