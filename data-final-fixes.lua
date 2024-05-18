@@ -300,7 +300,13 @@ tierSwitch["base"] = function(prototypeID, value)
 	if calculating[value.type][prototypeID] then return -math.huge end
 
 	calculating[value.type][prototypeID] = true
-	tier = tierSwitch[value.type](prototypeID, value);
+	local success = false
+	success, tier = pcall(tierSwitch[value.type], prototypeID, value)
+	if not success then
+		tier = -math.huge
+		-- _log({"error-calculating", prototypeID, value.type, serpent.dump(value)})
+		_log("Error calculating the "..value.type.." of "..prototypeID..":\n"..serpent.dump(value))
+	end
 	calculating[value.type][prototypeID] = nil
 	if tier >= 0 then -- Discard negative values
 		TierMaps[value.type][prototypeID] = tier
