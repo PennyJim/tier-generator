@@ -3,6 +3,7 @@ Version: 0.1.2
 Date: ????
   Bugfixes:
     - Now has a pcall so it should just log an error instead of halting startup
+    - Should now gracefully handle recipes that can't be unlocked (at least via research)
     - Added MoreSciencePacks-for1_1 as a hidden dependency so it properly considers the added science
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.1

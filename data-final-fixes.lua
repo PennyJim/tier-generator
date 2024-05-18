@@ -409,6 +409,11 @@ tierSwitch["recipe"] = function (recipeID, recipe)
 	if not recipeData.enabled then
 		technologyTier = math.huge
 		local technologies = RecipeTechnologyLookup[recipeID]
+		if not technologies then
+			print("\t"..recipeID.." is not an unlockable recipe.")
+			return -math.huge -- Ignore this recipe
+		end
+
 		for _, technology in pairs(technologies) do
 			local nextValue = data.raw["technology"][technology]
 			local nextTier = tierSwitch(technology, nextValue)
