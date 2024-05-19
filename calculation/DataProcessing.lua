@@ -17,47 +17,33 @@ lib.log("Processing data.raw")
 
 ---Parses `data.raw.recipe` items
 ---@param recipeID data.RecipeID
----@param recipePrototype data.RecipePrototype
+---@param recipePrototype LuaRecipePrototype
 local function processRecipe(recipeID, recipePrototype)
 	if ignored_recipes[recipeID] then
 		lib.log("\t\t"..recipeID.." was in ignored settings. Ignoring...")
 		return
 	end
-
-	---@type data.RecipePrototype|data.RecipeData
-	local recipeData = lib.alwaysRecipeData(recipePrototype);
-
-	if not recipeData.results then
+	if #recipePrototype.products == 0 then
 		lib.log("\t\t"..recipeID.." didn't result in anything?")
-		lib.log(serpent.line(recipeData))
+		lib.log(serpent.line(recipePrototype))
 		return
 	end
-
 	-- Ignore unbarreling recipes
 	if recipePrototype.subgroup == "empty-barrel" then
 		lib.log("\t\t"..recipeID.." is unbarreling. Ignoring...")
 		return
 	end
 
-	for _, rawResult in pairs(recipeData.results) do
-		-- Get resultID
-		local result = rawResult[1] or rawResult.name;
-		if result == nil then
-			lib.log("\t\tCouldn't find ingredientID:")
-			lib.log(serpent.line(rawResult))
-			goto continue
-		end
-
-		if rawResult.type == "fluid" then
-			lib.appendToArrayInTable(lookup.FluidRecipe, result, recipeID)
+	for _, result in pairs(recipePrototype.products) do
+		if result.type == "fluid" then
+			lib.appendToArrayInTable(lookup.FluidRecipe, result.name, recipeID)
 		else
-			lib.appendToArrayInTable(lookup.ItemRecipe, result, recipeID)
+			lib.appendToArrayInTable(lookup.ItemRecipe, result.name, recipeID)
 		end
-	::continue::
 	end
 end
 lib.log("\tProcessing recipes")
-for recipeID, rawRecipe in pairs(data.raw["recipe"]) do
+for recipeID, rawRecipe in pairs(game.recipe_prototypes) do
 	processRecipe(recipeID, rawRecipe);
 end
 --#endregion
@@ -65,31 +51,23 @@ end
 
 ---Parses `data.raw.technology` items
 ---@param technologyID data.TechnologyID
----@param technologyPrototype data.TechnologyPrototype
+---@param technologyPrototype LuaTechnologyPrototype
 local function processTechnology(technologyID, technologyPrototype)
-	---@type data.TechnologyPrototype|data.TechnologyData
-	local technologyData = technologyPrototype
-
-	if technologyData.effects == nil then
----@diagnostic disable-next-line: cast-local-type
-		technologyData = technologyData.normal or technologyData.expensive
-		if not technologyData then
-			lib.log("\t\t"..technologyID.." didn't unlock anything")
-			-- log(serpent.line(technologyPrototype))
-			return;
-		end
+	if technologyPrototype.effects == nil then
+		lib.log("\t\t"..technologyID.." didn't unlock anything")
+		return
 	end
 
-	for _, modifier in pairs(technologyData.effects) do
+	for _, modifier in pairs(technologyPrototype.effects) do
 		if modifier.type == "unlock-recipe" then
 			lib.appendToArrayInTable(lookup.RecipeTechnology, modifier.recipe, technologyID)
 		end
-		-- Theoretically, it can give an item. Should we make that
-		-- item inherit the tier of the technology that gives it?
+		-- Theoretically, it can give an item.
+		-- TODO: make that a recipe
 	end
 end
 lib.log("\tProcessing technology")
-for technologyID, technologyData in pairs(data.raw["technology"]) do
+for technologyID, technologyData in pairs(game.technology_prototypes) do
 	processTechnology(technologyID, technologyData)
 end
 --#endregion
@@ -97,7 +75,7 @@ end
 
 ---Parses `data.raw.assembling` and `data.raw.furnace` items
 ---@param EntityID data.EntityID
----@param machinePrototype data.CraftingMachinePrototype
+---@param machinePrototype LuaEntityPrototype
 local function processCraftingMachine(EntityID, machinePrototype)
 	local machineItem = lib.getEntityItem(EntityID, machinePrototype)
 	if not machineItem then return end
@@ -106,11 +84,15 @@ local function processCraftingMachine(EntityID, machinePrototype)
 	end
 end
 lib.log("\tProcessing crafting categories")
-for EntityID, machinePrototype in pairs(data.raw["assembling-machine"]) do
-	processCraftingMachine(EntityID, machinePrototype)
-end
-for EntityID, furnacePrototype in pairs(data.raw["furnace"]) do
-	processCraftingMachine(EntityID, furnacePrototype)
+for EntityID, machinePrototype in pairs(game.get_filtered_entity_prototypes{
+	{filter = "type", type = "assembling-machine"},
+	{filter = "type", type = "furnace"}
+}) do
+	if machinePrototype.type == "assembling-machine" then
+		processCraftingMachine(EntityID, machinePrototype)
+	elseif machinePrototype.type == "furnace" then
+		processCraftingMachine(EntityID, machinePrototype)
+	end
 end
 -- TODO: figure out how to *properly* check this
 -- Add hand-crafting as simplest (first) recipe
@@ -118,48 +100,46 @@ lib.prependToArrayInTable(lookup.CategoryItem, "crafting", "hand")
 
 ---Parses `data.raw.burner-generator` items
 ---@param EntityID data.EntityID
----@param machinePrototype data.EntityPrototype
----@param machineBurner data.BurnerEnergySource
+---@param machinePrototype LuaEntityPrototype
+---@param machineBurner LuaBurnerPrototype
 local function processBurnerMachines(EntityID, machinePrototype, machineBurner)
-	local burnerItem = lib.getEntityItem(EntityID, machinePrototype)
-	if not burnerItem then return end
-	local categories = machineBurner.fuel_categories or {machineBurner.fuel_category}
-	for _, category in pairs(categories) do
-		lib.appendToArrayInTable(lookup.CategoryItem, "tiergen-fuel-"..category, burnerItem)
+	local burnerItems = lib.getEntityItem(EntityID, machinePrototype)
+	for _, burnerItem in ipairs(burnerItems) do
+		local categories = machineBurner.fuel_categories
+		for category in pairs(categories) do
+			lib.appendToArrayInTable(lookup.CategoryItem, "tiergen-fuel-"..category, burnerItem)
+		end
 	end
 end
 lib.log("\tProcessing burner categories")
--- Not the right place to look? tbd
--- for EnityID, BurnerMachinesPrototype in pairs(data.raw["burner-generator"]) do
--- 	processBurnerMachines(EnityID, BurnerMachinesPrototype, BurnerMachinesPrototype.burner)
--- end
-for EntityID, BoilerPrototype in pairs(data.raw["boiler"]) do
-	local energy_source = BoilerPrototype.energy_source
-	if energy_source.type == "burner" then
-		---@cast energy_source data.BurnerEnergySource
-		processBurnerMachines(EntityID, BoilerPrototype, energy_source)
-	end
-end
-for EntityID, ReactorPrototype in pairs(data.raw["reactor"]) do
-	local energy_source = ReactorPrototype.energy_source
-	if energy_source.type == "burner" then
-		---@cast energy_source data.BurnerEnergySource
-		processBurnerMachines(EntityID, ReactorPrototype, energy_source)
+-- Not all the right places to look?
+for EntityID, BurnerMachinePrototype in pairs(game.get_filtered_entity_prototypes{
+	{filter = "type", type = "burner"},
+	{filter = "type", type = "boiler"},
+	{filter = "type", type = "reactor"},
+}) do
+	local burner = BurnerMachinePrototype.burner_prototype
+	if burner then
+		processBurnerMachines(EntityID, BurnerMachinePrototype, burner)
 	end
 end
 
 ---Processes rocket silos
 ---@param EntityID data.EntityID
----@param RocketSiloPrototype data.RocketSiloPrototype
+---@param RocketSiloPrototype LuaEntityPrototype
 local function processRocketSilos(EntityID, RocketSiloPrototype)
-	local itemID = lib.getEntityItem(EntityID, RocketSiloPrototype)
-	if not itemID then
+	local itemIDs = lib.getEntityItem(EntityID, RocketSiloPrototype)
+	if #itemIDs == 0 then
 		return -- Ignore machine if not placeable
 	end
-	lib.appendToArrayInTable(lookup.CategoryItem, "tiergen-rocket-launch", itemID)
+	for _, itemID in ipairs(itemIDs) do
+		lib.appendToArrayInTable(lookup.CategoryItem, "tiergen-rocket-launch", {itemID})
+	end
 end
-lib.log("\tProcessing rocekt silos")
-for EntityID, RocketSiloPrototype in pairs(data.raw["rocket-silo"]) do
+lib.log("\tProcessing rocket silos")
+for EntityID, RocketSiloPrototype in pairs(game.get_filtered_entity_prototypes{
+	{filter = "type", type = "rocket-silo"}
+}) do
 	processCraftingMachine(EntityID, RocketSiloPrototype)
 	processRocketSilos(EntityID, RocketSiloPrototype)
 end
@@ -168,30 +148,22 @@ end
 
 ---Parses all items and creates a `recipe` out of the burnt_result
 ---@param ItemID data.ItemID
----@param itemPrototype data.ItemPrototype
+---@param itemPrototype LuaItemPrototype
 local function processBurningRecipe(ItemID, itemPrototype)
-	if itemPrototype.fuel_category and itemPrototype.burnt_result then
-		local result = itemPrototype.burnt_result
+	local result = itemPrototype.burnt_result
+	if itemPrototype.fuel_category and result then
 		-- Prepend because burning is usually simpler than crafting
-		lib.prependToArrayInTable(lookup.ItemRecipe, result, "tiergen-burning")
-		lib.appendToArrayInTable(lookup.Burning, result, ItemID)
+		lib.prependToArrayInTable(lookup.ItemRecipe, result.name, "tiergen-burning")
+		lib.appendToArrayInTable(lookup.Burning, result.name, ItemID)
 	end
 end
 ---Processes an item and creates a 'recipe' out of the rocket results
 ---@param ItemID data.ItemID
----@param itemPrototype data.ItemPrototype
+---@param itemPrototype LuaItemPrototype
 local function processRocketRecipe(ItemID, itemPrototype)
 	local rocket_products = itemPrototype.rocket_launch_products
-	if not rocket_products then
-		if not itemPrototype.rocket_launch_product then
-			return -- No products
-		end
-
-		rocket_products = {itemPrototype.rocket_launch_product}
-	end
-
 	for _, product in pairs(rocket_products) do
-		local name = product.name or product[1]
+		local name = product.name
 		if not name then
 			log("No name found?\n"..serpent.dump(product))
 		else
@@ -200,25 +172,20 @@ local function processRocketRecipe(ItemID, itemPrototype)
 		end
 	end
 end
----Parses all item-subtypes
----@param SubgroupID data.ItemSubGroupID
-local function processItemSubtype(SubgroupID)
-	for ItemID, itemPrototype in pairs(data.raw[SubgroupID]) do
-		if lookup.ItemType[ItemID] then
-			error(ItemID.." already assigned a type??")
-		end
-
----@diagnostic disable-next-line: assign-type-mismatch
-		lookup.ItemType[ItemID] = itemPrototype.type
----@diagnostic disable-next-line: param-type-mismatch
-		processBurningRecipe(ItemID, itemPrototype)
----@diagnostic disable-next-line: param-type-mismatch
-		processRocketRecipe(ItemID, itemPrototype)
-	end
-end
+-- ---Parses all item-subtypes
+-- ---@param ItemID data.ItemID
+-- ---@param itemPrototype LuaItemPrototype
+-- local function processItemSubtype(ItemID, itemPrototype)
+-- 	if lookup.ItemType[ItemID] then
+-- 		error(ItemID.." already assigned a type??")
+-- 	end
+-- 	lookup.ItemType[ItemID] = itemPrototype.type
+-- end
 lib.log("\tProcessing items")
-for subtype in pairs(defines.prototypes["item"]) do
-	processItemSubtype(subtype)
+for ItemID, itemPrototype in pairs(game.item_prototypes) do
+	-- processItemSubtype(ItemID, itemPrototype)
+	processBurningRecipe(ItemID, itemPrototype)
+	processRocketRecipe(ItemID, itemPrototype)
 end
 --#endregion
 

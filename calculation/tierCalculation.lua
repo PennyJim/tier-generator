@@ -212,6 +212,7 @@ end
 ---@type fun(ItemID:data.ItemID,value:LuaItemPrototype):tier
 tierSwitch["rocket-launch"] = function (ItemID, value)
 	local rocketRecipes = lookup.Rocket[ItemID]
+	-- FIXME: actually consider the rocket-parts
 	local tier = math.huge
 
 	for _, satelliteID in pairs(rocketRecipes) do

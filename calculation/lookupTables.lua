@@ -14,7 +14,7 @@ lookup.Burning = {}
 lookup.Rocket = {}
 ---@type table<data.RecipeCategoryID, data.ItemID[]>
 lookup.CategoryItem = {}
----@type table<data.ItemID, data.ItemSubGroupID>
-lookup.ItemType = {}
+-- ---@type table<data.ItemID, data.ItemSubGroupID>
+-- lookup.ItemType = {}
 
 return lookup
