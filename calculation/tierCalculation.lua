@@ -1,7 +1,5 @@
-local lookup = require("__tier-generator__.lookupTables")
 local lib = require("__tier-generator__.library")
--- Process data.raw
-require("__tier-generator__.calculation.DataProcessing")
+local lookup = require("__tier-generator__.calculation.DataProcessing")
 
 local tierArray = {};
 TierMaps = {

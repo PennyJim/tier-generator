@@ -1,4 +1,3 @@
-local lookup = require("__tier-generator__.lookupTables")
 local lib = require("__tier-generator__.library")
 local tier = require("__tier-generator__.calculation.tierCalculation")
 
