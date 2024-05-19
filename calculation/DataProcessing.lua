@@ -1,4 +1,4 @@
-local lookup = require("tier-generator.calculation.lookupTables")
+local lookup = require("__tier-generator__.calculation.lookupTables")
 local lib = require("__tier-generator__.library")
 
 ---@type table<data.RecipeID, boolean>
