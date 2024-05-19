@@ -3,6 +3,7 @@ Version: 0.1.4
 Date: ????
   Changes:
     - Refactored the monolithic data-final-fixes.lua into multiple files
+    - Add MIT License I forgor to
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.3
 Date: 2024-05-18
