@@ -1,5 +1,5 @@
-local lib = require("__tier-generator__.library")
 local lookup = require("__tier-generator__.calculation.DataProcessing")
+local lib = require("__tier-generator__.library")
 
 local tierArray = {};
 TierMaps = {
