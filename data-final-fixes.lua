@@ -100,7 +100,7 @@ local function alwaysPluralResults(table)
 			name = table.result,
 		}}
 	end
-	if results[1].name or results[1][1] then
+	if results[1] and results[1].name or results[1] and results[1][1] then
 		return results
 	else
 ---@diagnostic disable-next-line: return-type-mismatch
@@ -113,7 +113,7 @@ end
 local function alwaysRecipeData(table)
 	---@type data.RecipeData
 ---@diagnostic disable-next-line: assign-type-mismatch
-	local oldRecipeData = table.normal or table.expensive
+	local oldRecipeData = table.normal or table.expensive or {}
 	local recipeData = {
 		ingredients = table.ingredients or oldRecipeData.ingredients,
 		results = alwaysPluralResults(table) or alwaysPluralResults(oldRecipeData)
@@ -152,7 +152,7 @@ local function getEntityItem(EntityID, entityPrototype)
 	if entityPrototype.placeable_by then
 		return entityPrototype.placeable_by.item
 	elseif entityPrototype.minable then
-		local items = alwaysPluralResults(entityPrototype.minable)
+		local items = alwaysPluralResults(entityPrototype.minable) or {}
 
 		for _, item in pairs(items) do
 			if data.raw["item"][item.name].place_result == EntityID then
@@ -298,14 +298,22 @@ local function processBurnerMachines(EntityID, machinePrototype, machineBurner)
 	end
 end
 log("\tProcessing burner categories")
-for EnityID, BurnerMachinesPrototype in pairs(data.raw["burner-generator"]) do
-	processBurnerMachines(EnityID, BurnerMachinesPrototype, BurnerMachinesPrototype.burner)
+-- Not the right place to look? tbd
+-- for EnityID, BurnerMachinesPrototype in pairs(data.raw["burner-generator"]) do
+-- 	processBurnerMachines(EnityID, BurnerMachinesPrototype, BurnerMachinesPrototype.burner)
+-- end
+for EntityID, BoilerPrototype in pairs(data.raw["boiler"]) do
+	local energy_source = BoilerPrototype.energy_source
+	if energy_source.type == "burner" then
+		---@cast energy_source data.BurnerEnergySource
+		processBurnerMachines(EntityID, BoilerPrototype, energy_source)
+	end
 end
-for EnityID, ReactorPrototype in pairs(data.raw["reactor"]) do
+for EntityID, ReactorPrototype in pairs(data.raw["reactor"]) do
 	local energy_source = ReactorPrototype.energy_source
 	if energy_source.type == "burner" then
 		---@cast energy_source data.BurnerEnergySource
-		processBurnerMachines(EnityID, ReactorPrototype, energy_source)
+		processBurnerMachines(EntityID, ReactorPrototype, energy_source)
 	end
 end
 --#endregion
@@ -384,6 +392,10 @@ end
 ---@return integer
 tierSwitch["recipe-category"] = function (CategoryID, category)
 	local machines = CategoryItemLookup[CategoryID]
+	if not machines then
+		log("\tCategory "..CategoryID.." has no machines")
+		return -math.huge
+	end
 	local categoryTier = math.huge;
 	for _, item in pairs(machines) do
 		-- If it's craftable by hand, it's a base recipe.
@@ -397,6 +409,11 @@ tierSwitch["recipe-category"] = function (CategoryID, category)
 			categoryTier = math.min(categoryTier, itemTier)
 		end
 	end
+
+	if categoryTier == math.huge then
+		return -math.huge
+	end
+
 	if settings.startup["tiergen-reduce-category"].value then
 		categoryTier = categoryTier - 1
 	end

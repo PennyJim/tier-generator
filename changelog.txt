@@ -3,6 +3,10 @@ Version: 0.1.3
 Date: ????
   Features:
     - Burnable fuels now kind of work. Not all machines that can burn are currently being grabbed. To be refined
+  Bugfixes:
+    - Now will no longer crash on recipes with no results
+    - A category with no machines are handled instead of catching the thrown error
+    - A category with no valid machines now signals an invalid craft instead of leaking the infinity
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.2
 Date: 2024-05-18
