@@ -1,4 +1,5 @@
 local lookup = require("lookupTables")
+local lib = require("library")
 local tierArray = {};
 TierMaps = {
 	["recipe-category"] = {},
@@ -10,162 +11,20 @@ for subtype in pairs(defines.prototypes["item"]) do
 	TierMaps[subtype] = {}
 end
 local calculating = table.deepcopy(TierMaps)
-local debug_printing = settings.startup["tiergen-debug-log"].value --[[@as boolean]]
 ---@type table<data.RecipeID, boolean>
 local ignored_recipes = {}
 
 
---#region Helper functions
-
-local _log = log
-local function log(...)
-	if debug_printing then
-		return _log(...)
-	end
-end
----Splits a string at 'sep'
----@param s string
----@param sep string
----@return string[]
-function split(s, sep)
-	local fields = {}
-	
-	local sep = sep or " "
-	local pattern = string.format("([^%s]+)", sep)
----@diagnostic disable-next-line: discard-returns
-	string.gsub(s, pattern, function(c) fields[#fields + 1] = c end)
-	
-	return fields
-end
-
----Resolves the type of an item, and errors if one is not found
----@param itemID string
----@return string
-local function resolveItemType(itemID)
-	local itemType = ItemTypeLookup[itemID]
-	if not itemType then
-		error("Could not find item type of given item: "..itemID)
-	end
-	return itemType
-end
----Appends to an array within a table
----@param table table
----@param key any
----@param newValue any
-local function appendToArrayInTable(table, key, newValue)
-	local array = table[key] or {}
-	array[#array+1] = newValue;
-	table[key] = array;
-end
-
----Prepends to an array within a table
----@param table table
----@param key any
----@param newValue any
-local function prependToArrayInTable(table, key, newValue)
-	local array = table[key] or {}
-	local shiftedValue = newValue
-	for	index, oldValue in ipairs(array) do
-		array[index] = shiftedValue
-		shiftedValue = oldValue
-	end
-	array[#array+1] = shiftedValue
-	table[key] = array;
-end
-
----Always return plural results
----Absolutely no gurantees it works for everything
----@param table data.RecipePrototype|data.MinableProperties|any
----@return data.ProductPrototype[]
-local function alwaysPluralResults(table)
-	---@type data.ProductPrototype[]
-	local results = table.results
-	if not results then
-		results = {{
-			type = "item",
-			name = table.result,
-		}}
-	end
-	if results[1] and results[1].name or results[1] and results[1][1] then
-		return results
-	else
----@diagnostic disable-next-line: return-type-mismatch
-		return false
-	end
-end
----Always return RecipeData
----@param table data.RecipePrototype
----@return data.RecipeData
-local function alwaysRecipeData(table)
-	---@type data.RecipeData
----@diagnostic disable-next-line: assign-type-mismatch
-	local oldRecipeData = table.normal or table.expensive or {}
-	local recipeData = {
-		ingredients = table.ingredients or oldRecipeData.ingredients,
-		results = alwaysPluralResults(table) or alwaysPluralResults(oldRecipeData)
-	}
-	if table then
-		recipeData.enabled = table.enabled
-	elseif oldRecipeData then
-		recipeData.enabled = oldRecipeData.enabled
-	end
-	-- has to check if it's nil specifically, as it'll just always be true otherwise
-	if recipeData.enabled == nil then
-		recipeData.enabled = true;
-	end
-
-	return recipeData
-end
----Always returns TechnologyData
----@param table data.TechnologyPrototype
----@return data.TechnologyData
-local function alwaysTechnologyData(table)
-	---@type data.TechnologyData
----@diagnostic disable-next-line: assign-type-mismatch
-	local oldTechnologyData = table.normal or table.expensive or {}
-	local technologyData = {
-		unit = table.unit or oldTechnologyData.unit,
-		prerequisites = table.prerequisites or oldTechnologyData.prerequisites or {}
-	}
-	return technologyData
-end
-
----Gets the placable item that results in the entity
----@param EntityID data.EntityID
----@param entityPrototype data.EntityPrototype
----@return data.ItemID?
-local function getEntityItem(EntityID, entityPrototype)
-	if entityPrototype.placeable_by then
-		return entityPrototype.placeable_by.item
-	elseif entityPrototype.minable then
-		local items = alwaysPluralResults(entityPrototype.minable) or {}
-
-		for _, item in pairs(items) do
-			if data.raw["item"][item.name].place_result == EntityID then
-				return item.name
-			end
-		end
-		
-		log("\t\t"..EntityID.."'s mined items aren't placable. Ignoring...")
-	else
-		log("\t\t"..EntityID.." Isn't placable _or_ mineable. Ignoring...")
-	end
-	return nil
-end
-
---#endregion
-
-
 local ignoredRecipes = settings.startup["tiergen-ignored-recipes"].value --[[@as string]]
 -- Turn array into lookup table
-for index, recipeID in ipairs(split(ignoredRecipes, ",")) do
+for index, recipeID in ipairs(lib.split(ignoredRecipes, ",")) do
 	-- Remove whitespace
 	recipeID = recipeID:match("^%s*(.-)%s*$")
 	ignored_recipes[recipeID] = true
 end
 
 --#region Process functions & loops
-log("Processing data.raw")
+lib.log("Processing data.raw")
 --#region Recipe Processing
 
 ---Parses `data.raw.recipe` items
@@ -173,22 +32,22 @@ log("Processing data.raw")
 ---@param recipePrototype data.RecipePrototype
 local function processRecipe(recipeID, recipePrototype)
 	if ignored_recipes[recipeID] then
-		log("\t\t"..recipeID.." was in ignored settings. Ignoring...")
+		lib.log("\t\t"..recipeID.." was in ignored settings. Ignoring...")
 		return
 	end
 
 	---@type data.RecipePrototype|data.RecipeData
-	local recipeData = alwaysRecipeData(recipePrototype);
+	local recipeData = lib.alwaysRecipeData(recipePrototype);
 
 	if not recipeData.results then
-		log("\t\t"..recipeID.." didn't result in anything?")
-		log(serpent.line(recipeData))
+		lib.log("\t\t"..recipeID.." didn't result in anything?")
+		lib.log(serpent.line(recipeData))
 		return
 	end
 
 	-- Ignore unbarreling recipes
 	if recipePrototype.subgroup == "empty-barrel" then
-		log("\t\t"..recipeID.." is unbarreling. Ignoring...")
+		lib.log("\t\t"..recipeID.." is unbarreling. Ignoring...")
 		return
 	end
 
@@ -196,20 +55,20 @@ local function processRecipe(recipeID, recipePrototype)
 		-- Get resultID
 		local result = rawResult[1] or rawResult.name;
 		if result == nil then
-			log("\t\tCouldn't find ingredientID:")
-			log(serpent.line(rawResult))
+			lib.log("\t\tCouldn't find ingredientID:")
+			lib.log(serpent.line(rawResult))
 			goto continue
 		end
 
 		if rawResult.type == "fluid" then
-			appendToArrayInTable(lookup.FluidRecipe, result, recipeID)
+			lib.appendToArrayInTable(lookup.FluidRecipe, result, recipeID)
 		else
-			appendToArrayInTable(lookup.ItemRecipe, result, recipeID)
+			lib.appendToArrayInTable(lookup.ItemRecipe, result, recipeID)
 		end
 	::continue::
 	end
 end
-log("\tProcessing recipes")
+lib.log("\tProcessing recipes")
 for recipeID, rawRecipe in pairs(data.raw["recipe"]) do
 	processRecipe(recipeID, rawRecipe);
 end
@@ -227,7 +86,7 @@ local function processTechnology(technologyID, technologyPrototype)
 ---@diagnostic disable-next-line: cast-local-type
 		technologyData = technologyData.normal or technologyData.expensive
 		if not technologyData then
-			log("\t\t"..technologyID.." didn't unlock anything")
+			lib.log("\t\t"..technologyID.." didn't unlock anything")
 			-- log(serpent.line(technologyPrototype))
 			return;
 		end
@@ -235,13 +94,13 @@ local function processTechnology(technologyID, technologyPrototype)
 
 	for _, modifier in pairs(technologyData.effects) do
 		if modifier.type == "unlock-recipe" then
-			appendToArrayInTable(lookup.RecipeTechnology, modifier.recipe, technologyID)
+			lib.appendToArrayInTable(lookup.RecipeTechnology, modifier.recipe, technologyID)
 		end
 		-- Theoretically, it can give an item. Should we make that
 		-- item inherit the tier of the technology that gives it?
 	end
 end
-log("\tProcessing technology")
+lib.log("\tProcessing technology")
 for technologyID, technologyData in pairs(data.raw["technology"]) do
 	processTechnology(technologyID, technologyData)
 end
@@ -252,13 +111,13 @@ end
 ---@param EntityID data.EntityID
 ---@param machinePrototype data.CraftingMachinePrototype
 local function processCraftingMachine(EntityID, machinePrototype)
-	local machineItem = getEntityItem(EntityID, machinePrototype)
+	local machineItem = lib.getEntityItem(EntityID, machinePrototype)
 	if not machineItem then return end
 	for _, category in pairs(machinePrototype.crafting_categories) do
-		appendToArrayInTable(lookup.CategoryItem, category, machineItem)
+		lib.appendToArrayInTable(lookup.CategoryItem, category, machineItem)
 	end
 end
-log("\tProcessing crafting categories")
+lib.log("\tProcessing crafting categories")
 for EntityID, machinePrototype in pairs(data.raw["assembling-machine"]) do
 	processCraftingMachine(EntityID, machinePrototype)
 end
@@ -266,21 +125,21 @@ for EntityID, furnacePrototype in pairs(data.raw["furnace"]) do
 	processCraftingMachine(EntityID, furnacePrototype)
 end
 -- Add crafting as simplest recipe (first)
-prependToArrayInTable(lookup.CategoryItem, "crafting", "hand")
+lib.prependToArrayInTable(lookup.CategoryItem, "crafting", "hand")
 
 ---Parses `data.raw.burner-generator` items
 ---@param EntityID data.EntityID
 ---@param machinePrototype data.EntityPrototype
 ---@param machineBurner data.BurnerEnergySource
 local function processBurnerMachines(EntityID, machinePrototype, machineBurner)
-	local burnerItem = getEntityItem(EntityID, machinePrototype)
+	local burnerItem = lib.getEntityItem(EntityID, machinePrototype)
 	if not burnerItem then return end
 	local categories = machineBurner.fuel_categories or {machineBurner.fuel_category}
 	for _, category in pairs(categories) do
-		appendToArrayInTable(lookup.CategoryItem, "tiergen-fuel-"..category, burnerItem)
+		lib.appendToArrayInTable(lookup.CategoryItem, "tiergen-fuel-"..category, burnerItem)
 	end
 end
-log("\tProcessing burner categories")
+lib.log("\tProcessing burner categories")
 -- Not the right place to look? tbd
 -- for EnityID, BurnerMachinesPrototype in pairs(data.raw["burner-generator"]) do
 -- 	processBurnerMachines(EnityID, BurnerMachinesPrototype, BurnerMachinesPrototype.burner)
@@ -304,13 +163,13 @@ end
 ---@param EntityID data.EntityID
 ---@param RocketSiloPrototype data.RocketSiloPrototype
 local function processRocketSilos(EntityID, RocketSiloPrototype)
-	local itemID = getEntityItem(EntityID, RocketSiloPrototype)
+	local itemID = lib.getEntityItem(EntityID, RocketSiloPrototype)
 	if not itemID then
 		return -- Ignore machine if not placeable
 	end
-	appendToArrayInTable(lookup.CategoryItem, "tiergen-rocket-launch", itemID)
+	lib.appendToArrayInTable(lookup.CategoryItem, "tiergen-rocket-launch", itemID)
 end
-log("\tProcessing rocekt silos")
+lib.log("\tProcessing rocekt silos")
 for EntityID, RocketSiloPrototype in pairs(data.raw["rocket-silo"]) do
 	processCraftingMachine(EntityID, RocketSiloPrototype)
 	processRocketSilos(EntityID, RocketSiloPrototype)
@@ -325,8 +184,8 @@ local function processBurningRecipe(ItemID, itemPrototype)
 	if itemPrototype.fuel_category and itemPrototype.burnt_result then
 		local result = itemPrototype.burnt_result
 		-- Prepend because burning is usually simpler than crafting
-		prependToArrayInTable(lookup.ItemRecipe, result, "tiergen-burning")
-		appendToArrayInTable(lookup.Burning, result, ItemID)
+		lib.prependToArrayInTable(lookup.ItemRecipe, result, "tiergen-burning")
+		lib.appendToArrayInTable(lookup.Burning, result, ItemID)
 	end
 end
 ---Processes an item and creates a 'recipe' out of the rocket results
@@ -345,10 +204,10 @@ local function processRocketRecipe(ItemID, itemPrototype)
 	for _, product in pairs(rocket_products) do
 		local name = product.name or product[1]
 		if not name then
-			_log("No name found?\n"..serpent.dump(product))
+			log("No name found?\n"..serpent.dump(product))
 		else
-			appendToArrayInTable(lookup.ItemRecipe, name, "tiergen-rocket-launch")
-			appendToArrayInTable(lookup.Rocket, name, ItemID)
+			lib.appendToArrayInTable(lookup.ItemRecipe, name, "tiergen-rocket-launch")
+			lib.appendToArrayInTable(lookup.Rocket, name, ItemID)
 		end
 	end
 end
@@ -368,7 +227,7 @@ local function processItemSubtype(SubgroupID)
 		processRocketRecipe(ItemID, itemPrototype)
 	end
 end
-log("\tProcessing items")
+lib.log("\tProcessing items")
 for subtype in pairs(defines.prototypes["item"]) do
 	processItemSubtype(subtype)
 end
@@ -396,14 +255,14 @@ tierSwitch["base"] = function(prototypeID, value)
 	success, tier = pcall(tierSwitch[value.type], prototypeID, value)
 	if not success then
 		-- _log({"error-calculating", prototypeID, value.type, serpent.dump(value)})
-		_log("Error calculating the "..value.type.." of "..prototypeID..":\n"..tier)
+		log("Error calculating the "..value.type.." of "..prototypeID..":\n"..tier)
 		tier = -math.huge
 	end
 	calculating[value.type][prototypeID] = nil
 	if tier >= 0 then -- Discard negative values
 		TierMaps[value.type][prototypeID] = tier
 		if value.type == "fluid" or defines.prototypes["item"][value.type] == 0 then
-			appendToArrayInTable(tierArray, tier+1, prototypeID)
+			lib.appendToArrayInTable(tierArray, tier+1, prototypeID)
 		end
 	end
 	return tier
@@ -416,7 +275,7 @@ end
 tierSwitch["recipe-category"] = function (CategoryID, category)
 	local machines = lookup.CategoryItem[CategoryID]
 	if not machines then
-		log("\tCategory "..CategoryID.." has no machines")
+		lib.log("\tCategory "..CategoryID.." has no machines")
 		return -math.huge
 	end
 	local categoryTier = math.huge;
@@ -465,7 +324,7 @@ end
 ---@param technology data.TechnologyPrototype
 ---@return integer
 tierSwitch["technology"] = function (technologyID, technology)
-	local techData = alwaysTechnologyData(technology)
+	local techData = lib.alwaysTechnologyData(technology)
 	local ingredientsTier = getIngredientsTier(techData.unit.ingredients)
 
 	local prereqTier = 0;
@@ -488,9 +347,9 @@ end
 ---@param recipe data.RecipePrototype
 ---@return integer
 tierSwitch["recipe"] = function (recipeID, recipe)
-	local recipeData = alwaysRecipeData(recipe)
+	local recipeData = lib.alwaysRecipeData(recipe)
 	if not recipeData.ingredients then
-		log("\t"..recipeID.." didn't require anything? Means it's a t0?")
+		lib.log("\t"..recipeID.." didn't require anything? Means it's a t0?")
 		error(serpent.line(recipeData.ingredients))
 	end
 
@@ -631,9 +490,9 @@ end
 ---@param itemID string
 ---@return string?
 local function calculateTier(itemID)
-	local validItem, itemType = pcall(resolveItemType, itemID)
+	local validItem, itemType = pcall(lib.resolveItemType, itemID)
 	if not validItem then
-		_log("\tWas given an invalid item: "..itemID)
+		log("\tWas given an invalid item: "..itemID)
 		return
 	end
 	local tier = -1
@@ -643,9 +502,9 @@ local function calculateTier(itemID)
 		rounds = rounds + 1
 	end
 	if rounds == 5 then
-		_log("Gave up trying to calculate "..itemID.."'s tier")
+		log("Gave up trying to calculate "..itemID.."'s tier")
 	else
-		log("\t"..itemID..": Tier "..tier.." after "..rounds.." attempt(s)")
+		lib.log("\t"..itemID..": Tier "..tier.." after "..rounds.." attempt(s)")
 		return
 	end
 end
@@ -653,7 +512,7 @@ end
 ---Directly set the tier of a given itemID
 ---@param itemID string
 local function setTier(itemID)
-	local itemType = resolveItemType(itemID)
+	local itemType = lib.resolveItemType(itemID)
 	TierMaps[itemType][itemID] = 0
 end
 
@@ -662,22 +521,22 @@ end
 -- would like to not hard-code it if I don't have to.
 --#endregion
 
-log("Setting base item overrides")
+lib.log("Setting base item overrides")
 local baseItems = settings.startup["tiergen-base-items"].value --[[@as string]]
-for _, itemID in pairs(split(baseItems, ",")) do
+for _, itemID in pairs(lib.split(baseItems, ",")) do
 	-- Trim whitespace
 	itemID = itemID:match("^%s*(.-)%s*$")
-	log("\tSetting "..itemID.." to tier 0")
+	lib.log("\tSetting "..itemID.." to tier 0")
 	setTier(itemID)
 end
-log("Calculating items")
+lib.log("Calculating items")
 local items = settings.startup["tiergen-item-calculation"].value --[[@as string]]
-for _, itemID in pairs(split(items, ",")) do
+for _, itemID in pairs(lib.split(items, ",")) do
 	-- Trim whitespace
 	itemID = itemID:match("^%s*(.-)%s*$")
 	calculateTier(itemID)
 end
 
-log("Done!\n")
+lib.log("Done!\n")
 
-_log(serpent.dump(tierArray))
+log(serpent.dump(tierArray))
