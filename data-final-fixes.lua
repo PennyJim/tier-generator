@@ -1,3 +1,4 @@
+local lookup = require("lookupTables")
 local tierArray = {};
 TierMaps = {
 	["recipe-category"] = {},
@@ -13,23 +14,6 @@ local debug_printing = settings.startup["tiergen-debug-log"].value --[[@as boole
 ---@type table<data.RecipeID, boolean>
 local ignored_recipes = {}
 
---#region processedTables
-
----@type table<data.ItemID,data.RecipeID[]>
-local ItemRecipeLookup = {}
----@type table<data.FluidID,data.RecipeID[]>
-local FluidRecipeLookup = {}
----@type table<data.RecipeID,data.TechnologyID[]>
-local RecipeTechnologyLookup = {}
----@type table<data.ItemID,data.ItemID[]>
-local BurningLookup = {}
----@type table<data.ItemID,data.ItemID[]>
-local RocketLookup = {}
----@type table<data.RecipeCategoryID, data.ItemID[]>
-local CategoryItemLookup = {}
----@type table<data.ItemID, data.ItemSubGroupID>
-local ItemTypeLookup = {}
---#endregion
 
 --#region Helper functions
 
@@ -218,9 +202,9 @@ local function processRecipe(recipeID, recipePrototype)
 		end
 
 		if rawResult.type == "fluid" then
-			appendToArrayInTable(FluidRecipeLookup, result, recipeID)
+			appendToArrayInTable(lookup.FluidRecipe, result, recipeID)
 		else
-			appendToArrayInTable(ItemRecipeLookup, result, recipeID)
+			appendToArrayInTable(lookup.ItemRecipe, result, recipeID)
 		end
 	::continue::
 	end
@@ -251,7 +235,7 @@ local function processTechnology(technologyID, technologyPrototype)
 
 	for _, modifier in pairs(technologyData.effects) do
 		if modifier.type == "unlock-recipe" then
-			appendToArrayInTable(RecipeTechnologyLookup, modifier.recipe, technologyID)
+			appendToArrayInTable(lookup.RecipeTechnology, modifier.recipe, technologyID)
 		end
 		-- Theoretically, it can give an item. Should we make that
 		-- item inherit the tier of the technology that gives it?
@@ -271,7 +255,7 @@ local function processCraftingMachine(EntityID, machinePrototype)
 	local machineItem = getEntityItem(EntityID, machinePrototype)
 	if not machineItem then return end
 	for _, category in pairs(machinePrototype.crafting_categories) do
-		appendToArrayInTable(CategoryItemLookup, category, machineItem)
+		appendToArrayInTable(lookup.CategoryItem, category, machineItem)
 	end
 end
 log("\tProcessing crafting categories")
@@ -282,7 +266,7 @@ for EntityID, furnacePrototype in pairs(data.raw["furnace"]) do
 	processCraftingMachine(EntityID, furnacePrototype)
 end
 -- Add crafting as simplest recipe (first)
-prependToArrayInTable(CategoryItemLookup, "crafting", "hand")
+prependToArrayInTable(lookup.CategoryItem, "crafting", "hand")
 
 ---Parses `data.raw.burner-generator` items
 ---@param EntityID data.EntityID
@@ -293,7 +277,7 @@ local function processBurnerMachines(EntityID, machinePrototype, machineBurner)
 	if not burnerItem then return end
 	local categories = machineBurner.fuel_categories or {machineBurner.fuel_category}
 	for _, category in pairs(categories) do
-		appendToArrayInTable(CategoryItemLookup, "tiergen-fuel-"..category, burnerItem)
+		appendToArrayInTable(lookup.CategoryItem, "tiergen-fuel-"..category, burnerItem)
 	end
 end
 log("\tProcessing burner categories")
@@ -324,7 +308,7 @@ local function processRocketSilos(EntityID, RocketSiloPrototype)
 	if not itemID then
 		return -- Ignore machine if not placeable
 	end
-	appendToArrayInTable(CategoryItemLookup, "tiergen-rocket-launch", itemID)
+	appendToArrayInTable(lookup.CategoryItem, "tiergen-rocket-launch", itemID)
 end
 log("\tProcessing rocekt silos")
 for EntityID, RocketSiloPrototype in pairs(data.raw["rocket-silo"]) do
@@ -341,8 +325,8 @@ local function processBurningRecipe(ItemID, itemPrototype)
 	if itemPrototype.fuel_category and itemPrototype.burnt_result then
 		local result = itemPrototype.burnt_result
 		-- Prepend because burning is usually simpler than crafting
-		prependToArrayInTable(ItemRecipeLookup, result, "tiergen-burning")
-		appendToArrayInTable(BurningLookup, result, ItemID)
+		prependToArrayInTable(lookup.ItemRecipe, result, "tiergen-burning")
+		appendToArrayInTable(lookup.Burning, result, ItemID)
 	end
 end
 ---Processes an item and creates a 'recipe' out of the rocket results
@@ -363,8 +347,8 @@ local function processRocketRecipe(ItemID, itemPrototype)
 		if not name then
 			_log("No name found?\n"..serpent.dump(product))
 		else
-			appendToArrayInTable(ItemRecipeLookup, name, "tiergen-rocket-launch")
-			appendToArrayInTable(RocketLookup, name, ItemID)
+			appendToArrayInTable(lookup.ItemRecipe, name, "tiergen-rocket-launch")
+			appendToArrayInTable(lookup.Rocket, name, ItemID)
 		end
 	end
 end
@@ -372,12 +356,12 @@ end
 ---@param SubgroupID data.ItemSubGroupID
 local function processItemSubtype(SubgroupID)
 	for ItemID, itemPrototype in pairs(data.raw[SubgroupID]) do
-		if ItemTypeLookup[ItemID] then
+		if lookup.ItemType[ItemID] then
 			error(ItemID.." already assigned a type??")
 		end
 
 ---@diagnostic disable-next-line: assign-type-mismatch
-		ItemTypeLookup[ItemID] = itemPrototype.type
+		lookup.ItemType[ItemID] = itemPrototype.type
 ---@diagnostic disable-next-line: param-type-mismatch
 		processBurningRecipe(ItemID, itemPrototype)
 ---@diagnostic disable-next-line: param-type-mismatch
@@ -430,7 +414,7 @@ end
 ---@param category data.RecipeCategory
 ---@return integer
 tierSwitch["recipe-category"] = function (CategoryID, category)
-	local machines = CategoryItemLookup[CategoryID]
+	local machines = lookup.CategoryItem[CategoryID]
 	if not machines then
 		log("\tCategory "..CategoryID.." has no machines")
 		return -math.huge
@@ -466,7 +450,7 @@ local function getIngredientsTier(ingredients)
 	local ingredientsTier = 0;
 	for _, ingredient in pairs(ingredients) do
 		local nextName = ingredient.name or ingredient[1]
-		local nextType = ingredient.type or ItemTypeLookup[nextName]
+		local nextType = ingredient.type or lookup.ItemType[nextName]
 		local nextValue = data.raw[nextType][nextName]
 		local nextTier = tierSwitch(nextName, nextValue)
 		-- Skip if machine takes an item being calculated
@@ -525,7 +509,7 @@ tierSwitch["recipe"] = function (recipeID, recipe)
 	local technologyTier = 0
 	if not recipeData.enabled then
 		technologyTier = math.huge
-		local technologies = RecipeTechnologyLookup[recipeID]
+		local technologies = lookup.RecipeTechnology[recipeID]
 		if not technologies then
 			print("\t"..recipeID.." is not an unlockable recipe.")
 			return -math.huge -- Ignore this recipe
@@ -548,7 +532,7 @@ end
 ---@param ItemID data.ItemID
 ---@param value data.ItemPrototype
 tierSwitch["burning"] = function (ItemID, value)
-	local burningRecipes = BurningLookup[ItemID]
+	local burningRecipes = lookup.Burning[ItemID]
 	local tier = math.huge
 
 	for _, fuelID in pairs(burningRecipes) do
@@ -556,7 +540,7 @@ tierSwitch["burning"] = function (ItemID, value)
 		if fuelTier < 0 then
 			return fuelTier
 		end
-		local fuel = data.raw[ItemTypeLookup[fuelID]][fuelID]
+		local fuel = data.raw[lookup.ItemType[fuelID]][fuelID]
 		local categoryTier = tierSwitch("tiergen-fuel-"..fuel.fuel_category, {
 			type = "recipe-category",
 		})
@@ -573,7 +557,7 @@ end
 ---@param ItemID data.ItemID
 ---@param value data.ItemPrototype
 tierSwitch["rocket-launch"] = function (ItemID, value)
-	local rocketRecipes = RocketLookup[ItemID]
+	local rocketRecipes = lookup.Rocket[ItemID]
 	local tier = math.huge
 
 	for _, satelliteID in pairs(rocketRecipes) do
@@ -600,9 +584,9 @@ end
 tierSwitch["fluid"] = function (ItemID, value)
 	local recipes
 	if value.type == "fluid" then
-		recipes = FluidRecipeLookup[ItemID]
+		recipes = lookup.FluidRecipe[ItemID]
 	else
-		recipes = ItemRecipeLookup[ItemID]
+		recipes = lookup.ItemRecipe[ItemID]
 	end
 
 	-- No recipes create it, then it's a base resource
