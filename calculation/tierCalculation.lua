@@ -16,8 +16,6 @@ end
 local calculating = table.deepcopy(TierMaps)
 
 --#region Tier calculation
---@type table<string,fun(string,data.PrototypeBase)>
-
 ---@alias fakePrototype {type:string}
 ---@alias handledPrototypes fakePrototype|data.RecipeCategory|data.TechnologyPrototype|data.RecipePrototype|data.ItemPrototype|data.FluidPrototype
 ---@class TierSwitch
@@ -47,39 +45,6 @@ local tierSwitch = setmetatable({}, {
 		return tier
 	end
 })
-
----Determine the tier of the given recipe category
----@type fun(CategoryID:data.RecipeCategoryID,category:data.RecipeCategory):number
-tierSwitch["recipe-category"] = function (CategoryID, category)
-	local machines = lookup.CategoryItem[CategoryID]
-	if not machines then
-		lib.log("\tCategory "..CategoryID.." has no machines")
-		return -math.huge
-	end
-	local categoryTier = math.huge;
-	for _, item in pairs(machines) do
-		-- If it's craftable by hand, it's a base recipe.
-		-- TODO: figure out how to *properly* check this
-		-- I'm currently just adding "hand" to the "crafting" category
-		if item == "hand" then return 0 end
-		local itemTier = tierSwitch(item, data.raw["item"][item])
-		-- Don't consider the machine if it takes something being calculated.
-		-- It must mean that it uses something a tier too high, Right..?
-		if itemTier >= 0 then
-			categoryTier = math.min(categoryTier, itemTier)
-		end
-	end
-
-	if categoryTier == math.huge then
-		return -math.huge
-	end
-
-	if settings.startup["tiergen-reduce-category"].value then
-		categoryTier = categoryTier - 1
-	end
-	return categoryTier
-end
-
 ---Return the highest tier from the ingredients
 ---@param ingredients data.IngredientPrototype[]
 ---@return integer
@@ -117,7 +82,37 @@ tierSwitch["technology"] = function (technologyID, technology)
 	end
 	return math.max(ingredientsTier, prereqTier)
 end
+---Determine the tier of the given recipe category
+---@type fun(CategoryID:data.RecipeCategoryID,category:data.RecipeCategory):number
+tierSwitch["recipe-category"] = function (CategoryID, category)
+	local machines = lookup.CategoryItem[CategoryID]
+	if not machines then
+		lib.log("\tCategory "..CategoryID.." has no machines")
+		return -math.huge
+	end
+	local categoryTier = math.huge;
+	for _, item in pairs(machines) do
+		-- If it's craftable by hand, it's a base recipe.
+		-- TODO: figure out how to *properly* check this
+		-- I'm currently just adding "hand" to the "crafting" category
+		if item == "hand" then return 0 end
+		local itemTier = tierSwitch(item, data.raw["item"][item])
+		-- Don't consider the machine if it takes something being calculated.
+		-- It must mean that it uses something a tier too high, Right..?
+		if itemTier >= 0 then
+			categoryTier = math.min(categoryTier, itemTier)
+		end
+	end
 
+	if categoryTier == math.huge then
+		return -math.huge
+	end
+
+	if settings.startup["tiergen-reduce-category"].value then
+		categoryTier = categoryTier - 1
+	end
+	return categoryTier
+end
 ---Determine the tier of the given recipe
 ---@type fun(recipeID:data.RecipeID,recipe:data.RecipePrototype):number
 tierSwitch["recipe"] = function (recipeID, recipe)
@@ -160,7 +155,6 @@ tierSwitch["recipe"] = function (recipeID, recipe)
 
 	return math.max(ingredientsTier, machineTier, technologyTier)
 end
-
 ---Determine the tier of burning an item
 ---@type fun(ItemID:data.ItemID,value:data.ItemPrototype):number
 tierSwitch["burning"] = function (ItemID, value)
@@ -184,7 +178,6 @@ tierSwitch["burning"] = function (ItemID, value)
 	end
 	return tier
 end
-
 ---Determine the tier of launching an item into space
 ---@type fun(ItemID:data.ItemID,value:data.ItemPrototype):number
 tierSwitch["rocket-launch"] = function (ItemID, value)
@@ -207,7 +200,6 @@ tierSwitch["rocket-launch"] = function (ItemID, value)
 	end
 	return tier
 end
-
 ---Determine the tier of the given item or fluid
 ---@type fun(ItemID:data.ItemID|data.FluidID,value:data.ItemPrototype|data.FluidPrototype):number
 tierSwitch["fluid"] = function (ItemID, value)
@@ -275,6 +267,9 @@ local function calculateTier(itemID)
 	if rounds == 5 then
 		log("Gave up trying to calculate "..itemID.."'s tier")
 	else
+		if rounds > 1 then
+			log("MULTIPLE ROUNDS ACTUALLY DOES SOMETHING")
+		end
 		lib.log("\t"..itemID..": Tier "..tier.." after "..rounds.." attempt(s)")
 		return
 	end
