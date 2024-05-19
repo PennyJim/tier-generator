@@ -127,6 +127,30 @@ local function alwaysTechnologyData(table)
 	}
 	return technologyData
 end
+
+---Gets the placable item that results in the entity
+---@param EntityID data.EntityID
+---@param entityPrototype data.EntityPrototype
+---@return data.ItemID?
+local function getEntityItem(EntityID, entityPrototype)
+	if entityPrototype.placeable_by then
+		return entityPrototype.placeable_by.item
+	elseif entityPrototype.minable then
+		local items = alwaysPluralResults(entityPrototype.minable)
+
+		for _, item in pairs(items) do
+			if data.raw["item"][item.name].place_result == EntityID then
+				return item.name
+			end
+		end
+		
+		log("\t\t"..EntityID.."'s mined items aren't placable. Ignoring...")
+	else
+		log("\t\t"..EntityID.." Isn't placable _or_ mineable. Ignoring...")
+	end
+	return nil
+end
+
 --#endregion
 
 
@@ -226,26 +250,8 @@ end
 ---@param EntityID data.EntityID
 ---@param machinePrototype data.CraftingMachinePrototype
 local function processCraftingMachine(EntityID, machinePrototype)
-	local machineItem
-	if machinePrototype.placeable_by then
-		machineItem = machinePrototype.placeable_by.item
-	elseif machinePrototype.minable then
-		local items = alwaysPluralResults(machinePrototype.minable)
-
-		for _, item in pairs(items) do
-			if data.raw["item"][item.name].place_result == EntityID then
-				machineItem = item.name
-			end
-		end
-
-		if not machineItem then
-			log("\t\t"..EntityID.."'s mined items aren't placable. Ignoring...")
-		end
-	else
-		log("\t\t"..EntityID.." Isn't placable _or_ mineable. Ignoring...")
-		return
-	end
-
+	local machineItem = getEntityItem(EntityID, machinePrototype)
+	if not machineItem then return end
 	for _, category in pairs(machinePrototype.crafting_categories) do
 		appendToArrayInTable(CategoryItemLookup, category, machineItem)
 	end
