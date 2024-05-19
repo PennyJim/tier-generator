@@ -1,4 +1,4 @@
-local lookup = require("__tier-generator__.lookupTables")
+local lookup = require("tier-generator.calculation.lookupTables")
 
 --- A table full of functions to simplify complex things
 ---@class TiergenLibrary
