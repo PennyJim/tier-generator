@@ -72,6 +72,21 @@ local function appendToArrayInTable(table, key, newValue)
 	table[key] = array;
 end
 
+---Prepends to an array within a table
+---@param table table
+---@param key any
+---@param newValue any
+local function prependToArrayInTable(table, key, newValue)
+	local array = table[key] or {}
+	local shiftedValue = newValue
+	for	index, oldValue in ipairs(array) do
+		array[index] = shiftedValue
+		shiftedValue = oldValue
+	end
+	array[#array+1] = shiftedValue
+	table[key] = array;
+end
+
 ---Always return plural results
 ---Absolutely no gurantees it works for everything
 ---@param table data.RecipePrototype|data.MinableProperties|any
@@ -258,7 +273,6 @@ local function processCraftingMachine(EntityID, machinePrototype)
 	end
 end
 log("\tProcessing crafting categories")
-appendToArrayInTable(CategoryItemLookup, "crafting", "hand")
 for EntityID, machinePrototype in pairs(data.raw["assembling-machine"]) do
 	processCraftingMachine(EntityID, machinePrototype)
 end
@@ -268,6 +282,8 @@ end
 for EntityID, RocketSiloPrototype in pairs(data.raw["rocket-silo"]) do
 	processCraftingMachine(EntityID, RocketSiloPrototype)
 end
+-- Add crafting as simplest recipe (first)
+prependToArrayInTable(CategoryItemLookup, "crafting", "hand")
 
 ---Parses `data.raw.burner-generator` items
 ---@param EntityID data.EntityID
@@ -301,7 +317,8 @@ end
 local function processBurningRecipe(ItemID, itemPrototype)
 	if itemPrototype.fuel_category and itemPrototype.burnt_result then
 		local result = itemPrototype.burnt_result
-		appendToArrayInTable(ItemRecipeLookup, result, "tiergen-burning")
+		-- Prepend because burning is usually simpler than crafting
+		prependToArrayInTable(ItemRecipeLookup, result, "tiergen-burning")
 		appendToArrayInTable(BurningLookup, result, ItemID)
 	end
 end
