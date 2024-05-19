@@ -20,3 +20,49 @@ end
 lib.log("Done!\n")
 
 log(serpent.dump(tier.get()))
+
+-- Smuggle out
+local extension = {}
+extension[#extension+1] = {
+	type = "recipe-category",
+	name = "tiergen"
+}
+extension[#extension+1] = {
+	type = "item-subgroup",
+	name = "tiergen",
+	group = "other"
+}
+for curTier, itemArray in ipairs(tier.get()) do
+	curTier = curTier - 1
+	local normalized_tier = string.format("%03d", curTier)
+	---@type data.RecipePrototype
+	local tierRecipe = {
+		type = "recipe",
+		name = "tier"..normalized_tier,
+		category = "tiergen",
+		subgroup = "tiergen",
+		icon = "__base__/graphics/icons/iron-gear-wheel.png",
+		icon_size = 64, icon_mipmaps = 4,
+		order = normalized_tier,
+		ingredients = {},
+		results = {},
+		allow_decomposition = false,
+	}
+
+	for _, itemID in ipairs(itemArray) do
+		local isItem, itemType = pcall(lib.resolveItemType, itemID)
+		if isItem then
+			itemType = "item"
+		else
+			itemType = "fluid"
+		end
+		local ingredient = {
+			type = itemType,
+			name = itemID,
+			amount = 1,
+		}
+		tierRecipe.ingredients[#tierRecipe.ingredients+1] = ingredient
+	end
+	extension[#extension+1] = tierRecipe
+end
+data:extend(extension)
