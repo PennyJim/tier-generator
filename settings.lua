@@ -10,14 +10,14 @@ data:extend{
 		type = "string-setting",
 		name = "tiergen-item-calculation",
 		setting_type = "startup",
-		default_value = "rocket-part, satellite",
+		default_value = "space-science-pack",
 		order = "startup-b"
 	},
 	{
 		type = "string-setting",
 		name = "tiergen-base-items",
 		setting_type = "startup",
-		default_value = "",
+		default_value = "raw-fish",
 		allow_blank = true,
 		order = "startup-c"
 	},

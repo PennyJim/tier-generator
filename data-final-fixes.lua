@@ -23,6 +23,8 @@ local FluidRecipeLookup = {}
 local RecipeTechnologyLookup = {}
 ---@type table<data.ItemID,data.ItemID[]>
 local BurningLookup = {}
+---@type table<data.ItemID,data.ItemID[]>
+local RocketLookup = {}
 ---@type table<data.RecipeCategoryID, data.ItemID[]>
 local CategoryItemLookup = {}
 ---@type table<data.ItemID, data.ItemSubGroupID>
@@ -279,9 +281,6 @@ end
 for EntityID, furnacePrototype in pairs(data.raw["furnace"]) do
 	processCraftingMachine(EntityID, furnacePrototype)
 end
-for EntityID, RocketSiloPrototype in pairs(data.raw["rocket-silo"]) do
-	processCraftingMachine(EntityID, RocketSiloPrototype)
-end
 -- Add crafting as simplest recipe (first)
 prependToArrayInTable(CategoryItemLookup, "crafting", "hand")
 
@@ -316,6 +315,22 @@ for EntityID, ReactorPrototype in pairs(data.raw["reactor"]) do
 		processBurnerMachines(EntityID, ReactorPrototype, energy_source)
 	end
 end
+
+---Processes rocket silos
+---@param EntityID data.EntityID
+---@param RocketSiloPrototype data.RocketSiloPrototype
+local function processRocketSilos(EntityID, RocketSiloPrototype)
+	local itemID = getEntityItem(EntityID, RocketSiloPrototype)
+	if not itemID then
+		return -- Ignore machine if not placeable
+	end
+	appendToArrayInTable(CategoryItemLookup, "tiergen-rocket-launch", itemID)
+end
+log("\tProcessing rocekt silos")
+for EntityID, RocketSiloPrototype in pairs(data.raw["rocket-silo"]) do
+	processCraftingMachine(EntityID, RocketSiloPrototype)
+	processRocketSilos(EntityID, RocketSiloPrototype)
+end
 --#endregion
 --#region Item Processing
 
@@ -330,7 +345,29 @@ local function processBurningRecipe(ItemID, itemPrototype)
 		appendToArrayInTable(BurningLookup, result, ItemID)
 	end
 end
+---Processes an item and creates a 'recipe' out of the rocket results
+---@param ItemID data.ItemID
+---@param itemPrototype data.ItemPrototype
+local function processRocketRecipe(ItemID, itemPrototype)
+	local rocket_products = itemPrototype.rocket_launch_products
+	if not rocket_products then
+		if not itemPrototype.rocket_launch_product then
+			return -- No products
+		end
 
+		rocket_products = {itemPrototype.rocket_launch_product}
+	end
+
+	for _, product in pairs(rocket_products) do
+		local name = product.name or product[1]
+		if not name then
+			_log("No name found?\n"..serpent.dump(product))
+		else
+			appendToArrayInTable(ItemRecipeLookup, name, "tiergen-rocket-launch")
+			appendToArrayInTable(RocketLookup, name, ItemID)
+		end
+	end
+end
 ---Parses all item-subtypes
 ---@param SubgroupID data.ItemSubGroupID
 local function processItemSubtype(SubgroupID)
@@ -343,6 +380,8 @@ local function processItemSubtype(SubgroupID)
 		ItemTypeLookup[ItemID] = itemPrototype.type
 ---@diagnostic disable-next-line: param-type-mismatch
 		processBurningRecipe(ItemID, itemPrototype)
+---@diagnostic disable-next-line: param-type-mismatch
+		processRocketRecipe(ItemID, itemPrototype)
 	end
 end
 log("\tProcessing items")
@@ -530,6 +569,30 @@ tierSwitch["burning"] = function (ItemID, value)
 	return tier
 end
 
+---Determine the tier of launching an item into space
+---@param ItemID data.ItemID
+---@param value data.ItemPrototype
+tierSwitch["rocket-launch"] = function (ItemID, value)
+	local rocketRecipes = RocketLookup[ItemID]
+	local tier = math.huge
+
+	for _, satelliteID in pairs(rocketRecipes) do
+		local satelliteTier = getIngredientsTier{{satelliteID}}
+		if satelliteTier < 0 then
+			return satelliteTier
+		end
+		local categoryTier = tierSwitch("tiergen-rocket-launch", {
+			type = "recipe-category",
+		})
+		if categoryTier < 0 then
+			return categoryTier
+		end
+		local recipeTier = math.max(satelliteTier, categoryTier)
+		tier = math.min(tier, recipeTier)
+	end
+	return tier
+end
+
 ---Determine the tier of the given item or fluid
 ---@param ItemID data.ItemID|data.FluidID
 ---@param value data.ItemPrototype|data.FluidPrototype
@@ -594,7 +657,8 @@ local function calculateTier(itemID)
 	if rounds == 5 then
 		_log("Gave up trying to calculate "..itemID.."'s tier")
 	else
-		return "\t"..itemID..": Tier "..tier.." after "..rounds.." attempt(s)"
+		log("\t"..itemID..": Tier "..tier.." after "..rounds.." attempt(s)")
+		return
 	end
 end
 
@@ -623,7 +687,7 @@ local items = settings.startup["tiergen-item-calculation"].value --[[@as string]
 for _, itemID in pairs(split(items, ",")) do
 	-- Trim whitespace
 	itemID = itemID:match("^%s*(.-)%s*$")
-	log(calculateTier(itemID))
+	calculateTier(itemID)
 end
 
 log("Done!\n")
