@@ -91,8 +91,6 @@ tierSwitch["recipe-category"] = function (CategoryID, category)
 	local categoryTier = math.huge;
 	for _, item in pairs(machines) do
 		-- If it's craftable by hand, it's a base recipe.
-		-- TODO: figure out how to *properly* check this
-		-- I'm currently just adding "hand" to the "crafting" category
 		if item == "hand" then return 0 end
 		local itemTier = tierSwitch(item, data.raw["item"][item])
 		-- Don't consider the machine if it takes something being calculated.
@@ -209,7 +207,6 @@ tierSwitch["fluid"] = function (ItemID, value)
 	end
 
 	-- No recipes create it, then it's a base resource
-	-- TODO: take into account whether it generates?
 	-- if it doesn't generate, maybe check if a technology gives it
 	if not recipes then return 0 end
 

@@ -112,7 +112,8 @@ end
 for EntityID, furnacePrototype in pairs(data.raw["furnace"]) do
 	processCraftingMachine(EntityID, furnacePrototype)
 end
--- Add crafting as simplest recipe (first)
+-- TODO: figure out how to *properly* check this
+-- Add hand-crafting as simplest (first) recipe
 lib.prependToArrayInTable(lookup.CategoryItem, "crafting", "hand")
 
 ---Parses `data.raw.burner-generator` items
@@ -220,5 +221,7 @@ for subtype in pairs(defines.prototypes["item"]) do
 	processItemSubtype(subtype)
 end
 --#endregion
+
+-- TODO: take into account whether a resource generates?
 
 return lookup
