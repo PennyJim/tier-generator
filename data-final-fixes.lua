@@ -21,6 +21,8 @@ local ItemRecipeLookup = {}
 local FluidRecipeLookup = {}
 ---@type table<data.RecipeID,data.TechnologyID[]>
 local RecipeTechnologyLookup = {}
+---@type table<data.ItemID,data.ItemID[]>
+local BurningLookup = {}
 ---@type table<data.RecipeCategoryID, data.ItemID[]>
 local CategoryItemLookup = {}
 ---@type table<data.ItemID, data.ItemSubGroupID>
@@ -60,7 +62,6 @@ local function resolveItemType(itemID)
 	end
 	return itemType
 end
-
 ---Appends to an array within a table
 ---@param table table
 ---@param key any
@@ -264,11 +265,46 @@ end
 for EntityID, furnacePrototype in pairs(data.raw["furnace"]) do
 	processCraftingMachine(EntityID, furnacePrototype)
 end
-for EntityID, RocektSiloPrototype in pairs(data.raw["rocket-silo"]) do
-	processCraftingMachine(EntityID, RocektSiloPrototype)
+for EntityID, RocketSiloPrototype in pairs(data.raw["rocket-silo"]) do
+	processCraftingMachine(EntityID, RocketSiloPrototype)
+end
+
+---Parses `data.raw.burner-generator` items
+---@param EntityID data.EntityID
+---@param machinePrototype data.EntityPrototype
+---@param machineBurner data.BurnerEnergySource
+local function processBurnerMachines(EntityID, machinePrototype, machineBurner)
+	local burnerItem = getEntityItem(EntityID, machinePrototype)
+	if not burnerItem then return end
+	local categories = machineBurner.fuel_categories or {machineBurner.fuel_category}
+	for _, category in pairs(categories) do
+		appendToArrayInTable(CategoryItemLookup, "tiergen-fuel-"..category, burnerItem)
+	end
+end
+log("\tProcessing burner categories")
+for EnityID, BurnerMachinesPrototype in pairs(data.raw["burner-generator"]) do
+	processBurnerMachines(EnityID, BurnerMachinesPrototype, BurnerMachinesPrototype.burner)
+end
+for EnityID, ReactorPrototype in pairs(data.raw["reactor"]) do
+	local energy_source = ReactorPrototype.energy_source
+	if energy_source.type == "burner" then
+		---@cast energy_source data.BurnerEnergySource
+		processBurnerMachines(EnityID, ReactorPrototype, energy_source)
+	end
 end
 --#endregion
---#region Item Type Processing
+--#region Item Processing
+
+---Parses all items and creates a `recipe` out of the burnt_result
+---@param ItemID data.ItemID
+---@param itemPrototype data.ItemPrototype
+local function processBurningRecipe(ItemID, itemPrototype)
+	if itemPrototype.fuel_category and itemPrototype.burnt_result then
+		local result = itemPrototype.burnt_result
+		appendToArrayInTable(ItemRecipeLookup, result, "tiergen-burning")
+		appendToArrayInTable(BurningLookup, result, ItemID)
+	end
+end
 
 ---Parses all item-subtypes
 ---@param SubgroupID data.ItemSubGroupID
@@ -280,6 +316,8 @@ local function processItemSubtype(SubgroupID)
 
 ---@diagnostic disable-next-line: assign-type-mismatch
 		ItemTypeLookup[ItemID] = itemPrototype.type
+---@diagnostic disable-next-line: param-type-mismatch
+		processBurningRecipe(ItemID, itemPrototype)
 	end
 end
 log("\tProcessing items")
@@ -309,9 +347,9 @@ tierSwitch["base"] = function(prototypeID, value)
 	local success = false
 	success, tier = pcall(tierSwitch[value.type], prototypeID, value)
 	if not success then
-		tier = -math.huge
 		-- _log({"error-calculating", prototypeID, value.type, serpent.dump(value)})
-		_log("Error calculating the "..value.type.." of "..prototypeID..":\n"..serpent.dump(value))
+		_log("Error calculating the "..value.type.." of "..prototypeID..":\n"..tier)
+		tier = -math.huge
 	end
 	calculating[value.type][prototypeID] = nil
 	if tier >= 0 then -- Discard negative values
@@ -433,6 +471,31 @@ tierSwitch["recipe"] = function (recipeID, recipe)
 	return math.max(ingredientsTier, machineTier, technologyTier)
 end
 
+---Determine the tier of burning an item
+---@param ItemID data.ItemID
+---@param value data.ItemPrototype
+tierSwitch["burning"] = function (ItemID, value)
+	local burningRecipes = BurningLookup[ItemID]
+	local tier = math.huge
+
+	for _, fuelID in pairs(burningRecipes) do
+		local fuelTier = getIngredientsTier{{fuelID}}
+		if fuelTier < 0 then
+			return fuelTier
+		end
+		local fuel = data.raw[ItemTypeLookup[fuelID]][fuelID]
+		local categoryTier = tierSwitch("tiergen-fuel-"..fuel.fuel_category, {
+			type = "recipe-category",
+		})
+		if categoryTier < 0 then
+			return categoryTier
+		end
+		local recipeTier = math.max(fuelTier, categoryTier)
+		tier = math.min(tier, recipeTier)
+	end
+	return tier
+end
+
 ---Determine the tier of the given item or fluid
 ---@param ItemID data.ItemID|data.FluidID
 ---@param value data.ItemPrototype|data.FluidPrototype
@@ -452,8 +515,17 @@ tierSwitch["fluid"] = function (ItemID, value)
 
 	local recipeTier = math.huge
 	for _, recipe in pairs(recipes) do
-		local recipePrototype = data.raw["recipe"][recipe]
-		local tempTier = tierSwitch(recipe, recipePrototype)
+		-- if the recipeID starts with "tiergen-" then it's a fake recipe
+		-- this mod *will not* make recipes (not for smuggling this data out)
+		local _, realstart = recipe:find("^tiergen[-]")
+		local tempTier = math.huge
+		if realstart then
+			local fakeRecipeID = recipe:sub(realstart+1)
+			tempTier = tierSwitch[fakeRecipeID](ItemID, value)
+		else
+			local recipePrototype = data.raw["recipe"][recipe]
+			tempTier = tierSwitch(recipe, recipePrototype)
+		end
 		-- Skip recipe if it's using something being calculated
 		if tempTier >= 0 then
 			recipeTier = math.min(recipeTier, tempTier)
