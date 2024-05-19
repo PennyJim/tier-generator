@@ -8,6 +8,8 @@ Date: ????
     - Now will no longer crash on recipes with no results
     - A category with no machines are handled instead of catching the thrown error
     - A category with no valid machines now signals an invalid craft instead of leaking the infinity
+  Changes:
+    - Will only log when given an invalid type in startup settings, rather than halting it with an error
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.2
 Date: 2024-05-18

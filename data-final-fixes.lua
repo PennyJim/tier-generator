@@ -647,7 +647,11 @@ end
 ---@param itemID string
 ---@return string?
 local function calculateTier(itemID)
-	local itemType = resolveItemType(itemID)
+	local validItem, itemType = pcall(resolveItemType, itemID)
+	if not validItem then
+		_log("\tWas given an invalid item: "..itemID)
+		return
+	end
 	local tier = -1
 	local rounds = 0
 	while tier < 0 and rounds < 5 do
