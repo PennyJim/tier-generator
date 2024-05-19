@@ -19,44 +19,37 @@ local calculating = table.deepcopy(TierMaps)
 --@type table<string,fun(string,data.PrototypeBase)>
 
 ---@alias fakePrototype {type:string}
+---@alias handledPrototypes fakePrototype|data.RecipeCategory|data.TechnologyPrototype|data.RecipePrototype|data.ItemPrototype|data.FluidPrototype
 ---@class TierSwitch
----@overload fun(prototypeID:string,value:data.AnyPrototype|fakePrototype):number
+---@field [string] fun(prototypeID:string, value:handledPrototypes):number
+---@overload fun(prototypeID:string,value:handledPrototypes):number
 local tierSwitch = setmetatable({}, {
 	__call = function(self, prototypeID, value)
-		return self["base"](prototypeID, value)
+		local tier = TierMaps[value.type][prototypeID]
+		if tier ~= nil then return tier end
+		if calculating[value.type][prototypeID] then return -math.huge end
+
+		calculating[value.type][prototypeID] = true
+		local success = false
+		success, tier = pcall(self[value.type], prototypeID, value)
+		if not success then
+			-- _log({"error-calculating", prototypeID, value.type, serpent.dump(value)})
+			log("Error calculating the "..value.type.." of "..prototypeID..":\n"..tier)
+			tier = -math.huge
+		end
+		calculating[value.type][prototypeID] = nil
+		if tier >= 0 then -- Discard negative values
+			TierMaps[value.type][prototypeID] = tier
+			if value.type == "fluid" or defines.prototypes["item"][value.type] == 0 then
+				lib.appendToArrayInTable(tierArray, tier+1, prototypeID)
+			end
+		end
+		return tier
 	end
 })
----Determine the tier of the given prototype
----@param prototypeID string
----@param value data.PrototypeBase
----@return integer
-tierSwitch["base"] = function(prototypeID, value)
-	local tier = TierMaps[value.type][prototypeID]
-	if tier ~= nil then return tier end
-	if calculating[value.type][prototypeID] then return -math.huge end
-
-	calculating[value.type][prototypeID] = true
-	local success = false
-	success, tier = pcall(tierSwitch[value.type], prototypeID, value)
-	if not success then
-		-- _log({"error-calculating", prototypeID, value.type, serpent.dump(value)})
-		log("Error calculating the "..value.type.." of "..prototypeID..":\n"..tier)
-		tier = -math.huge
-	end
-	calculating[value.type][prototypeID] = nil
-	if tier >= 0 then -- Discard negative values
-		TierMaps[value.type][prototypeID] = tier
-		if value.type == "fluid" or defines.prototypes["item"][value.type] == 0 then
-			lib.appendToArrayInTable(tierArray, tier+1, prototypeID)
-		end
-	end
-	return tier
-end
 
 ---Determine the tier of the given recipe category
----@param CategoryID data.RecipeCategoryID
----@param category data.RecipeCategory
----@return integer
+---@type fun(CategoryID:data.RecipeCategoryID,category:data.RecipeCategory):number
 tierSwitch["recipe-category"] = function (CategoryID, category)
 	local machines = lookup.CategoryItem[CategoryID]
 	if not machines then
@@ -105,9 +98,7 @@ local function getIngredientsTier(ingredients)
 end
 
 ---Determine the tier of the given technology
----@param technologyID data.TechnologyID
----@param technology data.TechnologyPrototype
----@return integer
+---@type fun(technologyID:data.TechnologyID,technology:data.TechnologyPrototype):number
 tierSwitch["technology"] = function (technologyID, technology)
 	local techData = lib.alwaysTechnologyData(technology)
 	local ingredientsTier = getIngredientsTier(techData.unit.ingredients)
@@ -128,9 +119,7 @@ tierSwitch["technology"] = function (technologyID, technology)
 end
 
 ---Determine the tier of the given recipe
----@param recipeID data.RecipeID
----@param recipe data.RecipePrototype
----@return integer
+---@type fun(recipeID:data.RecipeID,recipe:data.RecipePrototype):number
 tierSwitch["recipe"] = function (recipeID, recipe)
 	local recipeData = lib.alwaysRecipeData(recipe)
 	if not recipeData.ingredients then
@@ -173,8 +162,7 @@ tierSwitch["recipe"] = function (recipeID, recipe)
 end
 
 ---Determine the tier of burning an item
----@param ItemID data.ItemID
----@param value data.ItemPrototype
+---@type fun(ItemID:data.ItemID,value:data.ItemPrototype):number
 tierSwitch["burning"] = function (ItemID, value)
 	local burningRecipes = lookup.Burning[ItemID]
 	local tier = math.huge
@@ -198,8 +186,7 @@ tierSwitch["burning"] = function (ItemID, value)
 end
 
 ---Determine the tier of launching an item into space
----@param ItemID data.ItemID
----@param value data.ItemPrototype
+---@type fun(ItemID:data.ItemID,value:data.ItemPrototype):number
 tierSwitch["rocket-launch"] = function (ItemID, value)
 	local rocketRecipes = lookup.Rocket[ItemID]
 	local tier = math.huge
@@ -222,9 +209,7 @@ tierSwitch["rocket-launch"] = function (ItemID, value)
 end
 
 ---Determine the tier of the given item or fluid
----@param ItemID data.ItemID|data.FluidID
----@param value data.ItemPrototype|data.FluidPrototype
----@return integer
+---@type fun(ItemID:data.ItemID|data.FluidID,value:data.ItemPrototype|data.FluidPrototype):number
 tierSwitch["fluid"] = function (ItemID, value)
 	local recipes
 	if value.type == "fluid" then
@@ -268,7 +253,7 @@ tierSwitch["fluid"] = function (ItemID, value)
 	return recipeTier + 1
 end
 for subtype in pairs(defines.prototypes["item"]) do
-	tierSwitch[subtype] = tierSwitch["fluid"]
+	tierSwitch[subtype] = tierSwitch["fluid"] --[[@as fun(ItemID:data.ItemID|data.FluidID,value:data.ItemPrototype|data.FluidPrototype):number]]
 end
 --#endregion
 
