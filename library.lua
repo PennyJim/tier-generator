@@ -37,6 +37,7 @@ end
 ---@param table {[Key]:Value[]}
 ---@param key Key
 ---@param newValue Value
+---@overload fun(table:tierItem[][],key:integer,newValue:tierItem)
 function library.appendToArrayInTable(table, key, newValue)
 	local array = table[key] or {}
 	array[#array+1] = newValue;
@@ -48,6 +49,7 @@ end
 ---@param table {[Key]:Value[]}
 ---@param key Key
 ---@param newValue Value
+---@overload fun(table:tierItem[][],key:integer,newValue:tierItem)
 function library.prependToArrayInTable(table, key, newValue)
 	local array = table[key] or {}
 	local shiftedValue = newValue

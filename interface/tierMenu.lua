@@ -10,6 +10,41 @@ local function create_frame(player)
 		visible = false,
 	}
 	base_frame.auto_center = true
+	local vert_scroll = base_frame.add{
+		type = "scroll-pane",
+		direction="vertical",
+	}.add{
+		type = "frame",
+		style = "slot_button_deep_frame",
+		direction="vertical",
+	}
+	local max_width = 0
+	for _, items in ipairs(global.tier_array) do
+		max_width = math.max(max_width, #items)
+	end
+	for tier, items in ipairs(global.tier_array) do
+		local tier_row = vert_scroll.add{
+			type = "flow",
+			direction = "horizontal"
+		}
+		local tier_label = tier_row.add{
+			type = "label",
+			caption = {"tiergen.tier-label", tier}
+		}
+		local tier_list = tier_row.add{
+			type = "table",
+			column_count = max_width,
+			style = "filter_slot_table"
+		}
+
+		for _, item in ipairs(items) do
+			tier_list.add{
+				type="sprite-button",
+				sprite=item.type.."/"..item.name,
+				style="recipe_slot_button"
+			}
+		end
+	end
 	return base_frame
 end
 ---Destroyes the menu for the player to recreate it
