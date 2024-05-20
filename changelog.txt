@@ -1,11 +1,12 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.4
 Date: ????
-  Features:
-    - The data is now available as recipes called `tier000`
   Changes:
     - Refactored the monolithic data-final-fixes.lua into multiple files
+    - Changed from a startup script to runtime
     - Add MIT License I forgor to
+  Bugfixes:
+    - Fixed a handful of bugs that I spotted while refactoring to runtime. Theoretically added just as many bugs though.
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.3
 Date: 2024-05-18
