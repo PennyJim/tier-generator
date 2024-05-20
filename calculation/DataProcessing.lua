@@ -112,7 +112,7 @@ local function processBurnerMachines(EntityID, machinePrototype, machineBurner)
 	for _, burnerItem in ipairs(burnerItems) do
 		local categories = machineBurner.fuel_categories
 		for category in pairs(categories) do
-			lib.appendToArrayInTable(lookup.CategoryItem, "tiergen-fuel-"..category, burnerItem)
+			lib.appendToArrayInTable(lookup.CategoryItem, "tiergen-fuel-"..category, burnerItem.name)
 		end
 	end
 end

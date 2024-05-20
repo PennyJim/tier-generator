@@ -32,9 +32,9 @@ end
 --#region Array Operations
 
 ---Appends to an array within a table
----@generic Key : any
----@generic Value : any
----@param table table<Key,Value[]>
+---@generic Key : string
+---@generic Value : string
+---@param table {[Key]:Value[]}
 ---@param key Key
 ---@param newValue Value
 function library.appendToArrayInTable(table, key, newValue)
@@ -43,9 +43,9 @@ function library.appendToArrayInTable(table, key, newValue)
 	table[key] = array;
 end
 ---Prepends to an array within a table
----@generic Key : any
----@generic Value : any
----@param table table<Key,Value[]>
+---@generic Key : string
+---@generic Value : string
+---@param table {[Key]:Value[]}
 ---@param key Key
 ---@param newValue Value
 function library.prependToArrayInTable(table, key, newValue)
@@ -58,66 +58,6 @@ function library.prependToArrayInTable(table, key, newValue)
 	array[#array+1] = shiftedValue
 	table[key] = array;
 end
---#endregion
---#region data.raw standardization
-
--- Theoretically unecessary now that its runtime
--- ---Always return plural results
--- ---Absolutely no gurantees it works for everything
--- ---@param table data.RecipePrototype|data.MinableProperties|any
--- ---@return data.ProductPrototype[]
--- function library.alwaysPluralResults(table)
--- 	---@type data.ProductPrototype[]
--- 	local results = table.results
--- 	if not results then
--- 		results = {{
--- 			type = "item",
--- 			name = table.result,
--- 		}}
--- 	end
--- 	if results[1] and results[1].name or results[1] and results[1][1] then
--- 		return results
--- 	else
--- ---@diagnostic disable-next-line: return-type-mismatch
--- 		return false
--- 	end
--- end
--- ---Always return RecipeData
--- ---@param table data.RecipePrototype
--- ---@return data.RecipeData
--- function library.alwaysRecipeData(table)
--- 	---@type data.RecipeData
--- ---@diagnostic disable-next-line: assign-type-mismatch
--- 	local oldRecipeData = table.normal or table.expensive or {}
--- 	local recipeData = {
--- 		ingredients = table.ingredients or oldRecipeData.ingredients,
--- 		results = library.alwaysPluralResults(table) or library.alwaysPluralResults(oldRecipeData)
--- 	}
--- 	if table then
--- 		recipeData.enabled = table.enabled
--- 	elseif oldRecipeData then
--- 		recipeData.enabled = oldRecipeData.enabled
--- 	end
--- 	-- has to check if it's nil specifically, as it'll just always be true otherwise
--- 	if recipeData.enabled == nil then
--- 		recipeData.enabled = true;
--- 	end
-
--- 	return recipeData
--- end
--- ---Always returns TechnologyData
--- ---@param table data.TechnologyPrototype
--- ---@return data.TechnologyData
--- function library.alwaysTechnologyData(table)
--- 	---@type data.TechnologyData
--- ---@diagnostic disable-next-line: assign-type-mismatch
--- 	local oldTechnologyData = table.normal or table.expensive or {}
--- 	local technologyData = {
--- 		unit = table.unit or oldTechnologyData.unit,
--- 		prerequisites = table.prerequisites or oldTechnologyData.prerequisites or {}
--- 	}
--- 	return technologyData
--- end
 --#endregion
 --#region Item Resolvers
 
@@ -181,8 +121,6 @@ function library.getRecipe(name)
 	return getGeneric(name, game.recipe_prototypes)
 end
 
-
-
 ---Gets the placable item that results in the entity
 ---@param EntityID data.EntityID
 ---@param entityPrototype LuaEntityPrototype
@@ -204,17 +142,6 @@ function library.getEntityItem(EntityID, entityPrototype)
 	-- 	end
 	-- end
 end
--- ---Resolves the type of an item, and errors if one is not found
--- ---@param itemID string
--- ---@return string
--- ---@deprecated
--- function library.resolveItemType(itemID)
--- 	local itemType = lookup.ItemType[itemID]
--- 	if not itemType then
--- 		error("Could not find item type of given item: "..itemID)
--- 	end
--- 	return itemType
--- end
 --#endregion
 
 return library
