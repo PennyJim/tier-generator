@@ -1,5 +1,6 @@
 local lookup = require("__tier-generator__.calculation.lookupTables")
 local lib = require("__tier-generator__.library")
+local processFunctions = {}
 
 ---@type table<data.RecipeID, boolean>
 local ignored_recipes = {}
@@ -42,9 +43,11 @@ local function processRecipe(recipeID, recipePrototype)
 		end
 	end
 end
-lib.log("\tProcessing recipes")
-for recipeID, rawRecipe in pairs(game.recipe_prototypes) do
-	processRecipe(recipeID, rawRecipe);
+processFunctions[#processFunctions+1] = function ()
+	lib.log("\tProcessing recipes")
+	for recipeID, rawRecipe in pairs(game.recipe_prototypes) do
+		processRecipe(recipeID, rawRecipe);
+	end
 end
 --#endregion
 --#region Technology Proesssing
@@ -66,9 +69,11 @@ local function processTechnology(technologyID, technologyPrototype)
 		-- TODO: make that a recipe
 	end
 end
-lib.log("\tProcessing technology")
-for technologyID, technologyData in pairs(game.technology_prototypes) do
-	processTechnology(technologyID, technologyData)
+processFunctions[#processFunctions+1] = function ()
+	lib.log("\tProcessing technology")
+	for technologyID, technologyData in pairs(game.technology_prototypes) do
+		processTechnology(technologyID, technologyData)
+	end
 end
 --#endregion
 --#region Category Processing
@@ -83,20 +88,22 @@ local function processCraftingMachine(EntityID, machinePrototype)
 		lib.appendToArrayInTable(lookup.CategoryItem, category, machineItem)
 	end
 end
-lib.log("\tProcessing crafting categories")
-for EntityID, machinePrototype in pairs(game.get_filtered_entity_prototypes{
-	{filter = "type", type = "assembling-machine"},
-	{filter = "type", type = "furnace"}
-}) do
-	if machinePrototype.type == "assembling-machine" then
-		processCraftingMachine(EntityID, machinePrototype)
-	elseif machinePrototype.type == "furnace" then
-		processCraftingMachine(EntityID, machinePrototype)
+processFunctions[#processFunctions+1] = function ()
+	lib.log("\tProcessing crafting categories")
+	for EntityID, machinePrototype in pairs(game.get_filtered_entity_prototypes{
+		{filter = "type", type = "assembling-machine"},
+		{filter = "type", type = "furnace"}
+	}) do
+		if machinePrototype.type == "assembling-machine" then
+			processCraftingMachine(EntityID, machinePrototype)
+		elseif machinePrototype.type == "furnace" then
+			processCraftingMachine(EntityID, machinePrototype)
+		end
 	end
+	-- TODO: figure out how to *properly* check this
+	-- Add hand-crafting as simplest (first) recipe
+	lib.prependToArrayInTable(lookup.CategoryItem, "crafting", "hand")
 end
--- TODO: figure out how to *properly* check this
--- Add hand-crafting as simplest (first) recipe
-lib.prependToArrayInTable(lookup.CategoryItem, "crafting", "hand")
 
 ---Parses `data.raw.burner-generator` items
 ---@param EntityID data.EntityID
@@ -111,16 +118,18 @@ local function processBurnerMachines(EntityID, machinePrototype, machineBurner)
 		end
 	end
 end
-lib.log("\tProcessing burner categories")
--- Not all the right places to look?
-for EntityID, BurnerMachinePrototype in pairs(game.get_filtered_entity_prototypes{
-	{filter = "type", type = "burner"},
-	{filter = "type", type = "boiler"},
-	{filter = "type", type = "reactor"},
-}) do
-	local burner = BurnerMachinePrototype.burner_prototype
-	if burner then
-		processBurnerMachines(EntityID, BurnerMachinePrototype, burner)
+processFunctions[#processFunctions+1] = function ()
+	lib.log("\tProcessing burner categories")
+	-- Not all the right places to look?
+	for EntityID, BurnerMachinePrototype in pairs(game.get_filtered_entity_prototypes{
+		{filter = "type", type = "burner"},
+		{filter = "type", type = "boiler"},
+		{filter = "type", type = "reactor"},
+	}) do
+		local burner = BurnerMachinePrototype.burner_prototype
+		if burner then
+			processBurnerMachines(EntityID, BurnerMachinePrototype, burner)
+		end
 	end
 end
 
@@ -136,12 +145,14 @@ local function processRocketSilos(EntityID, RocketSiloPrototype)
 		lib.appendToArrayInTable(lookup.CategoryItem, "tiergen-rocket-launch", {itemID})
 	end
 end
-lib.log("\tProcessing rocket silos")
-for EntityID, RocketSiloPrototype in pairs(game.get_filtered_entity_prototypes{
-	{filter = "type", type = "rocket-silo"}
-}) do
-	processCraftingMachine(EntityID, RocketSiloPrototype)
-	processRocketSilos(EntityID, RocketSiloPrototype)
+processFunctions[#processFunctions+1] = function ()
+	lib.log("\tProcessing rocket silos")
+	for EntityID, RocketSiloPrototype in pairs(game.get_filtered_entity_prototypes{
+		{filter = "type", type = "rocket-silo"}
+	}) do
+		processCraftingMachine(EntityID, RocketSiloPrototype)
+		processRocketSilos(EntityID, RocketSiloPrototype)
+	end
 end
 --#endregion
 --#region Item Processing
@@ -163,7 +174,7 @@ end
 local function processRocketRecipe(ItemID, itemPrototype)
 	local rocket_products = itemPrototype.rocket_launch_products
 	for _, product in pairs(rocket_products) do
-		local name = product.name
+		local name = product.name or product[1]
 		if not name then
 			log("No name found?\n"..serpent.dump(product))
 		else
@@ -181,14 +192,24 @@ end
 -- 	end
 -- 	lookup.ItemType[ItemID] = itemPrototype.type
 -- end
-lib.log("\tProcessing items")
-for ItemID, itemPrototype in pairs(game.item_prototypes) do
-	-- processItemSubtype(ItemID, itemPrototype)
-	processBurningRecipe(ItemID, itemPrototype)
-	processRocketRecipe(ItemID, itemPrototype)
+processFunctions[#processFunctions+1] = function ()
+	lib.log("\tProcessing items")
+	for ItemID, itemPrototype in pairs(game.item_prototypes) do
+		-- processItemSubtype(ItemID, itemPrototype)
+		processBurningRecipe(ItemID, itemPrototype)
+		processRocketRecipe(ItemID, itemPrototype)
+	end
 end
 --#endregion
 
 -- TODO: take into account whether a resource generates?
-
-return lookup
+local hasReturned = false
+return function ()
+	if not hasReturned then
+		for _, processFunction in ipairs(processFunctions) do
+			processFunction()
+		end
+		hasReturned = true
+	end
+	return lookup
+end

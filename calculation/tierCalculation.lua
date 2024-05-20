@@ -1,9 +1,10 @@
-local lookup = require("__tier-generator__.calculation.DataProcessing")
+local buildLookup = require("__tier-generator__.calculation.DataProcessing")
+local lookup ---@type LookupTables
 local lib = require("__tier-generator__.library")
 
 ---@alias fakePrototype {type:string}
 ---@alias handledPrototypes fakePrototype|LuaRecipeCategoryPrototype|LuaTechnologyPrototype|LuaRecipePrototype|LuaFluidPrototype|LuaItemPrototype
----@alias handledTypes "recipe-category"|"technology"|"recipe"|"fluid"|"item"
+---@alias handledTypes "LuaRecipeCategoryPrototype"|"LuaTechnologyPrototype"|"LuaRecipePrototype"|"LuaFluidPrototype"|"LuaItemPrototype"
 
 ---@enum invalidReason
 local invalidReason = {
@@ -23,18 +24,24 @@ local tierArray = {};
 
 ---@type table<handledTypes,table<string,number>>
 TierMaps = {
-	["recipe-category"] = {},
-	["technology"] = {},
-	["recipe"] = {},
-	["fluid"] = {},
-	["item"] = {}
+	["LuaRecipeCategoryPrototype"] = {},
+	["LuaTechnologyPrototype"] = {},
+	["LuaRecipePrototype"] = {},
+	["LuaFluidPrototype"] = {},
+	["LuaItemPrototype"] = {}
 };
-for subtype in pairs(defines.prototypes["item"]) do
-	TierMaps[subtype] = {}
-end
 ---@type table<handledTypes,table<string,boolean>>
----@diagnostic disable-next-line: assign-type-mismatch
-local calculating = table.deepcopy(TierMaps)
+local calculating = {
+	["LuaRecipeCategoryPrototype"] = {},
+	["LuaTechnologyPrototype"] = {},
+	["LuaRecipePrototype"] = {},
+	["LuaFluidPrototype"] = {},
+	["LuaItemPrototype"] = {}
+};
+-- for subtype in pairs(defines.prototypes["item"]) do
+-- 	TierMaps[subtype] = {}
+-- 	calculating[subtype] = {}
+-- end
 
 --#region Tier calculation
 ---@class TierSwitch
@@ -47,22 +54,23 @@ local tierSwitch = setmetatable({}, {
 	---@param value handledPrototypes
 	---@return tier
 	__call = function(self, prototypeID, value)
-		local tier = TierMaps[value.type][prototypeID]
+		local type = value.object_name
+		local tier = TierMaps[type][prototypeID]
 		if tier ~= nil then return tier end
-		if calculating[value.type][prototypeID] then return invalidReason.calculating end
+		if calculating[type][prototypeID] then return invalidReason.calculating end
 
-		calculating[value.type][prototypeID] = true
+		calculating[type][prototypeID] = true
 		local success = false
-		success, tier = pcall(self[value.type], prototypeID, value)
+		success, tier = pcall(self[type], prototypeID, value)
 		if not success then
-			-- _log({"error-calculating", prototypeID, value.type, serpent.dump(value)})
-			log("Error calculating the "..value.type.." of "..prototypeID..":\n"..tier)
+			-- _log({"error-calculating", prototypeID, type, serpent.dump(value)})
+			log("Error calculating the "..type.." of "..prototypeID..":\n"..tier)
 			tier = invalidReason.error
 		end
-		calculating[value.type][prototypeID] = nil
+		calculating[type][prototypeID] = nil
 		if tier >= 0 then -- Discard negative values
-			TierMaps[value.type][prototypeID] = tier
-			if value.type == "fluid" or defines.prototypes["item"][value.type] == 0 then
+			TierMaps[type][prototypeID] = tier
+			if type == "fluid" or defines.prototypes["item"][type] == 0 then
 				lib.appendToArrayInTable(tierArray, tier+1, prototypeID)
 			end
 		end
@@ -75,8 +83,8 @@ local tierSwitch = setmetatable({}, {
 local function getIngredientsTier(ingredients)
 	local ingredientsTier = 0;
 	for _, ingredient in pairs(ingredients) do
-		local nextName = ingredient.name
-		local nextType = ingredient.type
+		local nextName = ingredient.name or ingredient[1]
+		local nextType = ingredient.type or "item"
 		local nextValue = lib.getItemOrFluid(nextName, nextType)
 		local nextTier = tierSwitch(nextName, nextValue)
 		-- Skip if machine takes an item being calculated
@@ -88,7 +96,7 @@ end
 
 ---Determine the tier of the given technology
 ---@type fun(technologyID:data.TechnologyID,technology:LuaTechnologyPrototype):tier
-tierSwitch["technology"] = function (technologyID, technology)
+tierSwitch["LuaTechnologyPrototype"] = function (technologyID, technology)
 	local ingredients = technology.research_unit_ingredients
 	local ingredientsTier = getIngredientsTier(ingredients)
 
@@ -107,7 +115,7 @@ tierSwitch["technology"] = function (technologyID, technology)
 end
 ---Determine the tier of the given recipe category
 ---@type fun(CategoryID:data.RecipeCategoryID,category:LuaRecipeCategoryPrototype):tier
-tierSwitch["recipe-category"] = function (CategoryID, category)
+tierSwitch["LuaRecipeCategoryPrototype"] = function (CategoryID, category)
 	local machines = lookup.CategoryItem[CategoryID]
 	if not machines then
 		lib.log("\tCategory "..CategoryID.." has no machines")
@@ -136,7 +144,7 @@ tierSwitch["recipe-category"] = function (CategoryID, category)
 end
 ---Determine the tier of the given recipe
 ---@type fun(recipeID:data.RecipeID,recipe:LuaRecipePrototype):tier
-tierSwitch["recipe"] = function (recipeID, recipe)
+tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 	if #recipe.ingredients == 0 then
 		lib.log("\t"..recipeID.." didn't require anything? Means it's a t0?")
 		return 0
@@ -239,12 +247,12 @@ tierSwitch["rocket-launch"] = function (ItemID, value)
 end
 ---Determine the tier of the given item or fluid
 ---@type fun(ItemID:data.ItemID|data.FluidID,value:LuaItemPrototype|LuaFluidPrototype):tier
-tierSwitch["fluid"] = function (ItemID, value)
+tierSwitch["LuaFluidPrototype"] = function (ItemID, value)
 	local recipes
-	if value.type == "fluid" then
-		recipes = lookup.FluidRecipe[ItemID]
-	else
+	if value.object_name == "LuaItemPrototype" then
 		recipes = lookup.ItemRecipe[ItemID]
+	else
+		recipes = lookup.FluidRecipe[ItemID]
 	end
 
 	-- No recipes create it, then it's a base resource
@@ -280,15 +288,20 @@ tierSwitch["fluid"] = function (ItemID, value)
 
 	return recipeTier + 1
 end
-for subtype in pairs(defines.prototypes["item"]) do
-	tierSwitch[subtype] = tierSwitch["fluid"] --[[@as fun(ItemID:data.ItemID|data.FluidID,value:data.ItemPrototype|data.FluidPrototype):number]]
-end
+tierSwitch["LuaItemPrototype"] = tierSwitch["LuaFluidPrototype"] --[[@as fun(ItemID:data.ItemID|data.FluidID,value:data.ItemPrototype|data.FluidPrototype):number]]
 --#endregion
+
+local function checkLookup()
+	if not lookup then
+		lookup = buildLookup()
+	end
+end
 
 ---Calculates the tier of a given itemID
 ---@param itemID string
 ---@return string?
 local function calculateTier(itemID)
+	checkLookup()
 	local isValid, itemPrototype = pcall(lib.getItem, itemID)
 	if not isValid then
 		log("\tWas given an invalid item: "..itemID)
@@ -314,12 +327,13 @@ end
 ---Directly set the tier of a given itemID
 ---@param itemID string
 local function setTier(itemID)
+	checkLookup()
 	local isValid, itemPrototype = pcall(lib.getItem, itemID)
 	if not isValid then
 		log("\tWas given an invalid item: "..itemID)
 		return
 	end
-	TierMaps[itemPrototype.type][itemID] = 0
+	TierMaps[itemPrototype.object_name][itemID] = 0
 end
 
 return {

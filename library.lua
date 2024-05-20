@@ -127,6 +127,9 @@ end
 ---@param table table<string,P>
 ---@return P
 local function getGeneric(name, table)
+	if not name then
+		error("Was passed a nil instead of an ID", 3)
+	end
 	local prototype = table[name]
 	if not prototype then
 		error("Didn't find what we looked for: "..name, 2)
