@@ -30,7 +30,7 @@ local function processRecipe(recipeID, recipePrototype)
 		return
 	end
 	-- Ignore unbarreling recipes
-	if recipePrototype.subgroup == "empty-barrel" then
+	if recipePrototype.subgroup.name == "empty-barrel" then
 		lib.log("\t\t"..recipeID.." is unbarreling. Ignoring...")
 		return
 	end
@@ -82,10 +82,12 @@ end
 ---@param EntityID data.EntityID
 ---@param machinePrototype LuaEntityPrototype
 local function processCraftingMachine(EntityID, machinePrototype)
-	local machineItem = lib.getEntityItem(EntityID, machinePrototype)
-	if not machineItem then return end
-	for _, category in pairs(machinePrototype.crafting_categories) do
-		lib.appendToArrayInTable(lookup.CategoryItem, category, machineItem)
+	local machineItems = lib.getEntityItem(EntityID, machinePrototype)
+	if #machineItems == 0 then return end
+	for _,machineItem in pairs(machineItems) do
+		for category in pairs(machinePrototype.crafting_categories) do
+			lib.appendToArrayInTable(lookup.CategoryItem, category, machineItem.name)
+		end
 	end
 end
 processFunctions[#processFunctions+1] = function ()
@@ -94,11 +96,7 @@ processFunctions[#processFunctions+1] = function ()
 		{filter = "type", type = "assembling-machine"},
 		{filter = "type", type = "furnace"}
 	}) do
-		if machinePrototype.type == "assembling-machine" then
-			processCraftingMachine(EntityID, machinePrototype)
-		elseif machinePrototype.type == "furnace" then
-			processCraftingMachine(EntityID, machinePrototype)
-		end
+		processCraftingMachine(EntityID, machinePrototype)
 	end
 	-- TODO: figure out how to *properly* check this
 	-- Add hand-crafting as simplest (first) recipe
@@ -142,7 +140,7 @@ local function processRocketSilos(EntityID, RocketSiloPrototype)
 		return -- Ignore machine if not placeable
 	end
 	for _, itemID in ipairs(itemIDs) do
-		lib.appendToArrayInTable(lookup.CategoryItem, "tiergen-rocket-launch", {itemID})
+		lib.appendToArrayInTable(lookup.CategoryItem, "tiergen-rocket-launch", itemID.name)
 	end
 end
 processFunctions[#processFunctions+1] = function ()

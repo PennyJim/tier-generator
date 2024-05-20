@@ -186,7 +186,7 @@ end
 ---Gets the placable item that results in the entity
 ---@param EntityID data.EntityID
 ---@param entityPrototype LuaEntityPrototype
----@return data.ItemID[]
+---@return ItemStackDefinition[]
 function library.getEntityItem(EntityID, entityPrototype)
 	local items = entityPrototype.items_to_place_this
 	if not items then

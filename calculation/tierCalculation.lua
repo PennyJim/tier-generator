@@ -31,7 +31,7 @@ TierMaps = {
 	["LuaItemPrototype"] = {}
 };
 ---@type table<handledTypes,table<string,boolean>>
-local calculating = {
+calculating = {
 	["LuaRecipeCategoryPrototype"] = {},
 	["LuaTechnologyPrototype"] = {},
 	["LuaRecipePrototype"] = {},
@@ -70,7 +70,7 @@ local tierSwitch = setmetatable({}, {
 		calculating[type][prototypeID] = nil
 		if tier >= 0 then -- Discard negative values
 			TierMaps[type][prototypeID] = tier
-			if type == "fluid" or defines.prototypes["item"][type] == 0 then
+			if type == "LuaFluidPrototype" or type == "LuaItemPrototype" then
 				lib.appendToArrayInTable(tierArray, tier+1, prototypeID)
 			end
 		end
@@ -137,7 +137,7 @@ tierSwitch["LuaRecipeCategoryPrototype"] = function (CategoryID, category)
 		return invalidReason.no_valid_machine
 	end
 
-	if settings.startup["tiergen-reduce-category"].value then
+	if settings.startup["tiergen-reduce-category"].value and categoryTier > 0 then
 		categoryTier = categoryTier - 1
 	end
 	return categoryTier
@@ -200,7 +200,7 @@ tierSwitch["burning"] = function (ItemID, value)
 		end
 		local fuel = lib.getItem(fuelID)
 		local categoryTier = tierSwitch("tiergen-fuel-"..fuel.fuel_category, {
-			type = "recipe-category",
+			object_name = "LuaRecipeCategoryPrototype",
 		})
 		if categoryTier < 0 then
 			goto continue
@@ -229,7 +229,7 @@ tierSwitch["rocket-launch"] = function (ItemID, value)
 			goto continue
 		end
 		local categoryTier = tierSwitch("tiergen-rocket-launch", {
-			type = "recipe-category",
+			object_name = "LuaRecipeCategoryPrototype",
 		})
 		if categoryTier < 0 then
 			goto continue
@@ -288,7 +288,7 @@ tierSwitch["LuaFluidPrototype"] = function (ItemID, value)
 
 	return recipeTier + 1
 end
-tierSwitch["LuaItemPrototype"] = tierSwitch["LuaFluidPrototype"] --[[@as fun(ItemID:data.ItemID|data.FluidID,value:data.ItemPrototype|data.FluidPrototype):number]]
+tierSwitch["LuaItemPrototype"] = tierSwitch["LuaFluidPrototype"] --[[@as fun(ItemID:data.ItemID|data.FluidID,value:LuaItemPrototype|LuaFluidPrototype):number]]
 --#endregion
 
 local function checkLookup()
