@@ -104,6 +104,9 @@ end
 tierSwitch["LuaTechnologyPrototype"] = function (technologyID, technology)
 	local ingredients = technology.research_unit_ingredients
 	local ingredientsTier = getIngredientsTier(ingredients)
+	if ingredientsTier < 0 then
+		return ingredientsTier
+	end
 
 	local prereqTier = 0;
 	for _, prerequisite in pairs(technology.prerequisites) do
@@ -113,10 +116,13 @@ tierSwitch["LuaTechnologyPrototype"] = function (technologyID, technology)
 		prereqTier = math.max(prereqTier, preTier)
 	end
 
-	if ingredientsTier == 0 and prereqTier == 0 then
-		log("I don't think a technology should ever be t0")
+	local tier = math.max(ingredientsTier, prereqTier)
+	if tier == 0 then
+		log("I don't think a technology should ever be t0: "..technologyID)
+	elseif settings.startup["tiergen-reduce-technology"].value then
+		tier = tier - 1
 	end
-	return math.max(ingredientsTier, prereqTier)
+	return tier
 end
 ---Determine the tier of the given recipe category
 ---@type fun(CategoryID:data.RecipeCategoryID,category:LuaRecipeCategoryPrototype):tier

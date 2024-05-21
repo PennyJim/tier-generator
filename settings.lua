@@ -4,7 +4,14 @@ data:extend{
 		name = "tiergen-reduce-category",
 		setting_type = "startup",
 		default_value = true,
-		order = "startup-a"
+		order = "startup-a[category]"
+	},
+	{
+		type = "bool-setting",
+		name = "tiergen-reduce-technology",
+		setting_type = "startup",
+		default_value = true,
+		order = "startup-a[technology]"
 	},
 	{
 		type = "string-setting",
