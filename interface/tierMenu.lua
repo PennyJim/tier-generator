@@ -2,7 +2,6 @@
 ---@param frame LuaGuiElement
 ---@param caption LocalisedString
 local function create_titlebar(frame, caption)
-	frame.auto_center = true
 	local base_flow = frame.add{
 		type = "flow",
 		direction = "vertical",
@@ -34,7 +33,10 @@ local function create_titlebar(frame, caption)
 		hovered_sprite = "utility/close_black",
 		clicked_sprite = "utility/close_black",
 	}
-	return base_flow
+	return base_flow.add{
+		type = "frame",
+		style = "inside_shallow_frame"
+	}
 end
 
 ---Creates the menu for the player
@@ -42,36 +44,42 @@ end
 ---@return LuaGuiElement
 local function create_frame(player)
 	local screen = player.gui.screen
-	local base_frame = create_titlebar(screen.add{
+	local base = screen.add{
 		type = "frame",
 		name = "tiergen-menu",
 		visible = false
-	}, {"tiergen.menu"})
-	local table = base_frame.add{
-		type = "frame",
-		style = "inside_shallow_frame_with_padding"
-	}.add{
+	}
+	base.auto_center = true
+	local base_frame = create_titlebar(base, {"tiergen.menu"})
+	local scroll = base_frame.add{
 		type = "scroll-pane",
-	}.add{
+		style = "naked_scroll_pane"
+	}
+	scroll.style.maximal_height = 16*44
+	local table = scroll.add{
 		type = "table",
 		column_count = 2,
 		draw_horizontal_lines = true,
 		direction="vertical",
 	}
+	table.style.left_padding = 8
 	for tier, items in ipairs(global.tier_array) do
 		local tier_label = table.add{
 			type = "label",
 			caption = {"tiergen.tier-label", tier}
 		}
-		tier_label.style.size = {50, 0}
-		local tier_list = table.add{
+		tier_label.style.right_padding = 4
+		local tier_list_frame = table.add{
 			type = "frame",
 			style = "slot_button_deep_frame"
-		}.add{
+		}
+		tier_list_frame.style.horizontally_stretchable = true
+		local tier_list = tier_list_frame.add{
 			type = "table",
-			column_count = 9,
+			column_count = 12,
 			style = "filter_slot_table"
 		}
+		tier_list.style.width = 40*12
 
 		for _, item in ipairs(items) do
 			tier_list.add{
