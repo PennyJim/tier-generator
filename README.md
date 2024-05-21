@@ -1,12 +1,13 @@
 # Tier Generator
-calculates the `tier`, or the distance from `base items`, an item is.
+calculates the `tier`, or the complexity of an item.
 
-Currently only outputs to the log, but it is planned to smuggle that data into runtime
+Considers what machine is required to craft, the ingredients, the technology, and its science packs.
 
 
 ## Todo List:
 - [ ] Dynamically determine what is hand-craftable
 - [ ] Add mining to the 'recipes'
+- [ ] Add considerations for generation
+- [ ] Add offshore pumps
 - [ ] Add boiling liquids to the 'recipes'
-- [ ] Smuggle data to runtime
-- [ ] Display data neatly
+- [ ] Add setting to disable/enable considering the tier of technology
