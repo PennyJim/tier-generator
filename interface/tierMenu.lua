@@ -66,7 +66,7 @@ local function create_frame(player)
 	for tier, items in ipairs(global.tier_array) do
 		local tier_label = table.add{
 			type = "label",
-			caption = {"tiergen.tier-label", tier}
+			caption = {"tiergen.tier-label", tier-1}
 		}
 		tier_label.style.right_padding = 4
 		local tier_list_frame = table.add{
