@@ -19,7 +19,7 @@ local invalidReason = {
 }
 ---@alias tier invalidReason|uint
 
----@alias tierItem {name:string,type:string}
+---@alias tierItem {name:string,type:"item"|"fluid"}
 ---@type table<uint,tierItem[]>
 local tierArray = {};
 
@@ -72,7 +72,7 @@ local tierSwitch = setmetatable({}, {
 		if tier >= 0 then -- Discard negative values
 			TierMaps[type][prototypeID] = tier
 			if type == "LuaFluidPrototype" or type == "LuaItemPrototype" then
-				local itemType = type == "LuaItemPrototype" and "item" or "fluid"
+				local itemType = (type == "LuaItemPrototype") and "item" or "fluid"
 				lib.appendToArrayInTable(tierArray, tier+1, {
 					name = prototypeID,
 					type = itemType,

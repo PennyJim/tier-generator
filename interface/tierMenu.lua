@@ -1,3 +1,5 @@
+lib = require("__tier-generator__.library")
+
 ---comment
 ---@param frame LuaGuiElement
 ---@param caption LocalisedString
@@ -82,10 +84,12 @@ local function create_frame(player)
 		tier_list.style.width = 40*12
 
 		for _, item in ipairs(items) do
+			local itemPrototype = lib.getItemOrFluid(item.name, item.type)
 			tier_list.add{
-				type="sprite-button",
-				sprite=item.type.."/"..item.name,
-				style="recipe_slot_button"
+				type = "sprite-button",
+				sprite = item.type.."/"..item.name,
+				style = "recipe_slot_button",
+				tooltip = itemPrototype.localised_name
 			}
 		end
 	end
