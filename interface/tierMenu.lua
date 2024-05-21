@@ -1,39 +1,75 @@
+---comment
+---@param frame LuaGuiElement
+---@param caption LocalisedString
+local function create_titlebar(frame, caption)
+	frame.auto_center = true
+	local base_flow = frame.add{
+		type = "flow",
+		direction = "vertical",
+	}
+	local title_flow = base_flow.add{
+		type = "flow",
+		direction = "horizontal"
+	}
+	title_flow.drag_target = frame
+	title_flow.add{
+		type = "label",
+		style = "frame_title",
+		caption = caption,
+		ignored_by_interaction = true
+	}
+	local drag = title_flow.add{
+		type = "empty-widget",
+		style = "draggable_space_header",
+		ignored_by_interaction = true
+	}
+	drag.style.height = 24
+	drag.style.right_margin = 4
+	drag.style.horizontally_stretchable = true
+	title_flow.add{
+		type = "sprite-button",
+		name = "close_button",
+		style = "frame_action_button",
+		sprite = "utility/close_white",
+		hovered_sprite = "utility/close_black",
+		clicked_sprite = "utility/close_black",
+	}
+	return base_flow
+end
+
 ---Creates the menu for the player
 ---@param player LuaPlayer
 ---@return LuaGuiElement
 local function create_frame(player)
 	local screen = player.gui.screen
-	local base_frame = screen.add{
+	local base_frame = create_titlebar(screen.add{
 		type = "frame",
 		name = "tiergen-menu",
-		caption = {"tiergen.menu"},
-		visible = false,
-	}
-	base_frame.auto_center = true
-	local vert_scroll = base_frame.add{
-		type = "scroll-pane",
-		direction="vertical",
-	}.add{
+		visible = false
+	}, {"tiergen.menu"})
+	local table = base_frame.add{
 		type = "frame",
-		style = "slot_button_deep_frame",
+		style = "inside_shallow_frame_with_padding"
+	}.add{
+		type = "scroll-pane",
+	}.add{
+		type = "table",
+		column_count = 2,
+		draw_horizontal_lines = true,
 		direction="vertical",
 	}
-	local max_width = 0
-	for _, items in ipairs(global.tier_array) do
-		max_width = math.max(max_width, #items)
-	end
 	for tier, items in ipairs(global.tier_array) do
-		local tier_row = vert_scroll.add{
-			type = "flow",
-			direction = "horizontal"
-		}
-		local tier_label = tier_row.add{
+		local tier_label = table.add{
 			type = "label",
 			caption = {"tiergen.tier-label", tier}
 		}
-		local tier_list = tier_row.add{
+		tier_label.style.size = {50, 0}
+		local tier_list = table.add{
+			type = "frame",
+			style = "slot_button_deep_frame"
+		}.add{
 			type = "table",
-			column_count = max_width,
+			column_count = 9,
 			style = "filter_slot_table"
 		}
 
@@ -86,6 +122,18 @@ local function regenerate_menus()
 		reset_frame(player)
 	end
 end
+
+
+script.on_event(defines.events.on_gui_click, function (EventData)
+	if EventData.element.name == "close_button" then
+		local player = game.get_player(EventData.player_index)
+		if not player then
+			return log("wtf")
+		end
+		player.set_shortcut_toggled("tiergen-menu", false)
+		set_visibility(player, false)
+	end
+end)
 
 
 return {
