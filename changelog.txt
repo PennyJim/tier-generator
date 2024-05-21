@@ -1,6 +1,8 @@
 ---------------------------------------------------------------------------------------------------
-Version: 0.1.4
+Version: 0.2.0
 Date: ????
+  Major Features:
+    - Now has a UI to display the tiers!
   Changes:
     - Refactored the monolithic data-final-fixes.lua into multiple files
     - Changed from a startup script to runtime
