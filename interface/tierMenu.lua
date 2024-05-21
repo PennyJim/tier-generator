@@ -95,16 +95,6 @@ local function create_frame(player)
 	end
 	return base_frame
 end
----Destroyes the menu for the player to recreate it
----@param player LuaPlayer
-local function reset_frame(player)
-	---@type LuaGuiElement
-	local frame = player.gui.screen["tiergen-menu"]
-	if frame then
-		frame.destroy()
-	end
-	create_frame(player)
-end
 ---Changes the state of the tiergen menu for the player
 ---@param player LuaPlayer
 ---@param is_toggled boolean
@@ -115,6 +105,18 @@ local function set_visibility(player, is_toggled)
 	end
 
 	menu.visible = is_toggled
+end
+---Destroyes the menu for the player to recreate it
+---@param player LuaPlayer
+local function reset_frame(player)
+	---@type LuaGuiElement
+	local frame = player.gui.screen["tiergen-menu"]
+	if frame then
+		frame.destroy()
+	end
+	create_frame(player)
+	local is_open = player.is_shortcut_toggled("tiergen-menu")
+	set_visibility(player, is_open)
 end
 
 ---Initializes the menu for all players
