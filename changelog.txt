@@ -1,6 +1,8 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.1
 Date: ????
+  Optimizations:
+    - Now marks incalculable items and unmarks them once the blocking item is calculated
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.0
 Date: 2024-05-20
