@@ -9,12 +9,13 @@ local lib = require("__tier-generator__.library")
 ---@enum invalidReason
 local invalidReason = {
 	calculating = -1,
-	no_machine = -2,
-	no_valid_machine = -3,
-	no_valid_technology = -4,
-	no_valid_furnace = -5,
-	no_valid_rocket = -6,
-	no_valid_recipe = -7,
+	no_valid_machine = -2,
+	no_valid_technology = -3,
+	no_valid_furnace = -4,
+	no_valid_rocket = -5,
+	no_valid_recipe = -6,
+	not_unlockable = -97,
+	no_machine = -98,
 	error = -99
 }
 ---@alias tier invalidReason|uint
@@ -23,7 +24,7 @@ local invalidReason = {
 ---@type table<uint,tierItem[]>
 local tierArray = {};
 
----@type table<handledTypes,table<string,number>>
+---@type table<handledTypes,{[string]:boolean}>
 TierMaps = {
 	["LuaRecipeCategoryPrototype"] = {},
 	["LuaTechnologyPrototype"] = {},
@@ -31,7 +32,7 @@ TierMaps = {
 	["LuaFluidPrototype"] = {},
 	["LuaItemPrototype"] = {}
 };
----@type table<handledTypes,table<string,boolean>>
+---@type table<handledTypes,{[string]:boolean}>
 calculating = {
 	["LuaRecipeCategoryPrototype"] = {},
 	["LuaTechnologyPrototype"] = {},
@@ -39,14 +40,42 @@ calculating = {
 	["LuaFluidPrototype"] = {},
 	["LuaItemPrototype"] = {}
 };
+---@alias blockedReason {type:LuaObject.object_name,id:string,reason:invalidReason}
+---@alias blockedItem {type:LuaObject.object_name,id:string}
+---@type table<handledTypes,table<string,{reason:invalidReason,blockedBy:blockedItem[]}>>
+incalculable = {
+	["LuaRecipeCategoryPrototype"] = {},
+	["LuaTechnologyPrototype"] = {},
+	["LuaRecipePrototype"] = {},
+	["LuaFluidPrototype"] = {},
+	["LuaItemPrototype"] = {}
+}
 -- for subtype in pairs(defines.prototypes["item"]) do
 -- 	TierMaps[subtype] = {}
 -- 	calculating[subtype] = {}
 -- end
 
+---Clears the incalculable table for the given item and what it blocked
+---@param type LuaObject.object_name
+---@param prototypeID string
+local function unmarkIncalculable(type, prototypeID)
+	local incalculableItem = incalculable[type][prototypeID]
+	if not incalculableItem then
+		return lib.log("Likely was incalculable?? type: "..type.." id: "..prototypeID)
+	end
+	if incalculableItem.reason ~= invalidReason.error
+	or incalculableItem.reason ~= invalidReason.no_machine then
+		return lib.log("Will not unmark an item marked invalid for a static reason. type: "..type.." id: "..prototypeID)
+	end
+	for _, nextItem in ipairs(incalculableItem.blockedBy) do
+		unmarkIncalculable(nextItem.type, nextItem.id)
+	end
+	incalculable[type][prototypeID] = nil
+end
+
 --#region Tier calculation
 ---@class TierSwitch
----@field [string] fun(prototypeID:string, value:handledPrototypes):tier
+---@field [handledTypes] fun(prototypeID:string, value:handledPrototypes):tier,blockedReason[]
 ---@overload fun(prototypeID:string,value:handledPrototypes):tier
 local tierSwitch = setmetatable({}, {
 	---Base switching case of tierSwich
@@ -59,15 +88,22 @@ local tierSwitch = setmetatable({}, {
 		local tier = TierMaps[type][prototypeID]
 		if tier ~= nil then return tier end
 		if calculating[type][prototypeID] then return invalidReason.calculating end
+		local incalculableItem = incalculable[type][prototypeID]
+		if incalculableItem then -- and incalculableItem.reason ~= invalidReason.calculating then
+			return incalculableItem.reason
+		end
 
+		-- Attempt to calculate
 		calculating[type][prototypeID] = true
-		local success = false
-		success, tier = pcall(self[type], prototypeID, value)
+		local success, reasons = false, {}
+		success, tier, reasons = pcall(self[type], prototypeID, value)
 		if not success then
 			-- _log({"error-calculating", prototypeID, type, serpent.dump(value)})
 			log("Error calculating the "..type.." of "..prototypeID..":\n"..tier)
 			tier = invalidReason.error
 		end
+
+		-- Finish calculating
 		calculating[type][prototypeID] = nil
 		if tier >= 0 then -- Discard negative values
 			TierMaps[type][prototypeID] = tier
@@ -78,6 +114,36 @@ local tierSwitch = setmetatable({}, {
 					type = itemType,
 				})
 			end
+
+			--Remove blocked items, if it was marked incalculable during calculating
+			incalculableItem = incalculable[type][prototypeID]
+			if incalculableItem then
+				unmarkIncalculable(type, prototypeID)
+			end
+		else -- Mark as incalculable
+			incalculable[type][prototypeID] = {
+				reason = tier,
+				blockedBy = {}
+			}
+			for _, reason in ipairs(reasons) do
+				incalculableItem = incalculable[reason.type][reason.id]
+				if not incalculableItem then
+					lib.log("Marking a blocked as incalculable because "..reason.reason)
+					incalculableItem = {
+						reason = reason.reason,
+						blockedBy = {}
+					}
+					incalculable[reason.type][reason.id] = incalculableItem
+
+				-- Lower numbers are more static reasons and therefore more important
+				elseif incalculableItem.reason > reason.reason then
+					incalculableItem.reason = reason.reason
+				end
+				incalculableItem.blockedBy[#incalculableItem.blockedBy+1] = {
+					type = type,
+					id = prototypeID
+				}
+			end
 		end
 		return tier
 	end
@@ -85,6 +151,7 @@ local tierSwitch = setmetatable({}, {
 ---Return the highest tier from the ingredients
 ---@param ingredients Ingredient[]
 ---@return integer
+---@return blockedReason
 local function getIngredientsTier(ingredients)
 	local ingredientsTier = 0;
 	for _, ingredient in pairs(ingredients) do
@@ -93,26 +160,38 @@ local function getIngredientsTier(ingredients)
 		local nextValue = lib.getItemOrFluid(nextName, nextType)
 		local nextTier = tierSwitch(nextName, nextValue)
 		-- Skip if machine takes an item being calculated
-		if nextTier < 0 then return nextTier end
+		if nextTier < 0 then
+			return nextTier, {
+				type = nextType == "item" and "LuaItemPrototype" or "LuaFluidPrototype",
+				id = nextName,
+				reason = nextTier
+			}
+		end
 		ingredientsTier = math.max(ingredientsTier, nextTier)
 	end
-	return ingredientsTier
+	return ingredientsTier, {}
 end
 
 ---Determine the tier of the given technology
----@type fun(technologyID:data.TechnologyID,technology:LuaTechnologyPrototype):tier
+---@type fun(technologyID:data.TechnologyID,technology:LuaTechnologyPrototype):tier,blockedReason[]
 tierSwitch["LuaTechnologyPrototype"] = function (technologyID, technology)
 	local ingredients = technology.research_unit_ingredients
-	local ingredientsTier = getIngredientsTier(ingredients)
+	local ingredientsTier, ingredientBlocked = getIngredientsTier(ingredients)
 	if ingredientsTier < 0 then
-		return ingredientsTier
+		return ingredientsTier, {ingredientBlocked}
 	end
 
 	local prereqTier = 0;
 	for _, prerequisite in pairs(technology.prerequisites) do
 		local preTier = tierSwitch(prerequisite.name, prerequisite)
 		-- Skip if technology takes an item being calculated
-		if preTier < 0 then return preTier end
+		if preTier < 0 then
+			return preTier, {{
+				type = "LuaTechnologyPrototype",
+				id = prerequisite.name,
+				reason = preTier
+			}}
+		end
 		prereqTier = math.max(prereqTier, preTier)
 	end
 
@@ -122,64 +201,77 @@ tierSwitch["LuaTechnologyPrototype"] = function (technologyID, technology)
 	elseif settings.startup["tiergen-reduce-technology"].value then
 		tier = tier - 1
 	end
-	return tier
+	return tier, {}
 end
 ---Determine the tier of the given recipe category
----@type fun(CategoryID:data.RecipeCategoryID,category:LuaRecipeCategoryPrototype):tier
+---@type fun(CategoryID:data.RecipeCategoryID,category:LuaRecipeCategoryPrototype):tier,blockedReason[]
 tierSwitch["LuaRecipeCategoryPrototype"] = function (CategoryID, category)
 	local machines = lookup.CategoryItem[CategoryID]
 	if not machines then
 		lib.log("\tCategory "..CategoryID.." has no machines")
-		return invalidReason.no_machine
+		return invalidReason.no_machine, {}
 	end
 	local categoryTier = math.huge;
+	local blockedCategories = {}
 	for _, item in pairs(machines) do
 		-- If it's craftable by hand, it's a base recipe.
-		if item == "hand" then return 0 end
+		if item == "hand" then return 0, {} end
 		local itemTier = tierSwitch(item, lib.getItem(item))
 		-- Don't consider the machine if it takes something being calculated.
-		-- It must mean that it uses something a tier too high, Right..?
 		if itemTier >= 0 then
 			categoryTier = math.min(categoryTier, itemTier)
+		else
+			blockedCategories[#blockedCategories+1] = {
+				type = "LuaItemPrototype",
+				id = item,
+				reason = itemTier
+			}
 		end
 	end
 
 	if categoryTier == math.huge then
-		return invalidReason.no_valid_machine
+		return invalidReason.no_valid_machine, blockedCategories
 	end
 
 	if settings.startup["tiergen-reduce-category"].value and categoryTier > 0 then
 		categoryTier = categoryTier - 1
 	end
-	return categoryTier
+	return categoryTier, {}
 end
 ---Determine the tier of the given recipe
----@type fun(recipeID:data.RecipeID,recipe:LuaRecipePrototype):tier
+---@type fun(recipeID:data.RecipeID,recipe:LuaRecipePrototype):tier,blockedReason[]
 tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 	if #recipe.ingredients == 0 then
 		lib.log("\t"..recipeID.." didn't require anything? Means it's a t0?")
-		return 0
+		return 0, {}
 	end
 
 	-- Get recipe ingredients tier
-	local ingredientsTier = getIngredientsTier(recipe.ingredients)
+	local ingredientsTier, blockedIngredient = getIngredientsTier(recipe.ingredients)
 	-- Exit early if child-tier isn't currently calculable
-	if ingredientsTier < 0 then return ingredientsTier end
+	if ingredientsTier < 0 then return ingredientsTier, {blockedIngredient} end
 
 	-- Get category tier
 	local category = lib.getRecipeCategory(recipe.category)
 	local machineTier = tierSwitch(category.name, category)
 	-- Exit early if child-tier isn't currently calculable
-	if machineTier < 0 then return machineTier end
+	if machineTier < 0 then
+		return machineTier, {{
+			type = "LuaRecipeCategoryPrototype",
+			id = category.name,
+			reason = machineTier,
+		}}
+	end
 
 	-- Get technology tier if it isn't enabled to start with
 	local technologyTier = 0
+	local blockedTechnology = {}
 	if not recipe.enabled then
 		technologyTier = math.huge
 		local technologies = lookup.RecipeTechnology[recipeID]
 		if not technologies then
 			print("\t"..recipeID.." is not an unlockable recipe.")
-			return -math.huge -- Ignore this recipe
+			return invalidReason.not_unlockable, {}
 		end
 
 		for _, technology in pairs(technologies) do
@@ -188,25 +280,33 @@ tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 			-- Assume currently calculating technology to be of higher tier
 			if nextTier >= 0 then
 				technologyTier = math.min(technologyTier, nextTier)
+			else
+				blockedTechnology[#blockedTechnology+1] = {
+					type = "LuaTechnologyPrototype",
+					id = technology,
+					reason = nextTier
+				}
 			end
 		end
 	end
 
 	if technologyTier == math.huge then
-		return invalidReason.no_valid_technology
+		return invalidReason.no_valid_technology, blockedTechnology
 	end
 
-	return math.max(ingredientsTier, machineTier, technologyTier)
+	return math.max(ingredientsTier, machineTier, technologyTier), {}
 end
 ---Determine the tier of burning an item
----@type fun(ItemID:data.ItemID,value:LuaItemPrototype):tier
+---@type fun(ItemID:data.ItemID,value:LuaItemPrototype):tier,blockedReason[]
 tierSwitch["burning"] = function (ItemID, value)
 	local burningRecipes = lookup.Burning[ItemID]
 	local tier = math.huge
 
+	local blockedBy = {}
 	for _, fuelID in pairs(burningRecipes) do
-		local fuelTier = getIngredientsTier{{fuelID}}
+		local fuelTier, blockedFuel = getIngredientsTier{{fuelID}}
 		if fuelTier < 0 then
+			blockedBy[#blockedBy+1] = blockedFuel
 			goto continue
 		end
 		local fuel = lib.getItem(fuelID)
@@ -214,6 +314,11 @@ tierSwitch["burning"] = function (ItemID, value)
 			object_name = "LuaRecipeCategoryPrototype",
 		})
 		if categoryTier < 0 then
+			blockedBy[#blockedBy+1] = {
+				type = "LuaRecipeCategoryPrototype",
+				id = "tiergen-fuel-"..fuel.fuel_category,
+				reason = categoryTier,
+			}
 			goto continue
 		end
 		local recipeTier = math.max(fuelTier, categoryTier)
@@ -222,27 +327,34 @@ tierSwitch["burning"] = function (ItemID, value)
 	end
 
 	if tier == math.huge then
-		return invalidReason.no_valid_furnace
+		return invalidReason.no_valid_furnace, blockedBy
 	end
 
-	return tier
+	return tier, {}
 end
 ---Determine the tier of launching an item into space
----@type fun(ItemID:data.ItemID,value:LuaItemPrototype):tier
+---@type fun(ItemID:data.ItemID,value:LuaItemPrototype):tier,blockedReason[]
 tierSwitch["rocket-launch"] = function (ItemID, value)
 	local rocketRecipes = lookup.Rocket[ItemID]
 	-- FIXME: actually consider the rocket-parts
 	local tier = math.huge
+	local blockedBy = {}
 
 	for _, satelliteID in pairs(rocketRecipes) do
-		local satelliteTier = getIngredientsTier{{satelliteID}}
+		local satelliteTier, blockedSatellite = getIngredientsTier{{satelliteID}}
 		if satelliteTier < 0 then
+			blockedBy[#blockedBy+1] = blockedSatellite
 			goto continue
 		end
 		local categoryTier = tierSwitch("tiergen-rocket-launch", {
 			object_name = "LuaRecipeCategoryPrototype",
 		})
 		if categoryTier < 0 then
+			blockedBy[#blockedBy+1] = {
+				type = "LuaRecipeCategoryPrototype",
+				id = "tiergen-rocket-launch",
+				reason = categoryTier,
+			}
 			goto continue
 		end
 		local recipeTier = math.max(satelliteTier, categoryTier)
@@ -251,13 +363,13 @@ tierSwitch["rocket-launch"] = function (ItemID, value)
 	end
 
 	if tier == math.huge then
-		return invalidReason.no_valid_rocket
+		return invalidReason.no_valid_rocket, blockedBy
 	end
 
-	return tier
+	return tier, {}
 end
 ---Determine the tier of the given item or fluid
----@type fun(ItemID:data.ItemID|data.FluidID,value:LuaItemPrototype|LuaFluidPrototype):tier
+---@type fun(ItemID:data.ItemID|data.FluidID,value:LuaItemPrototype|LuaFluidPrototype):tier,blockedReason[]
 tierSwitch["LuaFluidPrototype"] = function (ItemID, value)
 	local recipes
 	if value.object_name == "LuaItemPrototype" then
@@ -268,9 +380,10 @@ tierSwitch["LuaFluidPrototype"] = function (ItemID, value)
 
 	-- No recipes create it, then it's a base resource
 	-- if it doesn't generate, maybe check if a technology gives it
-	if not recipes then return 0 end
+	if not recipes then return 0, {} end
 
 	local recipeTier = math.huge
+	local blockedRecipes = {}
 	for _, recipe in pairs(recipes) do
 		-- if the recipeID starts with "tiergen-" then it's a fake recipe
 		-- this mod *will not* make recipes
@@ -286,6 +399,12 @@ tierSwitch["LuaFluidPrototype"] = function (ItemID, value)
 		-- Skip recipe if it's using something being calculated
 		if tempTier >= 0 then
 			recipeTier = math.min(recipeTier, tempTier)
+		else
+			blockedRecipes[#blockedRecipes+1] = {
+				type = "LuaRecipePrototype",
+				id = recipe,
+				reason = tempTier
+			}
 		end
 	end
 
@@ -294,12 +413,12 @@ tierSwitch["LuaFluidPrototype"] = function (ItemID, value)
 	-- in the recipe processing, and skipped it if it there were *no* recipes.
 	-- This _must_ mean that there's something being calculated in the chain.
 	if recipeTier == math.huge then
-		return invalidReason.no_valid_recipe
+		return invalidReason.no_valid_recipe, blockedRecipes
 	end
 
-	return recipeTier + 1
+	return recipeTier + 1, {}
 end
-tierSwitch["LuaItemPrototype"] = tierSwitch["LuaFluidPrototype"] --[[@as fun(ItemID:data.ItemID|data.FluidID,value:LuaItemPrototype|LuaFluidPrototype):number]]
+tierSwitch["LuaItemPrototype"] = tierSwitch["LuaFluidPrototype"] --[[@as fun(ItemID:data.ItemID|data.FluidID,value:LuaItemPrototype|LuaFluidPrototype):tier,blockedReason[] ]]
 --#endregion
 
 local function checkLookup()
