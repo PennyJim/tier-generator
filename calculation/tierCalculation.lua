@@ -24,8 +24,10 @@ local invalidReason = {
 ---@type table<uint,tierItem[]>
 local tierArray = {};
 
----@type table<handledTypes,{[string]:boolean}>
+---@type table<handledTypes,{[string]:uint}>
 TierMaps = {};
+---@type {[string]:boolean}
+local baseOverride = {};
 ---@type table<handledTypes,{[string]:boolean}>
 calculating = {};
 ---@alias blockedReason {type:LuaObject.object_name,id:string,reason:invalidReason}
@@ -70,6 +72,14 @@ local tierSwitch = setmetatable({}, {
 		local type = value.object_name
 		local tier = TierMaps[type][prototypeID]
 		if tier ~= nil then return tier end
+		if type == "LuaItemPrototype" and baseOverride[prototypeID] then
+			lib.appendToArrayInTable(tierArray, 1, {
+				name = prototypeID,
+				type = "item",
+			})
+			TierMaps[type][prototypeID] = 0
+			return 0
+		end
 		if calculating[type][prototypeID] then return invalidReason.calculating end
 		local incalculableItem = incalculable[type][prototypeID]
 		if incalculableItem then -- and incalculableItem.reason ~= invalidReason.calculating then
@@ -111,7 +121,9 @@ local tierSwitch = setmetatable({}, {
 			for _, reason in ipairs(reasons) do
 				incalculableItem = incalculable[reason.type][reason.id]
 				if not incalculableItem then
-					lib.log("\tMarking "..reason.id.." as incalculable because "..reason.reason)
+					if reason.reason ~= invalidReason.calculating then
+						log("\tMarking "..reason.id.." as incalculable because "..reason.reason)
+					end
 					incalculableItem = {
 						reason = reason.reason,
 						blocked = {}
@@ -445,6 +457,7 @@ end
 ---Clears the tierArray and processing tables
 local function uncalculate()
 	tierArray = {}
+	baseOverride = {}
 	local prototypes = {
 		"LuaRecipeCategoryPrototype",
 		"LuaTechnologyPrototype",
@@ -468,7 +481,7 @@ local function setTier(itemID)
 		log("\tWas given an invalid item: "..itemID)
 		return
 	end
-	TierMaps[itemPrototype.object_name][itemID] = 0
+	baseOverride[itemID] = true
 end
 
 return {

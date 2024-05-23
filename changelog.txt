@@ -5,6 +5,8 @@ Date: ????
     - Settings are now global and the list will be updated to match the settings
   Optimizations:
     - Now marks incalculable items and unmarks them once the blocking item is calculated
+  Bugfixes:
+    - Fixed overriden base items not appearing in the tierlist
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.0
 Date: 2024-05-20
