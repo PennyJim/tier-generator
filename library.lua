@@ -8,6 +8,7 @@ local library = {}
 --#region Settings
 ---@alias tierSettings
 ---| "tiergen-reduce-category"
+---| "tiergen-consider-technology"
 ---| "tiergen-reduce-technology"
 ---| "tiergen-item-calculation"
 ---| "tiergen-base-items"
@@ -16,6 +17,7 @@ local library = {}
 ---@type {[tierSettings]:any}
 local tiergenSettings = {
 	["tiergen-reduce-category"] = true,
+	["tiergen-consider-technology"] = true,
 	["tiergen-reduce-technology"] = true,
 	["tiergen-item-calculation"] = true,
 	["tiergen-base-items"] = true,

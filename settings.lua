@@ -12,10 +12,17 @@ data:extend{
 	},
 	{
 		type = "bool-setting",
+		name = "tiergen-consider-technology",
+		setting_type = "runtime-global",
+		default_value = true,
+		order = "global-a[technology-a]"
+	},
+	{
+		type = "bool-setting",
 		name = "tiergen-reduce-technology",
 		setting_type = "runtime-global",
 		default_value = true,
-		order = "global-a[technology]"
+		order = "global-a[technology-b]"
 	},
 	{
 		type = "string-setting",

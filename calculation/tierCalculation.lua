@@ -261,7 +261,7 @@ tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 	-- Get technology tier if it isn't enabled to start with
 	local technologyTier = 0
 	local blockedTechnology = {}
-	if not recipe.enabled then
+	if lib.getSetting("tiergen-consider-technology") and not recipe.enabled then
 		technologyTier = math.huge
 		local technologies = lookup.RecipeTechnology[recipeID]
 		if not technologies then

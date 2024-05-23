@@ -10,4 +10,4 @@ Considers what machine is required to craft, the ingredients, the technology, an
 - [ ] Add considerations for generation
 - [ ] Add offshore pumps
 - [ ] Add boiling liquids to the 'recipes'
-- [ ] Add setting to disable/enable considering the tier of technology
+- [x] Add setting to disable/enable considering the tier of technology

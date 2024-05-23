@@ -31,7 +31,6 @@ end)
 
 script.on_event(defines.events.on_lua_shortcut, function (EventData)
 	if EventData.prototype_name == "tiergen-menu" then
-		log(EventData)
 		local player = game.get_player(EventData.player_index)
 		if not player then
 			return log("No player pressed that shortcut??")
