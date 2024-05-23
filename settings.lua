@@ -2,11 +2,6 @@ local default_items = "space-science-pack"
 local default_bases = "raw-fish"
 local default_ignored = ""
 
-if mods["Ultracube"] then
-	default_items = "cube-complete-annihilation-card"
-	default_bases = "cube-ultradense-utility-cube"
-end
-
 data:extend{
 	{
 		type = "bool-setting",
