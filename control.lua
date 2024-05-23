@@ -2,7 +2,7 @@ local calculator = require("__tier-generator__.calculation.calculator")
 local tierMenu = require("__tier-generator__.interface.tierMenu")
 
 script.on_init(function ()
-	global.tier_array = calculator()
+	global.tier_array = calculator.calculate()
 	tierMenu.init()
 end)
 
@@ -19,7 +19,7 @@ script.on_configuration_changed(function (ChangedData)
 	if ChangedData.mod_startup_settings_changed  or
 			ChangedData.mod_changes or
 			ChangedData.migration_applied then
-		global.tier_array = calculator()
+		global.tier_array = calculator.calculate()
 		tierMenu.regenerate_menus()
 	end
 end)
@@ -35,5 +35,22 @@ script.on_event(defines.events.on_lua_shortcut, function (EventData)
 		local isOpened = not player.is_shortcut_toggled("tiergen-menu")
 		player.set_shortcut_toggled("tiergen-menu", isOpened)
 		tierMenu.set_visibility(player, isOpened)
+	end
+end)
+
+script.on_event(defines.events.on_runtime_mod_setting_changed, function (EventData)
+	local setting = EventData.setting
+	if EventData.setting_type == "runtime-global" then
+		lib.clearSettingCache(setting)
+	end
+	if setting == "tiergen-ignored-recipes" then
+		calculator.clearCache()
+	end
+	if lib.isOurSetting(setting) and setting ~= "tiergen-debug-log" then
+		script.on_nth_tick(1, function (nthTick)
+			global.tier_array = calculator.calculate()
+			tierMenu.regenerate_menus()
+			script.on_nth_tick(1, nil)
+		end)
 	end
 end)

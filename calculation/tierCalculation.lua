@@ -1,4 +1,4 @@
-local buildLookup = require("__tier-generator__.calculation.DataProcessing")
+local processor = require("__tier-generator__.calculation.DataProcessing")
 local lookup ---@type LookupTables
 local lib = require("__tier-generator__.library")
 
@@ -25,31 +25,13 @@ local invalidReason = {
 local tierArray = {};
 
 ---@type table<handledTypes,{[string]:boolean}>
-TierMaps = {
-	["LuaRecipeCategoryPrototype"] = {},
-	["LuaTechnologyPrototype"] = {},
-	["LuaRecipePrototype"] = {},
-	["LuaFluidPrototype"] = {},
-	["LuaItemPrototype"] = {}
-};
+TierMaps = {};
 ---@type table<handledTypes,{[string]:boolean}>
-calculating = {
-	["LuaRecipeCategoryPrototype"] = {},
-	["LuaTechnologyPrototype"] = {},
-	["LuaRecipePrototype"] = {},
-	["LuaFluidPrototype"] = {},
-	["LuaItemPrototype"] = {}
-};
+calculating = {};
 ---@alias blockedReason {type:LuaObject.object_name,id:string,reason:invalidReason}
 ---@alias blockedItem {type:LuaObject.object_name,id:string}
 ---@type table<handledTypes,table<string,{reason:invalidReason,blocked:blockedItem[]}>>
-incalculable = {
-	["LuaRecipeCategoryPrototype"] = {},
-	["LuaTechnologyPrototype"] = {},
-	["LuaRecipePrototype"] = {},
-	["LuaFluidPrototype"] = {},
-	["LuaItemPrototype"] = {}
-}
+incalculable = {}
 -- for subtype in pairs(defines.prototypes["item"]) do
 -- 	TierMaps[subtype] = {}
 -- 	calculating[subtype] = {}
@@ -199,7 +181,7 @@ tierSwitch["LuaTechnologyPrototype"] = function (technologyID, technology)
 	local tier = math.max(ingredientsTier, prereqTier)
 	if tier == 0 then
 		log("I don't think a technology should ever be t0: "..technologyID)
-	elseif settings.startup["tiergen-reduce-technology"].value then
+	elseif lib.getSetting("tiergen-reduce-technology") then
 		tier = tier - 1
 	end
 	return tier, {}
@@ -234,7 +216,7 @@ tierSwitch["LuaRecipeCategoryPrototype"] = function (CategoryID, category)
 		return invalidReason.no_valid_machine, blockedCategories
 	end
 
-	if settings.startup["tiergen-reduce-category"].value and categoryTier > 0 then
+	if lib.getSetting("tiergen-reduce-category") and categoryTier > 0 then
 		categoryTier = categoryTier - 1
 	end
 	return categoryTier, {}
@@ -429,7 +411,7 @@ tierSwitch["LuaItemPrototype"] = tierSwitch["LuaFluidPrototype"] --[[@as fun(Ite
 
 local function checkLookup()
 	if not lookup then
-		lookup = buildLookup()
+		lookup = processor.process()
 	end
 end
 
@@ -460,6 +442,23 @@ local function calculateTier(itemID)
 	end
 end
 
+---Clears the tierArray and processing tables
+local function uncalculate()
+	tierArray = {}
+	local prototypes = {
+		"LuaRecipeCategoryPrototype",
+		"LuaTechnologyPrototype",
+		"LuaRecipePrototype",
+		"LuaFluidPrototype",
+		"LuaItemPrototype",
+	}
+	for _, prototype in ipairs(prototypes) do
+		TierMaps[prototype] = {}
+		calculating[prototype] = {}
+		incalculable[prototype] = {}
+	end
+end
+
 ---Directly set the tier of a given itemID
 ---@param itemID string
 local function setTier(itemID)
@@ -477,5 +476,12 @@ return {
 	calculate = calculateTier,
 	get = function ()
 		return tierArray
+	end,
+	uncalculate = uncalculate,
+	clearCache = function ()
+		processor.clearCache()
+---@diagnostic disable-next-line: cast-local-type
+		lookup = nil
+		uncalculate()
 	end
 }

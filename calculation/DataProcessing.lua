@@ -4,12 +4,15 @@ local processFunctions = {}
 
 ---@type table<data.RecipeID, boolean>
 local ignored_recipes = {}
-local ignoredRecipes = settings.startup["tiergen-ignored-recipes"].value --[[@as string]]
--- Turn array into lookup table
-for index, recipeID in ipairs(lib.split(ignoredRecipes, ",")) do
-	-- Remove whitespace
-	recipeID = recipeID:match("^%s*(.-)%s*$")
-	ignored_recipes[recipeID] = true
+function parseIgnoredRecipes()
+	ignored_recipes = {}
+	local ignoredRecipes = lib.getSetting("tiergen-ignored-recipes") --[[@as string]]
+	-- Turn array into lookup table
+	for index, recipeID in ipairs(lib.split(ignoredRecipes, ",")) do
+		-- Remove whitespace
+		recipeID = recipeID:match("^%s*(.-)%s*$")
+		ignored_recipes[recipeID] = true
+	end
 end
 
 --#region Process functions & loops
@@ -202,12 +205,20 @@ end
 
 -- TODO: take into account whether a resource generates?
 local hasReturned = false
-return function ()
-	if not hasReturned then
-		for _, processFunction in ipairs(processFunctions) do
-			processFunction()
+return {
+	process = function ()
+		if not hasReturned then
+			for _, processFunction in ipairs(processFunctions) do
+				processFunction()
+			end
+			hasReturned = true
 		end
-		hasReturned = true
+		return lookup
+	end,
+	clearCache = function ()
+		for key in pairs(lookup) do
+			lookup[key] = {}
+		end
+		hasReturned = false
 	end
-	return lookup
-end
+}

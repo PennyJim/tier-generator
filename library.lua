@@ -4,13 +4,58 @@ local lookup = require("__tier-generator__.calculation.lookupTables")
 ---@class TiergenLibrary
 local library = {}
 
+
+--#region Settings
+---@alias tierSettings
+---| "tiergen-reduce-category"
+---| "tiergen-reduce-technology"
+---| "tiergen-item-calculation"
+---| "tiergen-base-items"
+---| "tiergen-ignored-recipes"
+---| "tiergen-debug-log"
+---@type {[tierSettings]:any}
+local tiergenSettings = {
+	["tiergen-reduce-category"] = true,
+	["tiergen-reduce-technology"] = true,
+	["tiergen-item-calculation"] = true,
+	["tiergen-base-items"] = true,
+	["tiergen-ignored-recipes"] = true,
+	["tiergen-debug-log"] = true,
+}
+local cachedSettings = {}
+---Gets the global setting, and caches it
+---@param setting tierSettings
+---@return any
+function library.getSetting(setting)
+	local value = cachedSettings[setting]
+	if value then return value end
+
+	value = settings.global[setting].value
+	cachedSettings[setting] = value
+	return value
+end
+---Clears the settings cache
+---@param setting tierSettings?
+function library.clearSettingCache(setting)
+	if setting then
+		cachedSettings[setting] = nil
+	else
+		cachedSettings = {}
+	end
+end
+---Return whether or not the setting is ours
+---@param setting string
+---@return boolean
+function library.isOurSetting(setting)
+	return tiergenSettings[setting]
+end
+--#endregion
 --#region Basic functions
-local debug_printing = settings.startup["tiergen-debug-log"].value --[[@as boolean]]
 ---Only logs if debug_printing is enabled
 ---@param ... any
 ---@see log
 function library.log(...)
-	if debug_printing then
+	if library.getSetting("tiergen-debug-log") then
 		return log(...)
 	end
 end
