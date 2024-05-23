@@ -390,9 +390,10 @@ tierSwitch["LuaFluidPrototype"] = function (ItemID, value)
 		-- this mod *will not* make recipes
 		local _, realstart = recipe:find("^tiergen[-]")
 		local tempTier = math.huge
+		local tempBlocked = nil
 		if realstart then
 			local fakeRecipeID = recipe:sub(realstart+1)
-			tempTier = tierSwitch[fakeRecipeID](ItemID, value)
+			tempTier, tempBlocked = tierSwitch[fakeRecipeID](ItemID, value)
 		else
 			local recipePrototype = lib.getRecipe(recipe)
 			tempTier = tierSwitch(recipe, recipePrototype)
@@ -400,6 +401,10 @@ tierSwitch["LuaFluidPrototype"] = function (ItemID, value)
 		-- Skip recipe if it's using something being calculated
 		if tempTier >= 0 then
 			recipeTier = math.min(recipeTier, tempTier)
+		elseif tempBlocked then
+			for _, blocked in ipairs(tempBlocked) do
+				blockedRecipes[#blockedRecipes+1] = blocked
+			end
 		else
 			blockedRecipes[#blockedRecipes+1] = {
 				type = "LuaRecipePrototype",
