@@ -1,3 +1,12 @@
+local default_items = "space-science-pack"
+local default_bases = "raw-fish"
+local default_ignored = ""
+
+if mods["Ultracube"] then
+	default_items = "cube-complete-annihilation-card"
+	default_bases = "cube-ultradense-utility-cube"
+end
+
 data:extend{
 	{
 		type = "bool-setting",
@@ -17,14 +26,14 @@ data:extend{
 		type = "string-setting",
 		name = "tiergen-item-calculation",
 		setting_type = "startup",
-		default_value = "space-science-pack",
+		default_value = default_items,
 		order = "startup-b"
 	},
 	{
 		type = "string-setting",
 		name = "tiergen-base-items",
 		setting_type = "startup",
-		default_value = "raw-fish",
+		default_value = default_bases,
 		allow_blank = true,
 		order = "startup-c"
 	},
@@ -32,7 +41,7 @@ data:extend{
 		type = "string-setting",
 		name = "tiergen-ignored-recipes",
 		setting_type = "startup",
-		default_value = "",
+		default_value = default_ignored,
 		allow_blank = true,
 		order = "startup-d"
 	},
