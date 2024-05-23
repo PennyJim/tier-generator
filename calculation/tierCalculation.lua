@@ -42,7 +42,7 @@ calculating = {
 };
 ---@alias blockedReason {type:LuaObject.object_name,id:string,reason:invalidReason}
 ---@alias blockedItem {type:LuaObject.object_name,id:string}
----@type table<handledTypes,table<string,{reason:invalidReason,blockedBy:blockedItem[]}>>
+---@type table<handledTypes,table<string,{reason:invalidReason,blocked:blockedItem[]}>>
 incalculable = {
 	["LuaRecipeCategoryPrototype"] = {},
 	["LuaTechnologyPrototype"] = {},
@@ -61,13 +61,14 @@ incalculable = {
 local function unmarkIncalculable(type, prototypeID)
 	local incalculableItem = incalculable[type][prototypeID]
 	if not incalculableItem then
-		return lib.log("Likely was incalculable?? type: "..type.." id: "..prototypeID)
+		return lib.log("\tLikely was incalculable?? type: "..type.." id: "..prototypeID)
 	end
-	if incalculableItem.reason ~= invalidReason.error
-	or incalculableItem.reason ~= invalidReason.no_machine then
-		return lib.log("Will not unmark an item marked invalid for a static reason. type: "..type.." id: "..prototypeID)
+	if incalculableItem.reason == invalidReason.error
+	or incalculableItem.reason == invalidReason.no_machine
+	or incalculableItem.reason == invalidReason.not_unlockable then
+		return lib.log("\tWill not unmark an item marked invalid for a static reason. type: "..type.." id: "..prototypeID)
 	end
-	for _, nextItem in ipairs(incalculableItem.blockedBy) do
+	for _, nextItem in ipairs(incalculableItem.blocked) do
 		unmarkIncalculable(nextItem.type, nextItem.id)
 	end
 	incalculable[type][prototypeID] = nil
@@ -123,15 +124,15 @@ local tierSwitch = setmetatable({}, {
 		else -- Mark as incalculable
 			incalculable[type][prototypeID] = {
 				reason = tier,
-				blockedBy = {}
+				blocked = {}
 			}
 			for _, reason in ipairs(reasons) do
 				incalculableItem = incalculable[reason.type][reason.id]
 				if not incalculableItem then
-					lib.log("Marking a blocked as incalculable because "..reason.reason)
+					lib.log("\tMarking "..reason.id.." as incalculable because "..reason.reason)
 					incalculableItem = {
 						reason = reason.reason,
-						blockedBy = {}
+						blocked = {}
 					}
 					incalculable[reason.type][reason.id] = incalculableItem
 
@@ -139,7 +140,7 @@ local tierSwitch = setmetatable({}, {
 				elseif incalculableItem.reason > reason.reason then
 					incalculableItem.reason = reason.reason
 				end
-				incalculableItem.blockedBy[#incalculableItem.blockedBy+1] = {
+				incalculableItem.blocked[#incalculableItem.blocked+1] = {
 					type = type,
 					id = prototypeID
 				}
