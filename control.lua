@@ -28,8 +28,17 @@ script.on_event(defines.events.on_player_created, function (EventData)
 end)
 
 script.on_configuration_changed(function (ChangedData)
+	local tiergen_migration = ChangedData.mod_changes["tier-generator"]
+	if tiergen_migration then
+		tierMenu.migration(tiergen_migration)
+	end
+	local mods_have_changed = false
+	for _ in pairs(ChangedData.mod_changes) do
+		mods_have_changed = true
+		break
+	end
 	if ChangedData.mod_startup_settings_changed
-	or ChangedData.mod_changes
+	or mods_have_changed
 	or ChangedData.migration_applied then
 		global.player_highlight = {}
 		global.updateBase = true

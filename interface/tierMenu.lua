@@ -1,4 +1,5 @@
 local calculator = require("__tier-generator__.calculation.calculator")
+local migrator = require("__tier-generator__.interface.tierMenuMigrations")
 lib = require("__tier-generator__.library")
 
 ---comment
@@ -163,6 +164,8 @@ local function regenerate_menus()
 		local frame = player.gui.screen["tiergen-menu"]
 		if frame then
 			update_list(player)
+		else
+			create_frame(player)
 		end
 	end
 end
@@ -240,4 +243,5 @@ return {
 	join_player = new_player,
 	set_visibility = set_visibility,
 	regenerate_menus = regenerate_menus,
+	migration = migrator,
 }
