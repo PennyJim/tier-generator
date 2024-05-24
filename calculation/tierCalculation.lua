@@ -16,28 +16,43 @@ local invalidReason = {
 	no_valid_recipe = -6,
 	not_unlockable = -97,
 	no_machine = -98,
-	error = -99
+	error = -99,
+	not_an_item = -100,
 }
 ---@alias tier invalidReason|uint
 
----@alias tierItem {name:string,type:"item"|"fluid"}
----@type table<uint,tierItem[]>
-local tierArray = {};
+---@class tierTableItem
+---@field name string
+---@field tier uint
+---@class tierTable
+---@field ["item"] tierTableItem[]
+---@field ["fluid"] tierTableItem[]
+---@class tierArrayItem
+---@field name string
+---@field type "item"|"fluid"
+---@class tierArray
+---@field [uint] tierArrayItem[]
 
----@type table<handledTypes,{[string]:uint}>
+---@class dependency
+---@field type handledTypes
+---@field id string
+---@class tierEntry
+---@field tier uint
+---@field dependencies dependency[]
+---@class tierMap
+---@field [string] tierEntry
+---@type {[handledTypes]:tierMap}
 TierMaps = {};
 ---@type {[string]:boolean}
 local baseOverride = {};
 ---@type table<handledTypes,{[string]:boolean}>
 calculating = {};
----@alias blockedReason {type:LuaObject.object_name,id:string,reason:invalidReason}
----@alias blockedItem {type:LuaObject.object_name,id:string}
----@type table<handledTypes,table<string,{reason:invalidReason,blocked:blockedItem[]}>>
+---@class blockedReason: dependency
+---@field type handledTypes
+---@field id string
+---@field reason invalidReason
+---@type table<handledTypes,table<string,{reason:invalidReason,blocked:dependency[]}>>
 incalculable = {}
--- for subtype in pairs(defines.prototypes["item"]) do
--- 	TierMaps[subtype] = {}
--- 	calculating[subtype] = {}
--- end
 
 ---Clears the incalculable table for the given item and what it blocked
 ---@param type LuaObject.object_name
@@ -69,15 +84,18 @@ local tierSwitch = setmetatable({}, {
 	---@param value handledPrototypes
 	---@return tier
 	__call = function(self, prototypeID, value)
-		local type = value.object_name
+		local type = value.object_name --[[@as handledTypes]]
 		local tier = TierMaps[type][prototypeID]
-		if tier ~= nil then return tier end
+		if tier ~= nil then return tier.tier end
 		if type == "LuaItemPrototype" and baseOverride[prototypeID] then
-			lib.appendToArrayInTable(tierArray, 1, {
-				name = prototypeID,
-				type = "item",
-			})
-			TierMaps[type][prototypeID] = 0
+			-- lib.appendToArrayInTable(tierArray, 1, {
+			-- 	name = prototypeID,
+			-- 	type = "item",
+			-- })
+			TierMaps[type][prototypeID] = {
+				tier = 0,
+				dependencies = {}
+			}
 			return 0
 		end
 		if calculating[type][prototypeID] then return invalidReason.calculating end
@@ -88,25 +106,30 @@ local tierSwitch = setmetatable({}, {
 
 		-- Attempt to calculate
 		calculating[type][prototypeID] = true
-		local success, reasons = false, {}
-		success, tier, reasons = pcall(self[type], prototypeID, value)
+		local success, result, dependencies = false, -math.huge, {}
+		success, result, dependencies = pcall(self[type], prototypeID, value)
 		if not success then
 			-- _log({"error-calculating", prototypeID, type, serpent.dump(value)})
-			log("Error calculating the "..type.." of "..prototypeID..":\n"..tier)
-			tier = invalidReason.error
+			log("Error calculating the "..type.." of "..prototypeID..":\n"..result)
+			result = invalidReason.error
+			dependencies = {}
 		end
+		tier = {
+			tier = result,
+			dependencies = dependencies
+		}
 
 		-- Finish calculating
 		calculating[type][prototypeID] = nil
-		if tier >= 0 then -- Discard negative values
+		if result >= 0 then -- Discard negative values
 			TierMaps[type][prototypeID] = tier
-			if type == "LuaFluidPrototype" or type == "LuaItemPrototype" then
-				local itemType = (type == "LuaItemPrototype") and "item" or "fluid"
-				lib.appendToArrayInTable(tierArray, tier+1, {
-					name = prototypeID,
-					type = itemType,
-				})
-			end
+			-- if type == "LuaFluidPrototype" or type == "LuaItemPrototype" then
+			-- 	local itemType = (type == "LuaItemPrototype") and "item" or "fluid"
+			-- 	lib.appendToArrayInTable(tierArray, tier+1, {
+			-- 		name = prototypeID,
+			-- 		type = itemType,
+			-- 	})
+			-- end
 
 			--Remove blocked items, if it was marked incalculable during calculating
 			incalculableItem = incalculable[type][prototypeID]
@@ -115,10 +138,10 @@ local tierSwitch = setmetatable({}, {
 			end
 		else -- Mark as incalculable
 			incalculable[type][prototypeID] = {
-				reason = tier,
+				reason = tier.tier,
 				blocked = {}
 			}
-			for _, reason in ipairs(reasons) do
+			for _, reason in ipairs(dependencies) do
 				incalculableItem = incalculable[reason.type][reason.id]
 				if not incalculableItem then
 					if reason.reason ~= invalidReason.calculating then
@@ -140,41 +163,48 @@ local tierSwitch = setmetatable({}, {
 				}
 			end
 		end
-		return tier
+		return tier.tier
 	end
 })
 ---Return the highest tier from the ingredients
 ---@param ingredients Ingredient[]
 ---@return integer
----@return blockedReason
+---@return blockedReason[]|dependency[]
 local function getIngredientsTier(ingredients)
 	local ingredientsTier = 0;
+	---@type dependency[]
+	local dependencies = {}
 	for _, ingredient in pairs(ingredients) do
 		local nextName = ingredient.name or ingredient[1]
 		local nextType = ingredient.type or "item"
 		local nextValue = lib.getItemOrFluid(nextName, nextType)
 		local nextTier = tierSwitch(nextName, nextValue)
+		dependencies[#dependencies+1] = {
+			type = nextType == "item" and "LuaItemPrototype" or "LuaFluidPrototype",
+			id = nextName,
+		}
 		-- Skip if machine takes an item being calculated
 		if nextTier < 0 then
-			return nextTier, {
+			return nextTier, {{
 				type = nextType == "item" and "LuaItemPrototype" or "LuaFluidPrototype",
 				id = nextName,
 				reason = nextTier
-			}
+			}}
 		end
 		ingredientsTier = math.max(ingredientsTier, nextTier)
 	end
-	return ingredientsTier, {}
+	return ingredientsTier, dependencies
 end
 
 ---Determine the tier of the given technology
----@type fun(technologyID:data.TechnologyID,technology:LuaTechnologyPrototype):tier,blockedReason[]
+---@type fun(technologyID:data.TechnologyID,technology:LuaTechnologyPrototype):tier,blockedReason[]|dependency[]
 tierSwitch["LuaTechnologyPrototype"] = function (technologyID, technology)
 	local ingredients = technology.research_unit_ingredients
-	local ingredientsTier, ingredientBlocked = getIngredientsTier(ingredients)
+	local ingredientsTier, dependencies = getIngredientsTier(ingredients)
 	if ingredientsTier < 0 then
-		return ingredientsTier, {ingredientBlocked}
+		return ingredientsTier, dependencies
 	end
+	---@cast dependencies dependency[]
 
 	local prereqTier = 0;
 	for _, prerequisite in pairs(technology.prerequisites) do
@@ -187,6 +217,10 @@ tierSwitch["LuaTechnologyPrototype"] = function (technologyID, technology)
 				reason = preTier
 			}}
 		end
+		dependencies[#dependencies+1] = {
+			type = "LuaTechnologyPrototype",
+			id = prerequisite.name
+		}
 		prereqTier = math.max(prereqTier, preTier)
 	end
 
@@ -196,10 +230,10 @@ tierSwitch["LuaTechnologyPrototype"] = function (technologyID, technology)
 	elseif lib.getSetting("tiergen-reduce-technology") then
 		tier = tier - 1
 	end
-	return tier, {}
+	return tier, dependencies
 end
 ---Determine the tier of the given recipe category
----@type fun(CategoryID:data.RecipeCategoryID,category:LuaRecipeCategoryPrototype):tier,blockedReason[]
+---@type fun(CategoryID:data.RecipeCategoryID,category:LuaRecipeCategoryPrototype):tier,blockedReason[]|dependency[]
 tierSwitch["LuaRecipeCategoryPrototype"] = function (CategoryID, category)
 	local machines = lookup.CategoryItem[CategoryID]
 	if not machines then
@@ -207,14 +241,23 @@ tierSwitch["LuaRecipeCategoryPrototype"] = function (CategoryID, category)
 		return invalidReason.no_machine, {}
 	end
 	local categoryTier = math.huge;
+	---@type blockedReason[]
 	local blockedCategories = {}
+	---@type dependency
+	local machineDependant
 	for _, item in pairs(machines) do
 		-- If it's craftable by hand, it's a base recipe.
 		if item == "hand" then return 0, {} end
 		local itemTier = tierSwitch(item, lib.getItem(item))
 		-- Don't consider the machine if it takes something being calculated.
 		if itemTier >= 0 then
-			categoryTier = math.min(categoryTier, itemTier)
+			if itemTier < categoryTier then
+				categoryTier = itemTier
+				machineDependant = {
+					type = "LuaItemPrototype",
+					id = item
+				}
+			end
 		else
 			blockedCategories[#blockedCategories+1] = {
 				type = "LuaItemPrototype",
@@ -231,10 +274,10 @@ tierSwitch["LuaRecipeCategoryPrototype"] = function (CategoryID, category)
 	if lib.getSetting("tiergen-reduce-category") and categoryTier > 0 then
 		categoryTier = categoryTier - 1
 	end
-	return categoryTier, {}
+	return categoryTier, {machineDependant}
 end
 ---Determine the tier of the given recipe
----@type fun(recipeID:data.RecipeID,recipe:LuaRecipePrototype):tier,blockedReason[]
+---@type fun(recipeID:data.RecipeID,recipe:LuaRecipePrototype):tier,blockedReason[]|dependency[]
 tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 	if #recipe.ingredients == 0 then
 		lib.log("\t"..recipeID.." didn't require anything? Means it's a t0?")
@@ -242,9 +285,10 @@ tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 	end
 
 	-- Get recipe ingredients tier
-	local ingredientsTier, blockedIngredient = getIngredientsTier(recipe.ingredients)
+	local ingredientsTier, dependencies = getIngredientsTier(recipe.ingredients)
 	-- Exit early if child-tier isn't currently calculable
-	if ingredientsTier < 0 then return ingredientsTier, {blockedIngredient} end
+	if ingredientsTier < 0 then return ingredientsTier, dependencies end
+	---@cast dependencies dependency[]
 
 	-- Get category tier
 	local category = lib.getRecipeCategory(recipe.category)
@@ -257,7 +301,10 @@ tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 			reason = machineTier,
 		}}
 	end
-
+	dependencies[#dependencies+1] = {
+		type = "LuaRecipeCategoryPrototype",
+		id = category.name,
+	}
 	-- Get technology tier if it isn't enabled to start with
 	local technologyTier = 0
 	local blockedTechnology = {}
@@ -274,7 +321,13 @@ tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 			local nextTier = tierSwitch(technology, nextValue)
 			-- Assume currently calculating technology to be of higher tier
 			if nextTier >= 0 then
-				technologyTier = math.min(technologyTier, nextTier)
+				if nextTier < technologyTier then
+					technologyTier = nextTier
+					dependencies[#dependencies+1] = {
+						type = "LuaTechnologyPrototype",
+						id = technology,
+					}
+				end
 			else
 				blockedTechnology[#blockedTechnology+1] = {
 					type = "LuaTechnologyPrototype",
@@ -289,21 +342,28 @@ tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 		return invalidReason.no_valid_technology, blockedTechnology
 	end
 
-	return math.max(ingredientsTier, machineTier, technologyTier), {}
+	return math.max(ingredientsTier, machineTier, technologyTier), dependencies
 end
 ---Determine the tier of burning an item
----@type fun(ItemID:data.ItemID,value:LuaItemPrototype):tier,blockedReason[]
+---@type fun(ItemID:data.ItemID,value:LuaItemPrototype):tier,blockedReason[]|dependency[]
 tierSwitch["burning"] = function (ItemID, value)
 	local burningRecipes = lookup.Burning[ItemID]
 	local tier = math.huge
-
+	
+	---@type dependency[]
+	local dependencies
+	---@type blockedReason[]
 	local blockedBy = {}
 	for _, fuelID in pairs(burningRecipes) do
-		local fuelTier, blockedFuel = getIngredientsTier{{fuelID}}
+		local fuelTier, recipeDependencies = getIngredientsTier{{fuelID}}
 		if fuelTier < 0 then
-			blockedBy[#blockedBy+1] = blockedFuel
+			---@cast recipeDependencies blockedReason[]
+			for _, recipeDependency in ipairs(recipeDependencies) do
+				blockedBy[#blockedBy+1] = recipeDependency
+			end
 			goto continue
 		end
+		---@cast dependencies dependency[]
 		local fuel = lib.getItem(fuelID)
 		local categoryTier = tierSwitch("tiergen-fuel-"..fuel.fuel_category, {
 			object_name = "LuaRecipeCategoryPrototype",
@@ -316,8 +376,15 @@ tierSwitch["burning"] = function (ItemID, value)
 			}
 			goto continue
 		end
+		recipeDependencies[#recipeDependencies+1] = {
+			type = "LuaRecipeCategoryPrototype",
+			id = "tiergen-fuel-"..fuel.fuel_category,
+		}
 		local recipeTier = math.max(fuelTier, categoryTier)
-		tier = math.min(tier, recipeTier)
+		if recipeTier < tier then
+			tier = recipeTier
+			dependencies = recipeDependencies
+		end
 	  	::continue::
 	end
 
@@ -325,22 +392,29 @@ tierSwitch["burning"] = function (ItemID, value)
 		return invalidReason.no_valid_furnace, blockedBy
 	end
 
-	return tier, {}
+	return tier, dependencies
 end
 ---Determine the tier of launching an item into space
----@type fun(ItemID:data.ItemID,value:LuaItemPrototype):tier,blockedReason[]
+---@type fun(ItemID:data.ItemID,value:LuaItemPrototype):tier,blockedReason[]|dependency[]
 tierSwitch["rocket-launch"] = function (ItemID, value)
 	local rocketRecipes = lookup.Rocket[ItemID]
 	-- FIXME: actually consider the rocket-parts
 	local tier = math.huge
+	---@type dependency[]
+	local dependencies
+	---@type blockedReason[]
 	local blockedBy = {}
 
 	for _, satelliteID in pairs(rocketRecipes) do
-		local satelliteTier, blockedSatellite = getIngredientsTier{{satelliteID}}
+		local satelliteTier, itemDependencies = getIngredientsTier{{satelliteID}}
 		if satelliteTier < 0 then
-			blockedBy[#blockedBy+1] = blockedSatellite
+			---@cast itemDependencies blockedReason[]
+			for _, itemDependency in ipairs(itemDependencies) do
+				blockedBy[#blockedBy+1] = itemDependency
+			end
 			goto continue
 		end
+		---@cast itemDependencies dependency[]
 		local categoryTier = tierSwitch("tiergen-rocket-launch", {
 			object_name = "LuaRecipeCategoryPrototype",
 		})
@@ -352,8 +426,15 @@ tierSwitch["rocket-launch"] = function (ItemID, value)
 			}
 			goto continue
 		end
+		itemDependencies[#itemDependencies+1] = {
+			type = "LuaRecipeCategoryPrototype",
+			id = "tiergen-rocket-launch",
+		}
 		local recipeTier = math.max(satelliteTier, categoryTier)
-		tier = math.min(tier, recipeTier)
+		if recipeTier < tier then
+			tier = recipeTier
+			dependencies = itemDependencies
+		end
 	    ::continue::
 	end
 
@@ -361,10 +442,10 @@ tierSwitch["rocket-launch"] = function (ItemID, value)
 		return invalidReason.no_valid_rocket, blockedBy
 	end
 
-	return tier, {}
+	return tier, dependencies
 end
 ---Determine the tier of the given item or fluid
----@type fun(ItemID:data.ItemID|data.FluidID,value:LuaItemPrototype|LuaFluidPrototype):tier,blockedReason[]
+---@type fun(ItemID:data.ItemID|data.FluidID,value:LuaItemPrototype|LuaFluidPrototype):tier,blockedReason[]|dependency[]
 tierSwitch["LuaFluidPrototype"] = function (ItemID, value)
 	local recipes
 	if value.object_name == "LuaItemPrototype" then
@@ -378,25 +459,38 @@ tierSwitch["LuaFluidPrototype"] = function (ItemID, value)
 	if not recipes then return 0, {} end
 
 	local recipeTier = math.huge
+	---@type dependency[]
+	local dependencies
+	---@type blockedReason[]
 	local blockedRecipes = {}
 	for _, recipe in pairs(recipes) do
 		-- if the recipeID starts with "tiergen-" then it's a fake recipe
 		-- this mod *will not* make recipes
 		local _, realstart = recipe:find("^tiergen[-]")
 		local tempTier = math.huge
-		local tempBlocked = nil
+		local tempDependencies = nil
 		if realstart then
 			local fakeRecipeID = recipe:sub(realstart+1)
-			tempTier, tempBlocked = tierSwitch[fakeRecipeID](ItemID, value)
+			tempTier, tempDependencies = tierSwitch[fakeRecipeID](ItemID, value)
 		else
 			local recipePrototype = lib.getRecipe(recipe)
 			tempTier = tierSwitch(recipe, recipePrototype)
 		end
 		-- Skip recipe if it's using something being calculated
 		if tempTier >= 0 then
-			recipeTier = math.min(recipeTier, tempTier)
-		elseif tempBlocked then
-			for _, blocked in ipairs(tempBlocked) do
+			if tempTier < recipeTier then
+				recipeTier = tempTier
+				if tempDependencies then
+					dependencies = tempDependencies
+				else
+					dependencies = {{
+						type = "LuaRecipePrototype",
+						id = recipe,
+					}}
+				end
+			end
+		elseif tempDependencies then
+			for _, blocked in ipairs(tempDependencies) do
 				blockedRecipes[#blockedRecipes+1] = blocked
 			end
 		else
@@ -416,9 +510,9 @@ tierSwitch["LuaFluidPrototype"] = function (ItemID, value)
 		return invalidReason.no_valid_recipe, blockedRecipes
 	end
 
-	return recipeTier + 1, {}
+	return recipeTier + 1, dependencies
 end
-tierSwitch["LuaItemPrototype"] = tierSwitch["LuaFluidPrototype"] --[[@as fun(ItemID:data.ItemID|data.FluidID,value:LuaItemPrototype|LuaFluidPrototype):tier,blockedReason[] ]]
+tierSwitch["LuaItemPrototype"] = tierSwitch["LuaFluidPrototype"] --[[@as fun(ItemID:data.ItemID|data.FluidID,value:LuaItemPrototype|LuaFluidPrototype):tier,blockedReason[]|dependency[] ]]
 --#endregion
 
 local function checkLookup()
@@ -429,34 +523,74 @@ end
 
 ---Calculates the tier of a given itemID
 ---@param itemID string
----@return string?
+---@return uint
 local function calculateTier(itemID)
+	checkLookup()
+	local isValid, itemPrototype = pcall(lib.getItem, itemID)
+	if not isValid then
+		log("\tWas given an invalid item: "..itemID)
+		return invalidReason.not_an_item
+	end
+	local tier = tierSwitch(itemID, itemPrototype)
+	if tier < 0 then
+		log("Failed to calculate "..itemID.."'s tier")
+	else
+		lib.log("\t"..itemID..": Tier "..tier)
+	end
+	return tier
+end
+
+---Takes an item and turns it into a table of item/fluid tiers
+---@param dependency dependency
+---@param table tierTable
+---@param processed table<handledTypes,{[string]:boolean}>
+local function resolveDependencies(dependency, table, processed)
+	local item = TierMaps[dependency.type][dependency.id]
+	if processed[dependency.type][dependency.id] then return end
+	if dependency.type == "LuaFluidPrototype"
+	or dependency.type == "LuaItemPrototype" then
+		local type = dependency.type == "LuaFluidPrototype" and "fluid" or "item"
+		lib.appendToArrayInTable(table, type, {
+			name = dependency.id,
+			tier = item.tier,
+		})
+	end
+	processed[dependency.type][dependency.id] = true
+	for _, dependency in ipairs(item.dependencies) do
+		resolveDependencies(dependency, table, processed)
+	end
+end
+
+---Turns a table of resolved dependencies into a tier array
+---@param dependencies tierTable
+---@return tierArray
+local function depenenciesToArray(dependencies)
+	---@type tierArray
+	local tierArray = {}
+	for _, type in ipairs({"item","fluid"}) do
+		for _, tierItem in ipairs(dependencies[type]) do
+			lib.appendToArrayInTable(tierArray, tierItem.tier+1, {
+				name = tierItem.name,
+				type = type,
+			})
+		end
+	end
+	return tierArray
+end
+
+---Directly set the tier of a given itemID
+---@param itemID string
+local function setTier(itemID)
 	checkLookup()
 	local isValid, itemPrototype = pcall(lib.getItem, itemID)
 	if not isValid then
 		log("\tWas given an invalid item: "..itemID)
 		return
 	end
-	local tier = -1
-	local rounds = 0
-	while tier < 0 and rounds < 5 do
-		tier = tierSwitch(itemID, itemPrototype)
-		rounds = rounds + 1
-	end
-	if rounds == 5 then
-		log("Gave up trying to calculate "..itemID.."'s tier")
-	else
-		if rounds > 1 then
-			log("MULTIPLE ROUNDS ACTUALLY DOES SOMETHING")
-		end
-		lib.log("\t"..itemID..": Tier "..tier.." after "..rounds.." attempt(s)")
-		return
-	end
+	baseOverride[itemID] = true
 end
-
----Clears the tierArray and processing tables
+---Clears the working tables
 local function uncalculate()
-	tierArray = {}
 	baseOverride = {}
 	local prototypes = {
 		"LuaRecipeCategoryPrototype",
@@ -472,29 +606,37 @@ local function uncalculate()
 	end
 end
 
----Directly set the tier of a given itemID
----@param itemID string
-local function setTier(itemID)
-	checkLookup()
-	local isValid, itemPrototype = pcall(lib.getItem, itemID)
-	if not isValid then
-		log("\tWas given an invalid item: "..itemID)
-		return
+---comment
+---@param itemIDs data.ItemID[]
+---@return tierArray
+local function getTier(itemIDs)
+	local table, processed = {},{
+		["LuaRecipeCategoryPrototype"] = {},
+		["LuaTechnologyPrototype"] = {},
+		["LuaRecipePrototype"] = {},
+		["LuaFluidPrototype"] = {},
+		["LuaItemPrototype"] = {},
+	}
+	for _, itemID in ipairs(itemIDs) do
+		local tier = calculateTier(itemID)
+		if tier >= 0 then
+			resolveDependencies({
+				type = "LuaItemPrototype",
+				id = itemID
+			}, table, processed)
+		end
 	end
-	baseOverride[itemID] = true
+	return depenenciesToArray(table)
 end
 
 return {
 	set = setTier,
+	unset = uncalculate,
 	calculate = calculateTier,
-	get = function ()
-		return tierArray
-	end,
-	uncalculate = uncalculate,
-	clearCache = function ()
-		processor.clearCache()
+	get = getTier,
+	reprocess = function ()
+		processor.unprocess()
 ---@diagnostic disable-next-line: cast-local-type
 		lookup = nil
-		uncalculate()
 	end
 }

@@ -3,7 +3,20 @@ local tier = require("__tier-generator__.calculation.tierCalculation")
 
 return {
 	calculate = function ()
-		tier.uncalculate()
+		lib.log("Calculating items")
+		local itemString = lib.getSetting("tiergen-item-calculation") --[[@as string]]
+		local itemIDs = lib.split(itemString, ",")
+		-- Trim whitespace
+		for index, itemID in pairs(lib.split(itemString, ",")) do
+			itemIDs[index] = itemID:match("^%s*(.-)%s*$")
+		end
+	
+		lib.log("Done!\n")
+	
+		return tier.get(itemIDs)
+	end,
+	updateBase = function ()
+		tier.unset()
 		lib.log("Setting base item overrides")
 		local baseItems = lib.getSetting("tiergen-base-items") --[[@as string]]
 		for _, itemID in pairs(lib.split(baseItems, ",")) do
@@ -12,17 +25,6 @@ return {
 			lib.log("\tSetting "..itemID.." to tier 0")
 			tier.set(itemID)
 		end
-		lib.log("Calculating items")
-		local items = lib.getSetting("tiergen-item-calculation") --[[@as string]]
-		for _, itemID in pairs(lib.split(items, ",")) do
-			-- Trim whitespace
-			itemID = itemID:match("^%s*(.-)%s*$")
-			tier.calculate(itemID)
-		end
-	
-		lib.log("Done!\n")
-	
-		return tier.get()
 	end,
-	clearCache = tier.clearCache
+	reprocess = tier.reprocess
 }

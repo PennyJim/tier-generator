@@ -79,24 +79,22 @@ end
 --#region Array Operations
 
 ---Appends to an array within a table
----@generic Key : string
----@generic Value : string
----@param table {[Key]:Value[]}
----@param key Key
----@param newValue Value
----@overload fun(table:tierItem[][],key:integer,newValue:tierItem)
+---@param table {[string]:string[]}
+---@param key string
+---@param newValue string
+---@overload fun(table:tierTable,key:"fluid"|"item",newValue:tierTableItem)
+---@overload fun(table:tierArray,key:uint,newValue:tierArrayItem)
 function library.appendToArrayInTable(table, key, newValue)
 	local array = table[key] or {}
 	array[#array+1] = newValue;
 	table[key] = array;
 end
 ---Prepends to an array within a table
----@generic Key : string
----@generic Value : string
----@param table {[Key]:Value[]}
----@param key Key
----@param newValue Value
----@overload fun(table:tierItem[][],key:integer,newValue:tierItem)
+---@param table {[string]:string[]}
+---@param key string
+---@param newValue string
+---@overload fun(table:tierTable,key:"fluid"|"item",newValue:tierTableItem)
+---@overload fun(table:tierArray,key:uint,newValue:tierArrayItem)
 function library.prependToArrayInTable(table, key, newValue)
 	local array = table[key] or {}
 	local shiftedValue = newValue

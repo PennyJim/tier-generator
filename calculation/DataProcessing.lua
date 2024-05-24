@@ -215,7 +215,7 @@ return {
 		end
 		return lookup
 	end,
-	clearCache = function ()
+	unprocess = function ()
 		for key in pairs(lookup) do
 			lookup[key] = {}
 		end

@@ -2,6 +2,10 @@ local calculator = require("__tier-generator__.calculation.calculator")
 local tierMenu = require("__tier-generator__.interface.tierMenu")
 
 local function recalcTiers()
+	if global.updateBase then
+		calculator.updateBase()
+		global.updateBase = nil
+	end
 	global.tier_array = calculator.calculate()
 	tierMenu.regenerate_menus()
 	script.on_nth_tick(1, nil)
@@ -9,6 +13,7 @@ local function recalcTiers()
 end
 
 script.on_init(function ()
+	global.updateBase = true
 	recalcTiers()
 end)
 
@@ -25,6 +30,7 @@ script.on_configuration_changed(function (ChangedData)
 	if ChangedData.mod_startup_settings_changed
 	or ChangedData.mod_changes
 	or ChangedData.migration_applied then
+		global.updateBase = true
 		recalcTiers()
 	end
 end)
@@ -48,7 +54,7 @@ script.on_event(defines.events.on_runtime_mod_setting_changed, function (EventDa
 		lib.clearSettingCache(setting)
 	end
 	if setting == "tiergen-ignored-recipes" then
-		calculator.clearCache()
+		calculator.reprocess()
 	end
 	if not global.willRecalc
 	and lib.isOurSetting(setting)
