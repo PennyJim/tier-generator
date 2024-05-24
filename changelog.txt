@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.1
-Date: ????
+Date: 2024-05-24
   Features:
     - Clicking on an item now highlights its dependents
     - Settings are now global and the list will be updated to match the settings
