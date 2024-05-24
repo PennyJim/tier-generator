@@ -2,10 +2,13 @@
 Version: 0.2.1
 Date: ????
   Features:
+    - Clicking on an item now highlights its dependents
     - Settings are now global and the list will be updated to match the settings
     - Add a setting to toggle on whether or not to consider technology when calculating
   Optimizations:
     - Now marks incalculable items and unmarks them once the blocking item is calculated
+  Changes:
+    - Left-most items are no longer reliably simpler than right-most items
   Bugfixes:
     - Fixed overriden base items not appearing in the tierlist
 ---------------------------------------------------------------------------------------------------

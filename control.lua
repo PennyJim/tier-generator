@@ -13,6 +13,7 @@ local function recalcTiers()
 end
 
 script.on_init(function ()
+	global.player_highlight = {}
 	global.updateBase = true
 	recalcTiers()
 end)
@@ -30,6 +31,7 @@ script.on_configuration_changed(function (ChangedData)
 	if ChangedData.mod_startup_settings_changed
 	or ChangedData.mod_changes
 	or ChangedData.migration_applied then
+		global.player_highlight = {}
 		global.updateBase = true
 		recalcTiers()
 	end

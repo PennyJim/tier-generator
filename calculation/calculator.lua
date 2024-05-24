@@ -15,6 +15,7 @@ return {
 	
 		return tier.get(itemIDs)
 	end,
+	get = tier.get,
 	updateBase = function ()
 		tier.unset()
 		lib.log("Setting base item overrides")

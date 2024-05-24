@@ -283,28 +283,9 @@ tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 		lib.log("\t"..recipeID.." didn't require anything? Means it's a t0?")
 		return 0, {}
 	end
+	---@type dependency[]
+	local dependencies = {}
 
-	-- Get recipe ingredients tier
-	local ingredientsTier, dependencies = getIngredientsTier(recipe.ingredients)
-	-- Exit early if child-tier isn't currently calculable
-	if ingredientsTier < 0 then return ingredientsTier, dependencies end
-	---@cast dependencies dependency[]
-
-	-- Get category tier
-	local category = lib.getRecipeCategory(recipe.category)
-	local machineTier = tierSwitch(category.name, category)
-	-- Exit early if child-tier isn't currently calculable
-	if machineTier < 0 then
-		return machineTier, {{
-			type = "LuaRecipeCategoryPrototype",
-			id = category.name,
-			reason = machineTier,
-		}}
-	end
-	dependencies[#dependencies+1] = {
-		type = "LuaRecipeCategoryPrototype",
-		id = category.name,
-	}
 	-- Get technology tier if it isn't enabled to start with
 	local technologyTier = 0
 	local blockedTechnology = {}
@@ -336,6 +317,31 @@ tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 				}
 			end
 		end
+	end
+
+	-- Get category tier
+	local category = lib.getRecipeCategory(recipe.category)
+	local machineTier = tierSwitch(category.name, category)
+	-- Exit early if child-tier isn't currently calculable
+	if machineTier < 0 then
+		return machineTier, {{
+			type = "LuaRecipeCategoryPrototype",
+			id = category.name,
+			reason = machineTier,
+		}}
+	end
+	dependencies[#dependencies+1] = {
+		type = "LuaRecipeCategoryPrototype",
+		id = category.name,
+	}
+
+	-- Get recipe ingredients tier
+	local ingredientsTier, itemDependencies = getIngredientsTier(recipe.ingredients)
+	-- Exit early if child-tier isn't currently calculable
+	if ingredientsTier < 0 then return ingredientsTier, itemDependencies end
+	---@cast itemDependencies dependency[]
+	for index, dependency in ipairs(itemDependencies) do
+		dependencies[index+1] = dependency
 	end
 
 	if technologyTier == math.huge then
@@ -568,12 +574,14 @@ local function depenenciesToArray(dependencies)
 	---@type tierArray
 	local tierArray = {}
 	for _, type in ipairs({"item","fluid"}) do
+		if not dependencies[type] then goto continue end
 		for _, tierItem in ipairs(dependencies[type]) do
 			lib.appendToArrayInTable(tierArray, tierItem.tier+1, {
 				name = tierItem.name,
 				type = type,
 			})
 		end
+    ::continue::
 	end
 	return tierArray
 end
