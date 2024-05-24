@@ -11,6 +11,7 @@ Date: ????
     - Left-most items are no longer reliably simpler than right-most items
   Bugfixes:
     - Fixed overriden base items not appearing in the tierlist
+    - Fixed ignored recipes not being ignored
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.0
 Date: 2024-05-20

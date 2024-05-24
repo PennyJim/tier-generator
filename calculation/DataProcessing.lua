@@ -16,7 +16,6 @@ function parseIgnoredRecipes()
 end
 
 --#region Process functions & loops
-lib.log("Processing data.raw")
 --#region Recipe Processing
 
 ---Parses `data.raw.recipe` items
@@ -48,6 +47,7 @@ local function processRecipe(recipeID, recipePrototype)
 end
 processFunctions[#processFunctions+1] = function ()
 	lib.log("\tProcessing recipes")
+	parseIgnoredRecipes()
 	for recipeID, rawRecipe in pairs(game.recipe_prototypes) do
 		processRecipe(recipeID, rawRecipe);
 	end
@@ -208,6 +208,7 @@ local hasReturned = false
 return {
 	process = function ()
 		if not hasReturned then
+			lib.log("Processing prototypes")
 			for _, processFunction in ipairs(processFunctions) do
 				processFunction()
 			end
