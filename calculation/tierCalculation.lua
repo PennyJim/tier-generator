@@ -238,11 +238,12 @@ tierSwitch["LuaTechnologyPrototype"] = function (technologyID, technology)
 		prereqTier = math.max(prereqTier, preTier)
 	end
 
+	if ingredientsTier > 0 and lib.getSetting("tiergen-reduce-technology") then
+		ingredientsTier = ingredientsTier - 1
+	end
 	local tier = math.max(ingredientsTier, prereqTier)
 	if tier == 0 then
 		log("I don't think a technology should ever be t0: "..technologyID)
-	elseif lib.getSetting("tiergen-reduce-technology") then
-		tier = tier - 1
 	end
 	return tier, dependencies
 end
@@ -331,6 +332,10 @@ tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 				}
 			end
 		end
+	end
+
+	if technologyTier < 0 then
+		return invalidReason.no_valid_technology, blockedTechnology
 	end
 
 	-- Get category tier

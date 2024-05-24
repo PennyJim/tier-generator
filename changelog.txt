@@ -12,6 +12,7 @@ Date: ????
   Bugfixes:
     - Fixed overriden base items not appearing in the tierlist
     - Fixed ignored recipes not being ignored
+    - Fixed the technology decrement applying even when the tier was determined by the prerequesite instead of items
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.0
 Date: 2024-05-20
