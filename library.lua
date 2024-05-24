@@ -53,10 +53,17 @@ function library.isOurSetting(setting)
 end
 --#endregion
 --#region Basic functions
----Only logs if debug_printing is enabled
+
+---Logs from a centralized point
 ---@param ... any
 ---@see log
 function library.log(...)
+	return log(...)
+end
+---Only logs if debug_printing is enabled
+---@param ... any
+---@see log
+function library.debug(...)
 	if library.getSetting("tiergen-debug-log") then
 		return log(...)
 	end

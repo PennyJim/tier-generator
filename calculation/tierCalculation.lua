@@ -1,5 +1,5 @@
 local processor = require("__tier-generator__.calculation.DataProcessing")
-local lookup ---@type LookupTables
+lookup = nil ---@type LookupTables
 local lib = require("__tier-generator__.library")
 
 ---@alias fakePrototype {type:string}
@@ -19,6 +19,18 @@ local invalidReason = {
 	error = -99,
 	not_an_item = -100,
 }
+setmetatable(invalidReason,{
+	---Returns the key of the given value
+	---@param self table<string,integer>
+	---@param reason int
+	---@return string
+	__call = function (self, reason)
+		for key, value in pairs(self) do
+			if value == reason then return key end
+		end
+		return "unknown"
+	end
+})
 ---@alias tier invalidReason|uint
 
 ---@class tierTableItem
@@ -67,10 +79,11 @@ local function unmarkIncalculable(type, prototypeID)
 	or incalculableItem.reason == invalidReason.not_unlockable then
 		return lib.log("\tWill not unmark an item marked invalid for a static reason. type: "..type.." id: "..prototypeID)
 	end
+	lib.debug(type..":"..prototypeID.." has been unmarked as incalculable")
+	incalculable[type][prototypeID] = nil
 	for _, nextItem in ipairs(incalculableItem.blocked) do
 		unmarkIncalculable(nextItem.type, nextItem.id)
 	end
-	incalculable[type][prototypeID] = nil
 end
 
 --#region Tier calculation
@@ -137,6 +150,7 @@ local tierSwitch = setmetatable({}, {
 				unmarkIncalculable(type, prototypeID)
 			end
 		else -- Mark as incalculable
+			lib.debug(type..":"..prototypeID.." failed because \""..invalidReason(result).."\"")
 			incalculable[type][prototypeID] = {
 				reason = tier.tier,
 				blocked = {}
