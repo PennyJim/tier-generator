@@ -80,6 +80,7 @@ processFunctions[#processFunctions+1] = function ()
 end
 --#endregion
 --#region Category Processing
+--#region Crafting Machines
 
 ---Parses `data.raw.assembling` and `data.raw.furnace` items
 ---@param EntityID data.EntityID
@@ -103,8 +104,9 @@ processFunctions[#processFunctions+1] = function ()
 	end
 	-- TODO: figure out how to *properly* check this
 	-- Add hand-crafting as simplest (first) recipe
-	lib.prependToArrayInTable(lookup.CategoryItem, "crafting", "hand")
 end
+--#endregion
+--#region Burner Machines
 
 ---Parses `data.raw.burner-generator` items
 ---@param EntityID data.EntityID
@@ -133,6 +135,8 @@ processFunctions[#processFunctions+1] = function ()
 		end
 	end
 end
+--#endregion
+--#region Rocket Silos
 
 ---Processes rocket silos
 ---@param EntityID data.EntityID
@@ -153,6 +157,46 @@ processFunctions[#processFunctions+1] = function ()
 	}) do
 		processCraftingMachine(EntityID, RocketSiloPrototype)
 		processRocketSilos(EntityID, RocketSiloPrototype)
+	end
+end
+--#endregion
+--#region Boilers
+
+---Processes boiler prototypes
+---@param BoilerID data.EntityID
+---@param boilerPrototype LuaEntityPrototype
+local function processBoilers(BoilerID, boilerPrototype)
+	local fluidboxes = boilerPrototype.fluidbox_prototypes
+	if #fluidboxes ~= 2 then
+		return lib.log("\t\t"..BoilerID.." is not a standard boiler? Ignoring...")
+	end
+	local input = fluidboxes[1].filter
+	local output = fluidboxes[2].filter
+
+	if not input or not output then
+		return lib.log("\t\t"..BoilerID.." fluidboxes aren't filtered? Ignoring...")
+	end
+
+	local entityItems = lib.getEntityItem(BoilerID, boilerPrototype)
+	if #entityItems == 0 then
+		return lib.log("\t\t"..BoilerID.." has no items placing it? Ignoring...")
+	end
+
+	lib.appendToArrayInTable(lookup.FluidRecipe, output.name, "tiergen-boil")
+	lib.appendToArrayInTable(lookup.boiling, output.name, {
+		input = input.name,
+		category = "tiergen-boil-"..BoilerID,
+	})
+	for _, entityItem in ipairs(entityItems) do
+		lib.appendToArrayInTable(lookup.CategoryItem, "tiergen-boil-"..BoilerID, entityItem.name)
+	end
+end
+processFunctions[#processFunctions+1] = function ()
+	lib.log("\tProcessing boiler recipes")
+	for boilerID, boilerPrototype in pairs(game.get_filtered_entity_prototypes{
+		{filter = "type", type = "boiler"},
+	}) do
+		processBoilers(boilerID, boilerPrototype)
 	end
 end
 --#endregion
@@ -184,15 +228,6 @@ local function processRocketRecipe(ItemID, itemPrototype)
 		end
 	end
 end
--- ---Parses all item-subtypes
--- ---@param ItemID data.ItemID
--- ---@param itemPrototype LuaItemPrototype
--- local function processItemSubtype(ItemID, itemPrototype)
--- 	if lookup.ItemType[ItemID] then
--- 		error(ItemID.." already assigned a type??")
--- 	end
--- 	lookup.ItemType[ItemID] = itemPrototype.type
--- end
 processFunctions[#processFunctions+1] = function ()
 	lib.log("\tProcessing items")
 	for ItemID, itemPrototype in pairs(game.item_prototypes) do

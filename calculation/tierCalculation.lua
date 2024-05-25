@@ -2,7 +2,7 @@ local processor = require("__tier-generator__.calculation.DataProcessing")
 lookup = nil ---@type LookupTables
 local lib = require("__tier-generator__.library")
 
----@alias fakePrototype {type:string}
+---@alias fakePrototype {object_name:string}
 ---@alias handledPrototypes fakePrototype|LuaRecipeCategoryPrototype|LuaTechnologyPrototype|LuaRecipePrototype|LuaFluidPrototype|LuaItemPrototype
 ---@alias handledTypes "LuaRecipeCategoryPrototype"|"LuaTechnologyPrototype"|"LuaRecipePrototype"|"LuaFluidPrototype"|"LuaItemPrototype"
 
@@ -467,6 +467,62 @@ tierSwitch["rocket-launch"] = function (ItemID, value)
 		return invalidReason.no_valid_rocket, blockedBy
 	end
 
+	return tier, dependencies
+end
+---Determine the tier of boiling a liquid
+---@type fun(FluidID:data.FluidID,value:LuaFluidPrototype):tier,blockedReason[]|dependency[]
+tierSwitch["boil"] = function (FluidID, value)
+	local recipes = lookup.boiling[FluidID]
+	---@type dependency[]
+	local dependencies
+	---@type blockedReason[]
+	local blockedBy = {}
+	local tier = math.huge
+
+	for _, recipe in ipairs(recipes) do
+		---@type dependency[]
+		local recipeDependencies = {}
+
+		local input = lib.getFluid(recipe.input)
+		local itemTier = tierSwitch(recipe.input, input)
+		recipeDependencies[#recipeDependencies+1] = {
+			type = "LuaFluidPrototype",
+			id = recipe.input,
+		}
+		if itemTier < 0 then
+			local dependency = recipeDependencies[#recipeDependencies]
+			---@cast dependency blockedReason
+			dependency.reason = itemTier
+			blockedBy[#blockedBy+1] = dependency
+			goto continue
+		end
+
+		local catTier = tierSwitch(recipe.category, {
+			object_name = "LuaRecipeCategoryPrototype"
+		})
+		recipeDependencies[#recipeDependencies+1] = {
+			type = "LuaRecipeCategoryPrototype",
+			id = recipe.category
+		}
+		if catTier < 0 then
+			local dependency = recipeDependencies[#recipeDependencies]
+			---@cast dependency blockedReason
+			dependency.reason = itemTier
+			blockedBy[#blockedBy+1] = dependency
+			goto continue
+		end
+
+		local recipeTier = math.max(itemTier, catTier)
+		if recipeTier < tier then
+			tier = recipeTier
+			dependencies = recipeDependencies
+		end
+	    ::continue::
+	end
+
+	if tier == math.huge then
+		return invalidReason.no_valid_recipe, blockedBy
+	end
 	return tier, dependencies
 end
 ---Determine the tier of the given item or fluid

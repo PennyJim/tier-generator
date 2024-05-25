@@ -12,6 +12,8 @@ lookup.RecipeTechnology = {}
 lookup.Burning = {}
 ---@type table<data.ItemID,data.ItemID[]>
 lookup.Rocket = {}
+---@type table<data.FluidID,{input:data.FluidID,category:string}[]>
+lookup.boiling = {}
 ---@type table<data.RecipeCategoryID, data.ItemID[]>
 lookup.CategoryItem = {}
 -- ---@type table<data.ItemID, data.ItemSubGroupID>
