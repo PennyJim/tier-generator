@@ -102,8 +102,21 @@ processFunctions[#processFunctions+1] = function ()
 	}) do
 		processCraftingMachine(EntityID, machinePrototype)
 	end
-	-- TODO: figure out how to *properly* check this
-	-- Add hand-crafting as simplest (first) recipe
+	for EntityID, EntityPrototype in pairs(game.get_filtered_entity_prototypes{
+		{filter = "type", type = "character"}
+	}) do
+---@diagnostic disable-next-line: cast-type-mismatch
+		---@cast EntityPrototype data.CharacterPrototype
+		if EntityID ~= "character" then
+			lib.log(EntityID.." is a custom CharacterPrototype")
+		end
+		local categories = EntityPrototype.crafting_categories
+		if categories then
+			for category in pairs(categories) do
+				lib.prependToArrayInTable(lookup.CategoryItem, category, "hand")
+			end
+		end
+	end
 end
 --#endregion
 --#region Burner Machines
