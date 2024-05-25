@@ -189,15 +189,22 @@ function library.getEntityItem(EntityID, entityPrototype)
 	end
 
 	return items
-	-- Unecessary?
-	-- for _, item in ipairs(items) do
-	-- 	local itemPrototype = library.getItemOrFluid(item.name, "item")
-
-	-- 	if itemPrototype.place_result and itemPrototype.place_result.name == EntityID then
-	-- 		return item.name
-	-- 	end
-	-- end
 end
+--#endregion
+--#region GUI functions
+
+---Gets the root element of a custom Gui. Eg: elements added like player.gui.screen.add{}
+---@param element LuaGuiElement
+---@return LuaGuiElement
+function library.getRootElement(element)
+	local lastElem = nil
+	while element.parent do
+		lastElem = element
+		element = element.parent --[[@as LuaGuiElement]]
+	end
+	return lastElem or element
+end
+
 --#endregion
 
 return library

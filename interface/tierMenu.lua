@@ -217,21 +217,19 @@ script.on_event(defines.events.on_gui_click, function (EventData)
 	if not player then
 		return log("wtf")
 	end
+	local rootElement = lib.getRootElement(EventData.element)
+	if rootElement.name == "tiergen-menu" then
+		unhighlightItems(player)
+	end
 	if EventData.element.name == "close_button" then
-		local player = game.get_player(EventData.player_index)
-		if not player then
-			return log("wtf")
-		end
 		player.set_shortcut_toggled("tiergen-menu", false)
 		set_visibility(player, false)
 	elseif EventData.element.parent.name == "tierlist-items" then
-		unhighlightItems(player)
 		-- FIXME: Currently doesn't automatically unhighlighting elements
 		local type_item = EventData.element.name
 		local type = type_item:match("^[^/]+")
 		local item = type_item:match("/.+"):sub(2)
 		highlightArray = calculator.get({item}, type)
-		--- FIXME: Somehow highlights items in tiers above it?
 		global.player_highlight[EventData.player_index] = highlightArray
 		highlightItems(player)
 	end
