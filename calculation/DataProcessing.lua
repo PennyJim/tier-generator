@@ -23,8 +23,7 @@ end
 ---@param recipePrototype LuaRecipePrototype
 local function processRecipe(recipeID, recipePrototype)
 	if ignored_recipes[recipeID] then
-		lib.log("\t\t"..recipeID.." was in ignored settings. Ignoring...")
-		return
+		return lib.ignore(recipeID, "was in ignored settings.")
 	end
 	if #recipePrototype.products == 0 then
 		lib.log("\t\t"..recipeID.." didn't result in anything?")
@@ -33,8 +32,7 @@ local function processRecipe(recipeID, recipePrototype)
 	end
 	-- Ignore unbarreling recipes
 	if recipePrototype.subgroup.name == "empty-barrel" then
-		lib.log("\t\t"..recipeID.." is unbarreling. Ignoring...")
-		return
+		return lib.ignore(recipeID, "is unbarreling.")
 	end
 
 	for _, result in pairs(recipePrototype.products) do
@@ -79,7 +77,6 @@ processFunctions[#processFunctions+1] = function ()
 	end
 end
 --#endregion
---#region Category Processing
 --#region Crafting Machines
 
 ---Parses `data.raw.assembling` and `data.raw.furnace` items
@@ -102,20 +99,34 @@ processFunctions[#processFunctions+1] = function ()
 	}) do
 		processCraftingMachine(EntityID, machinePrototype)
 	end
+end
+--#endregion
+--#region Character Crafting
+
+---Processes a character prototype and adds the "hand" machine to its crafting_categories
+---@param EntityID data.EntityID
+---@param CharacterPrototype data.CharacterPrototype
+local function processCharacters(EntityID, CharacterPrototype)
+	---@diagnostic disable-next-line: cast-type-mismatch
+	if EntityID ~= "character" then
+		lib.log(EntityID.." is a custom CharacterPrototype")
+		-- Maybe return to discard custom CharacterPrototypes?
+	end
+	local categories = CharacterPrototype.crafting_categories
+	if categories then
+		for category in pairs(categories) do
+			lib.prependToArrayInTable(lookup.CategoryItem, category, "hand")
+		end
+	end
+end
+processFunctions[#processFunctions+1] = function ()
+	lib.log("\tProcessing CharacterPrototypes")
 	for EntityID, EntityPrototype in pairs(game.get_filtered_entity_prototypes{
 		{filter = "type", type = "character"}
 	}) do
 ---@diagnostic disable-next-line: cast-type-mismatch
 		---@cast EntityPrototype data.CharacterPrototype
-		if EntityID ~= "character" then
-			lib.log(EntityID.." is a custom CharacterPrototype")
-		end
-		local categories = EntityPrototype.crafting_categories
-		if categories then
-			for category in pairs(categories) do
-				lib.prependToArrayInTable(lookup.CategoryItem, category, "hand")
-			end
-		end
+		processCharacters(EntityID, EntityPrototype)
 	end
 end
 --#endregion
@@ -181,18 +192,18 @@ end
 local function processBoilers(BoilerID, boilerPrototype)
 	local fluidboxes = boilerPrototype.fluidbox_prototypes
 	if #fluidboxes ~= 2 then
-		return lib.log("\t\t"..BoilerID.." is not a standard boiler? Ignoring...")
+		return lib.ignore(BoilerID, "is not a standard boiler?")
 	end
 	local input = fluidboxes[1].filter
 	local output = fluidboxes[2].filter
 
 	if not input or not output then
-		return lib.log("\t\t"..BoilerID.." fluidboxes aren't filtered? Ignoring...")
+		return lib.ignore(BoilerID, "fluidboxes aren't filtered?")
 	end
 
 	local entityItems = lib.getEntityItem(BoilerID, boilerPrototype)
 	if #entityItems == 0 then
-		return lib.log("\t\t"..BoilerID.." has no items placing it? Ignoring...")
+		return lib.noItems(BoilerID)
 	end
 
 	lib.appendToArrayInTable(lookup.FluidRecipe, output.name, "tiergen-boil")
@@ -249,6 +260,7 @@ processFunctions[#processFunctions+1] = function ()
 		processRocketRecipe(ItemID, itemPrototype)
 	end
 end
+--#endregion
 --#endregion
 
 -- TODO: take into account whether a resource generates?

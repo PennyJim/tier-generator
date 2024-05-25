@@ -68,6 +68,19 @@ function library.debug(...)
 		return log(...)
 	end
 end
+---Adds the tabs, concatenates the id and reason with spaces
+---as well as adds "Ignoring..." to the end. Just for fewer repetition
+---@param id string
+---@param reason string
+function library.ignore(id, reason)
+	library.log("\t\t"..id.." "..reason.." Ignoring...")
+end
+---Essentially `TiergenLibrary.ignore` but with
+---"has no items placing it?" as the passed reason
+---@param id string
+function library.noItems(id)
+	library.log("\t\t"..id.." has no items placing it? Ignoring...")
+end
 ---Splits a string at 'sep'
 ---@param s string
 ---@param sep string
