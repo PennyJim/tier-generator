@@ -2,7 +2,8 @@ local calculator = require("__tier-generator__.calculation.calculator")
 local migrator = require("__tier-generator__.interface.tierMenuMigrations")
 lib = require("__tier-generator__.library")
 
----comment
+---Adds a title_bar to the given frame, and returns the
+---horizontal flow for elements to be put into
 ---@param frame LuaGuiElement
 ---@param caption LocalisedString
 local function create_titlebar(frame, caption)
@@ -16,6 +17,7 @@ local function create_titlebar(frame, caption)
 		direction = "horizontal"
 	}
 	title_flow.drag_target = frame
+	title_flow.style.horizontal_spacing = 8
 	title_flow.add{
 		type = "label",
 		style = "frame_title",
@@ -39,9 +41,26 @@ local function create_titlebar(frame, caption)
 		clicked_sprite = "utility/close_black",
 	}
 	return base_flow.add{
+		type = "flow",
+		name = "flow",
+		direction = "horizontal",
+		style = "inset_frame_container_horizontal_flow"
+	}
+end
+---Creates the options interface
+---@param base_flow LuaGuiElement
+local function create_options(base_flow)
+	local vert_flow = base_flow.add{
 		type = "frame",
-		name = "frame",
-		style = "inside_shallow_frame"
+		style = "inside_shallow_frame_with_padding"
+	}.add{
+		type = "flow",
+		direction = "vertical"
+	}
+	vert_flow.style.vertically_stretchable = true
+	local testing = vert_flow.add{
+		type = "label",
+		caption = "Testing Testing 1 2 3"
 	}
 end
 ---Updates the tier list for the player
@@ -49,7 +68,7 @@ end
 local function update_list(player)
 	local menu = player.gui.screen["tiergen-menu"]
 	---@type LuaGuiElement
-	local scroll = menu["base"]["frame"]["scroll"]
+	local scroll = menu["base"]["flow"]["scroll_frame"]["scroll"]
 	---@type LuaGuiElement
 	local table = scroll["table"]
 	if table then
@@ -109,7 +128,21 @@ local function update_list(player)
 			}
 		end
 	end
-	menu.force_auto_center()
+end
+---Creates the structure for the list
+---@param base_flow LuaGuiElement
+local function create_list(base_flow)
+	local scroll = base_flow.add{
+		type = "frame",
+		name = "scroll_frame",
+		style = "inside_shallow_frame"
+	}.add{
+		type = "scroll-pane",
+		name = "scroll",
+		style = "naked_scroll_pane"
+	}
+	scroll.style.maximal_height = 16*44
+	scroll.style.left_padding = 8
 end
 ---Creates the menu for the player
 ---@param player LuaPlayer
@@ -122,17 +155,11 @@ local function create_frame(player)
 		visible = false
 	}
 	base.auto_center = true
-	local base_frame = create_titlebar(base, {"tiergen.menu"})
-	local scroll = base_frame.add{
-		type = "scroll-pane",
-		name = "scroll",
-		style = "naked_scroll_pane"
-	}
-	scroll.style.maximal_height = 16*44
-	local table = scroll
-	table.style.left_padding = 8
+	local base_flow = create_titlebar(base, {"tiergen.menu"})
+	-- create_options(base_flow)
+	create_list(base_flow)
 	update_list(player)
-	return base_frame
+	return base
 end
 ---Changes the state of the tiergen menu for the player
 ---@param player LuaPlayer
@@ -176,7 +203,7 @@ end
 local function traverseArray(menu, array, callback)
 	array = array or {{}}
 	---@type LuaGuiElement
-	local table = menu["base"]["frame"]["scroll"]["table"]
+	local table = menu["base"]["flow"]["scroll_frame"]["scroll"]["table"]
 	for tier, items in ipairs(array) do
 		---@type LuaGuiElement
 		local item_table = table.children[tier*2]["tierlist-items"]
@@ -234,7 +261,6 @@ script.on_event(defines.events.on_gui_click, function (EventData)
 		highlightItems(player)
 	end
 end)
-
 
 return {
 	init = init,
