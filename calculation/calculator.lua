@@ -13,7 +13,7 @@ return {
 	
 		lib.log("Done!\n")
 	
-		return tier.get(itemIDs)
+		return tier.get(itemIDs, "item")
 	end,
 	get = tier.get,
 	updateBase = function ()

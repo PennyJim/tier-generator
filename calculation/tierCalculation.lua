@@ -557,10 +557,11 @@ end
 
 ---Calculates the tier of a given itemID
 ---@param itemID string
+---@param type "item"|"fluid"
 ---@return uint
-local function calculateTier(itemID)
+local function calculateTier(itemID, type)
 	checkLookup()
-	local isValid, itemPrototype = pcall(lib.getItem, itemID)
+	local isValid, itemPrototype = pcall(lib.getItemOrFluid, itemID, type)
 	if not isValid then
 		lib.log("\tWas given an invalid item: "..itemID)
 		return invalidReason.not_an_item
@@ -640,15 +641,16 @@ end
 
 ---comment
 ---@param itemIDs data.ItemID[]
+---@param type "item"|"fluid"
 ---@return tierArray
-local function getTier(itemIDs)
+local function getTier(itemIDs, type)
 	local table, processed = {},{}
 	resetTierMapTables(processed)
 	for _, itemID in ipairs(itemIDs) do
-		local tier = calculateTier(itemID)
+		local tier = calculateTier(itemID, type)
 		if tier >= 0 then
 			resolveDependencies({
-				type = "LuaItemPrototype",
+				type = type == "item" and "LuaItemPrototype" or "LuaFluidPrototype",
 				id = itemID
 			}, table, processed)
 		end

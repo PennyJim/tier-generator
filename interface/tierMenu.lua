@@ -204,7 +204,7 @@ local function traverseArray(menu, array, callback)
 	array = array or {{}}
 	---@type LuaGuiElement
 	local table = menu["base"]["flow"]["scroll_frame"]["scroll"]["table"]
-	if table.type ~= table then
+	if table.type ~= "table" then
 		return -- No tiers error message
 	end
 	for tier, items in ipairs(array) do
@@ -259,7 +259,7 @@ script.on_event(defines.events.on_gui_click, function (EventData)
 		local type_item = EventData.element.name
 		local type = type_item:match("^[^/]+")
 		local item = type_item:match("/.+"):sub(2)
-		highlightArray = calculator.get({item}, type)
+		local highlightArray = calculator.get({item}, type)
 		global.player_highlight[EventData.player_index] = highlightArray
 		highlightItems(player)
 	end
