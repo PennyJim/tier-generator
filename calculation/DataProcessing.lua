@@ -166,12 +166,22 @@ end
 ---@param EntityID data.EntityID
 ---@param RocketSiloPrototype LuaEntityPrototype
 local function processRocketSilos(EntityID, RocketSiloPrototype)
+	local fixed_recipe = RocketSiloPrototype.fixed_recipe
+	if not fixed_recipe then
+		return lib.ignore(EntityID, "doesn't have a set rocket recipe?")
+	end
+	local rocket_parts = lib.getRecipe(fixed_recipe).products
+	if #rocket_parts ~= 1 then
+		return lib.ignore(EntityID, "has more than one product to its fixed_recipe?")
+	end
+
 	local itemIDs = lib.getEntityItem(EntityID, RocketSiloPrototype)
 	if #itemIDs == 0 then
 		return -- Ignore machine if not placeable
 	end
+
 	for _, itemID in ipairs(itemIDs) do
-		lib.appendToArrayInTable(lookup.CategoryItem, "tiergen-rocket-launch", itemID.name)
+		lib.appendToArrayInTable(lookup.CategoryItem, "tiergen-rocket-launch", rocket_parts[1].name)
 	end
 end
 processFunctions[#processFunctions+1] = function ()
@@ -207,7 +217,7 @@ local function processBoilers(BoilerID, boilerPrototype)
 	end
 
 	lib.appendToArrayInTable(lookup.FluidRecipe, output.name, "tiergen-boil")
-	lib.appendToArrayInTable(lookup.boiling, output.name, {
+	lib.appendToArrayInTable(lookup.Boiling, output.name, {
 		input = input.name,
 		category = "tiergen-boil-"..BoilerID,
 	})

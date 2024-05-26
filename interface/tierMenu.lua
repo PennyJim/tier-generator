@@ -204,6 +204,9 @@ local function traverseArray(menu, array, callback)
 	array = array or {{}}
 	---@type LuaGuiElement
 	local table = menu["base"]["flow"]["scroll_frame"]["scroll"]["table"]
+	if table.type ~= table then
+		return -- No tiers error message
+	end
 	for tier, items in ipairs(array) do
 		---@type LuaGuiElement
 		local item_table = table.children[tier*2]["tierlist-items"]

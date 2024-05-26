@@ -3,6 +3,7 @@ Version: 0.2.2
 Date: ????
   Bugfixes:
     - Now unhighlights when you click anywhere on the Tier Menu
+    - Rocket products now consider building the rocket instead of just the silo
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.1
 Date: 2024-05-24

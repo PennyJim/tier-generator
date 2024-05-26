@@ -315,11 +315,7 @@ tierSwitch["rocket-launch"] = function (ItemID, _)
 			return doRecipe(
 				{{satellite}},
 				"tiergen-rocket-launch",
-				blockedBy,
-				function (dependencies)
-					-- FIXME: actually consider the rocket-parts
-					return 0
-				end
+				blockedBy
 			)
 		end
 	)

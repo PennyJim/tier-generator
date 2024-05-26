@@ -107,7 +107,7 @@ end
 ---@param newValue string
 ---@overload fun(table:tierTable,key:"fluid"|"item",newValue:tierTableItem)
 ---@overload fun(table:tierArray,key:uint,newValue:tierArrayItem)
----@overload fun(table: table<data.FluidID,{input:data.FluidID,category:string}[]>,key:data.FluidID,newValue:{input:data.FluidID,category:string})
+---@overload fun(table:table<data.ItemID,SingleItemFakeRecipe[]>,key:data.ItemID,newValue:SingleItemFakeRecipe)
 function library.appendToArrayInTable(table, key, newValue)
 	local array = table[key] or {}
 	array[#array+1] = newValue;
@@ -119,7 +119,7 @@ end
 ---@param newValue string
 ---@overload fun(table:tierTable,key:"fluid"|"item",newValue:tierTableItem)
 ---@overload fun(table:tierArray,key:uint,newValue:tierArrayItem)
----@overload fun(table: table<data.FluidID,{input:data.FluidID,category:string}[]>,key:data.FluidID,newValue:{input:data.FluidID,category:string})
+---@overload fun(table:table<data.ItemID,SingleItemFakeRecipe[]>,key:data.ItemID,newValue:SingleItemFakeRecipe)
 function library.prependToArrayInTable(table, key, newValue)
 	local array = table[key] or {}
 	local shiftedValue = newValue
