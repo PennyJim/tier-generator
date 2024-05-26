@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.2
-Date: ????
+Date: 2024-05-26
   Features:
     - Mining resources are now accounted for in the chain. This means uranium ore is no longer T0
     - Offshore pumps are now accounted for in the chain
