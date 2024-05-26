@@ -234,6 +234,38 @@ processFunctions[#processFunctions+1] = function ()
 	end
 end
 --#endregion
+--#region Offshore Pumps
+
+---Processes offshore pumps to make them a recipe
+---@param PumpID data.EntityID
+---@param pumpPrototype LuaEntityPrototype
+local function processOffshorePumps(PumpID, pumpPrototype)
+	local fluid = pumpPrototype.fluid
+	if not fluid then
+		return lib.ignore(PumpID, "has no fluid output!?")
+	end
+
+	local items = lib.getEntityItem(PumpID, pumpPrototype)
+	if #items == 0 then
+		return lib.noItems(PumpID)
+	end
+
+	lib.appendToArrayInTable(lookup.FluidRecipe, fluid.name, "tiergen-offshore-pump")
+	lib.appendToArrayInTable(lookup.OffshorePumping, fluid.name, "tiergen-pump-"..PumpID)
+	for _, item in ipairs(items) do
+		lib.appendToArrayInTable(lookup.CategoryItem, "tiergen-pump-"..PumpID, item.name)
+	end
+end
+processFunctions[#processFunctions+1] = function ()
+	lib.log("\tProcessing offshore pumps")
+	for EntityID, entityPrototype in pairs(game.get_filtered_entity_prototypes{
+		{filter = "type", type = "offshore-pump"}
+	}) do
+		processOffshorePumps(EntityID, entityPrototype)
+	end
+end
+
+--#endregion
 --#region Item Processing
 
 ---Parses all items and creates a `recipe` out of the burnt_result

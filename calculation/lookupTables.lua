@@ -26,6 +26,8 @@ lookup.Rocket = {}
 ---@field category data.RecipeCategoryID
 ---@type table<data.FluidID,{input:data.FluidID,category:data.RecipeCategoryID}[]>
 lookup.Boiling = {}
+---@type table<data.FluidID,data.RecipeCategoryID[]>
+lookup.OffshorePumping = {}
 --#endregion
 
 return lookup

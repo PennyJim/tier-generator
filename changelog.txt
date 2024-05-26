@@ -1,6 +1,8 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.2
 Date: ????
+  Features:
+    - Offshore pumps are now considered in the chain
   Bugfixes:
     - Now unhighlights when you click anywhere on the Tier Menu
     - Rocket products now consider building the rocket instead of just the silo

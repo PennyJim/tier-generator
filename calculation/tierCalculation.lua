@@ -3,13 +3,13 @@ lookup = nil ---@type LookupTables
 local lib = require("__tier-generator__.library")
 
 ---@alias fakeCategory "LuaRecipeCategoryPrototype"
----@alias fakeRecipes "burning"|"rocket-launch"|"boil"
+---@alias fakeRecipes "burning"|"rocket-launch"|"boil"|"offshore-pump"
 ---@alias handledPrototypes LuaRecipeCategoryPrototype|LuaTechnologyPrototype|LuaRecipePrototype|LuaFluidPrototype|LuaItemPrototype
 ---@alias tierSwitchValues handledPrototypes|fakeCategory|fakeRecipes
 ---@alias tierSwitchTypes LuaObject.object_name|fakeRecipes
 
 ---@enum invalidReason
-local invalidReason = {
+invalidReason = {
 	calculating = -1,
 	no_valid_machine = -2,
 	no_valid_technology = -3,
@@ -17,6 +17,7 @@ local invalidReason = {
 	no_valid_rocket = -5,
 	no_valid_recipe = -6,
 	no_valid_boiler = -7,
+	no_valid_offshore_pump = -8,
 	not_unlockable = -97,
 	no_machine = -98,
 	error = -99,
@@ -76,7 +77,8 @@ local function resetTierMapTables(...)
 		"LuaItemPrototype",
 		"burning",
 		"rocket-launch",
-		"boil",		
+		"boil",
+		"offshore-pump",
 	}
 	for _, prototype in ipairs(prototypes) do
 		for _, table in ipairs{...} do
@@ -348,6 +350,30 @@ tierSwitch["boil"] = function (FluidID,_)
 	)
 	if tier < 0 then
 		return tier, blockedBy
+	else
+		---@cast dependencies dependency[]
+		return tier, dependencies
+	end
+end
+---Determine the tier of pumping fluid out of a lake
+---@type fun(FluidID:data.FluidID,_:LuaFluidPrototype):tier,blockedReason[]|dependency[]
+tierSwitch["offshore-pump"] = function (FluidID, _)
+	local recipes = lookup.OffshorePumping[FluidID]
+	---@type blockedReason[]
+	local blockedby = {}
+
+	local tier, dependencies = lib.getMinTierArray(
+		recipes, invalidReason.no_valid_offshore_pump,
+		function (recipe)
+			return doRecipe(
+				{}, -- No ingredients
+				recipe,
+				blockedby
+			)
+		end
+	)
+	if tier < 0 then
+		return tier, blockedby
 	else
 		---@cast dependencies dependency[]
 		return tier, dependencies
