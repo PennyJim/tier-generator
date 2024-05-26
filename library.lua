@@ -54,6 +54,9 @@ end
 --#endregion
 --#region Basic functions
 
+---A renamed version of `type` so it can be used as a local variable
+---without losing the function
+library.type = type
 ---Logs from a centralized point
 ---@param ... any
 ---@see log
@@ -126,6 +129,36 @@ function library.prependToArrayInTable(table, key, newValue)
 	end
 	array[#array+1] = shiftedValue
 	table[key] = array;
+end
+--#endregion
+--#region TierCalculation functions
+
+---Takes an array and calls the given function for each item.
+---Returns the minimum tier and the dependencies of it
+---@nodiscard
+---@generic item : any
+---@param array item[]
+---@param invalid invalidReason
+---@param callback fun(item:item):tier,dependency[]?
+---@return tier
+---@return dependency[]?
+function library.getMinTierArray(array, invalid, callback)
+	---@type dependency[]?
+	local dependencies
+	local tier = math.huge
+
+	for _, item in ipairs(array) do
+		local itemTier, itemDependencies = callback(item)
+		if itemTier >= 0 and itemTier < tier then
+			tier = itemTier
+			dependencies = itemDependencies
+		end
+	end
+
+	if tier == math.huge then
+		tier = invalid
+	end
+	return tier, dependencies
 end
 --#endregion
 --#region Item Resolvers
