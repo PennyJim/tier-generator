@@ -68,7 +68,7 @@ incalculable = {}
 
 ---Takes the given table of tierSwitchTypes to arrays and resets them
 ---@param ... table<tierSwitchTypes,any>
-local function resetTierMapTables(...)
+local function initTierMapTables(...)
 	local prototypes = {
 		"LuaRecipeCategoryPrototype",
 		"LuaTechnologyPrototype",
@@ -86,6 +86,7 @@ local function resetTierMapTables(...)
 		end
 	end
 end
+initTierMapTables(TierMaps, calculating, incalculable)
 
 ---Clears the incalculable table for the given item and what it blocked
 ---@param type tierSwitchTypes
@@ -623,7 +624,7 @@ end
 ---@param itemID string
 local function setTier(itemID)
 	checkLookup()
-	local isValid, itemPrototype = pcall(lib.getItem, itemID)
+	local isValid = pcall(lib.getItem, itemID)
 	if not isValid then
 		lib.log("\tWas given an invalid item: "..itemID)
 		return
@@ -634,12 +635,7 @@ end
 ---Clears the working tables
 local function uncalculate()
 	baseOverride = {}
-	resetTierMapTables(TierMaps, calculating, incalculable)
-	-- for _, prototype in ipairs(prototypes) do
-	-- 	TierMaps[prototype] = {}
-	-- 	calculating[prototype] = {}
-	-- 	incalculable[prototype] = {}
-	-- end
+	initTierMapTables(TierMaps, calculating, incalculable)
 end
 
 ---comment
@@ -648,7 +644,7 @@ end
 ---@return tierArray
 local function getTier(itemIDs, type)
 	local table, processed = {},{}
-	resetTierMapTables(processed)
+	initTierMapTables(processed)
 	for _, itemID in ipairs(itemIDs) do
 		local tier = calculateTier(itemID, type)
 		if tier >= 0 then
@@ -668,6 +664,7 @@ return {
 	get = getTier,
 	reprocess = function ()
 		processor.unprocess()
+		uncalculate()
 ---@diagnostic disable-next-line: cast-local-type
 		lookup = nil
 	end
