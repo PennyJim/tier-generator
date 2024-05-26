@@ -15,6 +15,7 @@ end
 script.on_init(function ()
 	global.player_highlight = {}
 	global.updateBase = true
+	tierMenu.init()
 	recalcTiers()
 end)
 
@@ -66,6 +67,8 @@ script.on_event(defines.events.on_runtime_mod_setting_changed, function (EventDa
 	end
 	if setting == "tiergen-ignored-recipes" then
 		calculator.reprocess()
+	elseif setting == "tiergen-base-items" then
+		global.updateBase = true
 	end
 	if not global.willRecalc
 	and lib.isOurSetting(setting)

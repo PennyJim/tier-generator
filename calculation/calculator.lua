@@ -1,6 +1,18 @@
 local lib = require("__tier-generator__.library")
 local tier = require("__tier-generator__.calculation.tierCalculation")
 
+local function updateBase ()
+	tier.unset()
+	lib.log("Setting base item overrides")
+	local baseItems = lib.getSetting("tiergen-base-items") --[[@as string]]
+	for _, itemID in pairs(lib.split(baseItems, ",")) do
+		-- Trim whitespace
+		itemID = itemID:match("^%s*(.-)%s*$")
+		lib.log("\tSetting "..itemID.." to tier 0")
+		tier.set(itemID)
+	end
+end
+
 return {
 	calculate = function ()
 		lib.log("Calculating items")
@@ -16,16 +28,9 @@ return {
 		return tier.get(itemIDs, "item")
 	end,
 	get = tier.get,
-	updateBase = function ()
-		tier.unset()
-		lib.log("Setting base item overrides")
-		local baseItems = lib.getSetting("tiergen-base-items") --[[@as string]]
-		for _, itemID in pairs(lib.split(baseItems, ",")) do
-			-- Trim whitespace
-			itemID = itemID:match("^%s*(.-)%s*$")
-			lib.log("\tSetting "..itemID.." to tier 0")
-			tier.set(itemID)
-		end
-	end,
-	reprocess = tier.reprocess
+	updateBase = updateBase,
+	reprocess = function ()
+		tier.reprocess()
+		updateBase()
+	end
 }
