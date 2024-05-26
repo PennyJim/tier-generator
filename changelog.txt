@@ -6,6 +6,7 @@ Date: ????
   Bugfixes:
     - Now unhighlights when you click anywhere on the Tier Menu
     - Rocket products now consider building the rocket instead of just the silo
+    - Clicking on fluids now also highlight their dependents
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.1
 Date: 2024-05-24
