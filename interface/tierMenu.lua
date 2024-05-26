@@ -255,7 +255,6 @@ script.on_event(defines.events.on_gui_click, function (EventData)
 		player.set_shortcut_toggled("tiergen-menu", false)
 		set_visibility(player, false)
 	elseif EventData.element.parent.name == "tierlist-items" then
-		-- FIXME: Currently doesn't automatically unhighlighting elements
 		local type_item = EventData.element.name
 		local type = type_item:match("^[^/]+")
 		local item = type_item:match("/.+"):sub(2)

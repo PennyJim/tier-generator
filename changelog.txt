@@ -3,6 +3,8 @@ Version: 0.2.2
 Date: ????
   Features:
     - Offshore pumps are now considered in the chain
+  Changes:
+    - Refactored almost the entire tier calculation. Should now have less of a chance of dependency bugs and be mostly easier to read.
   Bugfixes:
     - Now unhighlights when you click anywhere on the Tier Menu
     - Rocket products now consider building the rocket instead of just the silo
