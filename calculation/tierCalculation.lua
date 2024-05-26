@@ -405,7 +405,7 @@ tierSwitch["LuaTechnologyPrototype"] = function (technologyID, technology)
 		prereqTier = math.max(prereqTier, preTier)
 	end
 
-	if ingredientsTier > 0 and not lib.getSetting("tiergen-reduce-technology") then
+	if not lib.getSetting("tiergen-reduce-technology") and ingredientsTier > 0 then
 		-- Used to be subtraction, but a refactor now implicitly does this.
 		-- now the opposite of the setting determines if we undo it
 		ingredientsTier = ingredientsTier + 1
@@ -445,8 +445,11 @@ tierSwitch["LuaRecipeCategoryPrototype"] = function (CategoryID)
 	end
 	---@cast dependencies dependency[]
 
-	if lib.getSetting("tiergen-reduce-category") and tier > 0 then
-		tier = tier - 1
+	---
+	if not lib.getSetting("tiergen-reduce-category") and tier > 0 then
+		-- Used to be subtraction, but a refactor now implicitly does this.
+		-- now the opposite of the setting determines if we undo it
+		tier = tier + 1
 	end
 	return tier, dependencies
 end
