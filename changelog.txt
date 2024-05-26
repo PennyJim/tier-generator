@@ -2,7 +2,8 @@
 Version: 0.2.2
 Date: ????
   Features:
-    - Offshore pumps are now considered in the chain
+    - Mining resources are now accounted for in the chain. This means uranium ore is no longer T0
+    - Offshore pumps are now accounted for in the chain
   Changes:
     - Refactored almost the entire tier calculation. Should now have less of a chance of dependency bugs and be mostly easier to read.
   Bugfixes:

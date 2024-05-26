@@ -2,23 +2,27 @@ local processor = require("__tier-generator__.calculation.DataProcessing")
 lookup = nil ---@type LookupTables
 local lib = require("__tier-generator__.library")
 
----@alias fakeCategory "LuaRecipeCategoryPrototype"
 ---@alias fakeRecipes "burning"|"rocket-launch"|"boil"|"offshore-pump"
+---@class fakePrototype : LuaObject
+---@field object_name fakeRecipes|"LuaRecipeCategoryPrototype"
+---@field real_object_name LuaObject.object_name
 ---@alias handledPrototypes LuaRecipeCategoryPrototype|LuaTechnologyPrototype|LuaRecipePrototype|LuaFluidPrototype|LuaItemPrototype
----@alias tierSwitchValues handledPrototypes|fakeCategory|fakeRecipes
+---@alias tierSwitchValues handledPrototypes|fakePrototype
 ---@alias tierSwitchTypes LuaObject.object_name|fakeRecipes
 
 ---@enum invalidReason
 invalidReason = {
-	calculating = -1,
+	busy_calculating = -1,
 	no_valid_machine = -2,
 	no_valid_technology = -3,
-	no_valid_furnace = -4,
-	no_valid_rocket = -5,
-	no_valid_recipe = -6,
-	no_valid_boiler = -7,
-	no_valid_offshore_pump = -8,
-	not_unlockable = -97,
+	no_valid_miner = -4,
+	no_valid_furnace = -5,
+	no_valid_rocket = -6,
+	no_valid_recipe = -7,
+	no_valid_boiler = -8,
+	no_valid_offshore_pump = -9,
+	not_unlockable = -96,
+	no_recipe = -97,
 	no_machine = -98,
 	error = -99,
 	not_an_item = -100,
@@ -75,6 +79,7 @@ local function initTierMapTables(...)
 		"LuaRecipePrototype",
 		"LuaFluidPrototype",
 		"LuaItemPrototype",
+		"mining",
 		"burning",
 		"rocket-launch",
 		"boil",
@@ -118,14 +123,7 @@ local tierSwitch = setmetatable({}, {
 	---@param value tierSwitchValues
 	---@return tier
 	__call = function(self, prototypeID, value)
-		local type
-		if lib.type(value) == "string" then
-			---@cast value string
-			type = value
-		else
-			---@cast value handledPrototypes
-			type = value.object_name
-		end
+		local type = value.object_name
 
 		local tier = TierMaps[type][prototypeID]
 		if tier ~= nil then return tier.tier end
@@ -136,7 +134,7 @@ local tierSwitch = setmetatable({}, {
 			}
 			return 0
 		end
-		if calculating[type][prototypeID] then return invalidReason.calculating end
+		if calculating[type][prototypeID] then return invalidReason.busy_calculating end
 		local incalculableItem = incalculable[type][prototypeID]
 		if incalculableItem then -- and incalculableItem.reason ~= invalidReason.calculating then
 			return incalculableItem.reason
@@ -184,7 +182,7 @@ local tierSwitch = setmetatable({}, {
 			for _, reason in ipairs(dependencies) do
 				incalculableItem = incalculable[reason.type][reason.id]
 				if not incalculableItem then
-					if reason.reason ~= invalidReason.calculating then
+					if reason.reason ~= invalidReason.busy_calculating then
 						lib.log("\tMarking "..reason.id.." as incalculable because "..reason.reason)
 					end
 					incalculableItem = {
@@ -267,7 +265,9 @@ local function doRecipe(ingredients, category, blocked, callback)
 	local ingredientsTier = getIngredientsTier(ingredients, dependencies, blocked)
 	if ingredientsTier < 0 then return ingredientsTier end
 	local categoryTier = resolveTierWithDependency(
-		category, "LuaRecipeCategoryPrototype", dependencies, blocked
+		category, {object_name = "LuaRecipeCategoryPrototype",
+			real_object_name = "LuaRecipeCategoryPrototype"
+		}, dependencies, blocked
 	)
 	if categoryTier < 0 then return categoryTier end
 	local customTier = callback and callback(dependencies) or 0
@@ -280,6 +280,41 @@ local function doRecipe(ingredients, category, blocked, callback)
 	return math.max(ingredientsTier, categoryTier, customTier), dependencies
 end
 
+---Determine the tier of mining an item or fluid
+---@type fun(ItemID:data.ItemID|data.FluidID,prototype:fakePrototype):tier,blockedReason[]|dependency[]
+tierSwitch["mining"] = function (ItemID, prototype)
+	local miningRecipes
+	if prototype.real_object_name == "LuaItemPrototype" then
+		miningRecipes = lookup.ItemMining[ItemID]
+	else
+		miningRecipes = lookup.FluidMining[ItemID]
+	end
+	---@type blockedReason[]
+	local blockedBy = {}
+
+	local tier, dependencies = lib.getMinTierArray(
+		miningRecipes, invalidReason.no_valid_miner,
+		function (item)
+			---@type Ingredient.fluid?
+			local ingredient
+			if item.input then
+				ingredient = {name = item.input, type = "fluid"}
+			end
+			return doRecipe(
+				{ingredient},
+				item.category,
+				blockedBy
+			)
+		end
+	)
+
+	if tier < 0 then
+		return tier, blockedBy
+	else
+		---@cast dependencies dependency[]
+		return tier, dependencies
+	end
+end
 ---Determine the tier of burning an item
 ---@type fun(ItemID:data.ItemID,_:LuaItemPrototype):tier,blockedReason[]|dependency[]
 tierSwitch["burning"] = function (ItemID, _)
@@ -517,7 +552,12 @@ tierSwitch["LuaFluidPrototype"] = function (ItemID, value)
 
 	-- No recipes create it, then it's a base resource
 	-- TODO: remove once all (determinable) ways of getting a base item is accounted for
-	if not recipes then return 0, {} end
+	-- Currently only need to do autoplace'ed items (like trees for wood)
+	if not recipes then
+		lib.debug(value.object_name..":"..ItemID.." has no recipes!")
+		-- return invalidReason.no_recipe, {}
+		return 0, {}
+	end
 
 
 	local tier, dependencies = lib.getMinTierArray(
@@ -530,7 +570,10 @@ tierSwitch["LuaFluidPrototype"] = function (ItemID, value)
 			local id, prototype
 			if realstart then
 				id = ItemID
-				prototype = recipe:sub(realstart+1)
+				prototype = {
+					object_name = recipe:sub(realstart+1),
+					real_object_name = value.object_name
+				}
 			else
 				id = recipe
 				prototype = lib.getRecipe(recipe)
@@ -575,7 +618,7 @@ local function calculateTier(itemID, type)
 		lib.log("Failed to calculate "..itemID.."'s tier")
 		lib.debug(serpent.dump(incalculable))
 	else
-		lib.log("\t"..itemID..": Tier "..tier)
+		lib.debug("\t"..itemID..": Tier "..tier)
 	end
 	return tier
 end

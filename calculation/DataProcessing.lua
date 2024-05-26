@@ -51,6 +51,47 @@ processFunctions[#processFunctions+1] = function ()
 	end
 end
 --#endregion
+--#region Mining
+
+---Processes resources that exist
+---@param EntityID data.EntityID
+---@param Resource LuaEntityPrototype
+function ProcessMining(EntityID, Resource)
+	local mineable = Resource.mineable_properties
+	if not mineable.minable then
+		return lib.ignore(EntityID, "Is not mineable.")
+	end
+	local category = Resource.resource_category
+	if not category then
+		return lib.ignore(EntityID, "has no resource category!?")
+	end
+
+	for _, item in ipairs(mineable.products) do
+		local recipeLookup = item.type == "item" and lookup.ItemRecipe or lookup.FluidRecipe
+		local miningLookup = item.type == "item" and lookup.ItemMining or lookup.FluidMining
+		category = "tiergen-mining-"..category
+		local altCategory
+		if not mineable.required_fluid then
+			altCategory = category.."-noinput"
+		end
+		---@type OptionalFluidFakeRecipe
+		local recipe = {
+			input = mineable.required_fluid,
+			category = altCategory or category
+		}
+		lib.appendToArrayInTable(recipeLookup, item.name, "tiergen-mining")
+		lib.appendToArrayInTable(miningLookup, item.name, recipe)
+	end
+end
+processFunctions[#processFunctions+1] = function ()
+	lib.log("\tProcessing resources")
+	for EntityID, entityPrototype in pairs(game.get_filtered_entity_prototypes{
+		{filter = "type", type = "resource"}
+	}) do
+		ProcessMining(EntityID, entityPrototype)
+	end
+end
+--#endregion
 --#region Technology Proesssing
 
 ---Parses `data.raw.technology` items
@@ -101,22 +142,65 @@ processFunctions[#processFunctions+1] = function ()
 	end
 end
 --#endregion
---#region Character Crafting
+--#region Miners
+
+---Processes miners for what they can mine
+---@param EntityID data.EntityID
+---@param Miner LuaEntityPrototype
+function ProcessMiners(EntityID, Miner)
+	local categories = Miner.resource_categories
+	if not categories then
+		return lib.ignore(EntityID, "can't mine any resources.")
+	end
+
+	local items = lib.getEntityItem(EntityID, Miner)
+	if #items == 0 then
+		return lib.noItems(EntityID)
+	end
+
+	for _, item in ipairs(items) do
+		for category in pairs(categories) do
+			-- Two fake categories so we can keep hand-mining separate from recipes that take fluid
+			lib.appendToArrayInTable(lookup.CategoryItem, "tiergen-mining-"..category, item.name)
+			lib.appendToArrayInTable(lookup.CategoryItem, "tiergen-mining-"..category.."-noinput", item.name)
+		end
+	end
+end
+processFunctions[#processFunctions+1] = function ()
+	lib.log("\tProcessing miners")
+	for EntityID, entityPrototype in pairs(game.get_filtered_entity_prototypes{
+		{filter = "type", type = "mining-drill"}
+	}) do
+		ProcessMiners(EntityID, entityPrototype)
+	end
+end
+--#endregion
+--#region Character Crafting/Mining
 
 ---Processes a character prototype and adds the "hand" machine to its crafting_categories
 ---@param EntityID data.EntityID
----@param CharacterPrototype data.CharacterPrototype
-local function processCharacters(EntityID, CharacterPrototype)
-	---@diagnostic disable-next-line: cast-type-mismatch
-	if EntityID ~= "character" then
-		lib.log(EntityID.." is a custom CharacterPrototype")
-		-- Maybe return to discard custom CharacterPrototypes?
-	end
+---@param CharacterPrototype LuaEntityPrototype
+local function processCharacterCrafting(EntityID, CharacterPrototype)
 	local categories = CharacterPrototype.crafting_categories
-	if categories then
-		for category in pairs(categories) do
-			lib.prependToArrayInTable(lookup.CategoryItem, category, "hand")
-		end
+	if not categories then
+		return lib.ignore(EntityID, "cannot craft.")
+	end
+
+	for category in pairs(categories) do
+		lib.prependToArrayInTable(lookup.CategoryItem, category, "hand")
+	end
+end
+---Processes a character prototype and adds the "hand" machine to its crafting_categories
+---@param EntityID data.EntityID
+---@param CharacterPrototype LuaEntityPrototype
+local function processCharacterMining(EntityID, CharacterPrototype)
+	local categories = CharacterPrototype.resource_categories
+	if not categories then
+		return lib.ignore(EntityID, "can't mine any resources.")
+	end
+
+	for category in pairs(categories) do
+		lib.prependToArrayInTable(lookup.CategoryItem, "tiergen-mining-"..category.."-noinput", "hand")
 	end
 end
 processFunctions[#processFunctions+1] = function ()
@@ -124,9 +208,12 @@ processFunctions[#processFunctions+1] = function ()
 	for EntityID, EntityPrototype in pairs(game.get_filtered_entity_prototypes{
 		{filter = "type", type = "character"}
 	}) do
----@diagnostic disable-next-line: cast-type-mismatch
-		---@cast EntityPrototype data.CharacterPrototype
-		processCharacters(EntityID, EntityPrototype)
+		if EntityID ~= "character" then
+			lib.log("\t\t"..EntityID.." is a custom CharacterPrototype")
+			-- Maybe return to discard custom CharacterPrototypes?
+		end
+		processCharacterCrafting(EntityID, EntityPrototype)
+		processCharacterMining(EntityID, EntityPrototype)
 	end
 end
 --#endregion

@@ -107,6 +107,7 @@ end
 ---@param newValue string
 ---@overload fun(table:tierTable,key:"fluid"|"item",newValue:tierTableItem)
 ---@overload fun(table:tierArray,key:uint,newValue:tierArrayItem)
+---@overload fun(table:table<data.FluidID,OptionalFluidFakeRecipe[]>,key:data.FluidID,newValue:OptionalFluidFakeRecipe)
 ---@overload fun(table:table<data.ItemID,SingleItemFakeRecipe[]>,key:data.ItemID,newValue:SingleItemFakeRecipe)
 ---@overload fun(table:table<data.FluidID,SingleFluidFakeRecipe[]>,key:data.FluidID,newValue:SingleFluidFakeRecipe)
 function library.appendToArrayInTable(table, key, newValue)
@@ -120,6 +121,7 @@ end
 ---@param newValue string
 ---@overload fun(table:tierTable,key:"fluid"|"item",newValue:tierTableItem)
 ---@overload fun(table:tierArray,key:uint,newValue:tierArrayItem)
+---@overload fun(table:table<data.FluidID,OptionalFluidFakeRecipe[]>,key:data.FluidID,newValue:OptionalFluidFakeRecipe)
 ---@overload fun(table:table<data.ItemID,SingleItemFakeRecipe[]>,key:data.ItemID,newValue:SingleItemFakeRecipe)
 ---@overload fun(table:table<data.FluidID,SingleFluidFakeRecipe[]>,key:data.FluidID,newValue:SingleFluidFakeRecipe)
 function library.prependToArrayInTable(table, key, newValue)
