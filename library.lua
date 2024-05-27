@@ -146,7 +146,7 @@ end
 ---@param callback fun(item:item):tier,dependency[]?
 ---@return tier
 ---@return dependency[]?
-function library.getMinTierArray(array, invalid, callback)
+function library.getMinTierInArray(array, invalid, callback)
 	---@type dependency[]?
 	local dependencies
 	local tier = math.huge

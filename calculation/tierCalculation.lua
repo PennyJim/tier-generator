@@ -21,6 +21,7 @@ invalidReason = {
 	no_valid_recipe = -7,
 	no_valid_boiler = -8,
 	no_valid_offshore_pump = -9,
+	not_player_mineable = -95,
 	not_unlockable = -96,
 	no_recipe = -97,
 	no_machine = -98,
@@ -82,6 +83,7 @@ local function initTierMapTables(...)
 		"LuaFluidPrototype",
 		"LuaItemPrototype",
 		"mining",
+		"hand-mining",
 		"burning",
 		"rocket-launch",
 		"boil",
@@ -227,7 +229,6 @@ local function resolveTierWithDependency(id, value, dependencyArray, blockedArra
 	end
 	return tier
 end
-
 ---Return the highest tier from the ingredients
 ---Adds each ingredient to dependencies if valid,
 ---or returns after adding to blocked if its not. 
@@ -252,7 +253,6 @@ local function getIngredientsTier(ingredients, dependencies, blocked)
 	end
 	return ingredientsTier
 end
-
 ---Does everything that both real and all fake recipes require
 ---@param ingredients Ingredient[]
 ---@param category string
@@ -281,6 +281,20 @@ local function doRecipe(ingredients, category, blocked, callback)
 
 	return math.max(ingredientsTier, categoryTier, customTier), dependencies
 end
+---Returns the tier and either the dependencies or blockedReason depending on tier
+---@param tier tier
+---@param dependency dependency[]?
+---@param blocked blockedReason[]
+---@return tier
+---@return dependency[]|blockedReason[]
+local function blockedOrDependency(tier, dependency, blocked)
+	if tier < 0 then
+		return tier, blocked
+	else
+		---@cast dependency dependency[]
+		return tier, dependency
+	end
+end
 
 ---Determine the tier of mining an item or fluid
 ---@type fun(ItemID:data.ItemID|data.FluidID,prototype:fakePrototype):tier,blockedReason[]|dependency[]
@@ -294,7 +308,7 @@ tierSwitch["mining"] = function (ItemID, prototype)
 	---@type blockedReason[]
 	local blockedBy = {}
 
-	local tier, dependencies = lib.getMinTierArray(
+	local tier, dependencies = lib.getMinTierInArray(
 		miningRecipes, invalidReason.no_valid_miner,
 		function (item)
 			---@type Ingredient.fluid?
@@ -318,13 +332,13 @@ tierSwitch["mining"] = function (ItemID, prototype)
 	end
 end
 ---Determine the tier of burning an item
----@type fun(ItemID:data.ItemID,_:LuaItemPrototype):tier,blockedReason[]|dependency[]
+---@type fun(ItemID:data.ItemID,_:fakePrototype):tier,blockedReason[]|dependency[]
 tierSwitch["burning"] = function (ItemID, _)
 	local burningRecipes = lookup.Burning[ItemID]
 	---@type blockedReason[]
 	local blockedBy = {}
 
-	local tier, dependencies = lib.getMinTierArray(
+	local tier, dependencies = lib.getMinTierInArray(
 		burningRecipes, invalidReason.no_valid_furnace,
 		function (fuelID)
 			local fuel = lib.getItem(fuelID)
@@ -335,21 +349,16 @@ tierSwitch["burning"] = function (ItemID, _)
 			)
 		end
 	)
-	if tier < 0 then
-		return tier, blockedBy
-	else
-		---@cast dependencies dependency[]
-		return tier, dependencies
-	end
+	return blockedOrDependency(tier, dependencies, blockedBy)
 end
 ---Determine the tier of launching an item into space
----@type fun(ItemID:data.ItemID,_:LuaItemPrototype):tier,blockedReason[]|dependency[]
+---@type fun(ItemID:data.ItemID,_:fakePrototype):tier,blockedReason[]|dependency[]
 tierSwitch["rocket-launch"] = function (ItemID, _)
 	local rocketRecipes = lookup.Rocket[ItemID]
 	---@type blockedReason[]
 	local blockedBy = {}
 
-	local tier, dependencies = lib.getMinTierArray(
+	local tier, dependencies = lib.getMinTierInArray(
 		rocketRecipes, invalidReason.no_valid_rocket,
 		function (satellite)
 			return doRecipe(
@@ -359,22 +368,16 @@ tierSwitch["rocket-launch"] = function (ItemID, _)
 			)
 		end
 	)
-
-	if tier < 0 then
-		return tier, blockedBy
-	else
-		---@cast dependencies dependency[]
-		return tier, dependencies
-	end
+	return blockedOrDependency(tier, dependencies, blockedBy)
 end
 ---Determine the tier of boiling a liquid
----@type fun(FluidID:data.FluidID,_:LuaFluidPrototype):tier,blockedReason[]|dependency[]
+---@type fun(FluidID:data.FluidID,_:fakePrototype):tier,blockedReason[]|dependency[]
 tierSwitch["boil"] = function (FluidID,_)
 	local recipes = lookup.Boiling[FluidID]
 	---@type blockedReason[]
 	local blockedBy = {}
 
-	local tier, dependencies = lib.getMinTierArray(
+	local tier, dependencies = lib.getMinTierInArray(
 		recipes, invalidReason.no_valid_boiler,
 		function (recipe)
 			return doRecipe(
@@ -386,36 +389,26 @@ tierSwitch["boil"] = function (FluidID,_)
 			)
 		end
 	)
-	if tier < 0 then
-		return tier, blockedBy
-	else
-		---@cast dependencies dependency[]
-		return tier, dependencies
-	end
+	return blockedOrDependency(tier, dependencies, blockedBy)
 end
 ---Determine the tier of pumping fluid out of a lake
----@type fun(FluidID:data.FluidID,_:LuaFluidPrototype):tier,blockedReason[]|dependency[]
+---@type fun(FluidID:data.FluidID,_:fakePrototype):tier,blockedReason[]|dependency[]
 tierSwitch["offshore-pump"] = function (FluidID, _)
 	local recipes = lookup.OffshorePumping[FluidID]
 	---@type blockedReason[]
-	local blockedby = {}
+	local blockedBy = {}
 
-	local tier, dependencies = lib.getMinTierArray(
+	local tier, dependencies = lib.getMinTierInArray(
 		recipes, invalidReason.no_valid_offshore_pump,
 		function (recipe)
 			return doRecipe(
 				{}, -- No ingredients
 				recipe,
-				blockedby
+				blockedBy
 			)
 		end
 	)
-	if tier < 0 then
-		return tier, blockedby
-	else
-		---@cast dependencies dependency[]
-		return tier, dependencies
-	end
+	return blockedOrDependency(tier, dependencies, blockedBy)
 end
 
 ---Determine the tier of the given technology
@@ -464,7 +457,7 @@ tierSwitch["LuaRecipeCategoryPrototype"] = function (CategoryID)
 	end
 	---@type blockedReason[]
 	local blockedBy = {}
-	local tier, dependencies = lib.getMinTierArray(
+	local tier, dependencies = lib.getMinTierInArray(
 		machines, invalidReason.no_valid_machine,
 		function (item)
 			---@type dependency[]
@@ -506,7 +499,7 @@ tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 		end
 		---@type (fun(p1:dependency[]):tier)?
 		considerTechnology = function (dependencies)
-			local tier, techDependencies = lib.getMinTierArray(
+			local tier, techDependencies = lib.getMinTierInArray(
 				technologies, invalidReason.no_valid_technology,
 				function (technologyID)
 					local technology = lib.getTechnology(technologyID)
@@ -532,13 +525,7 @@ tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 		recipe.ingredients, recipe.category, blockedBy,
 		considerTechnology
 	)
-
-	if recipeTier < 0 then
-		return recipeTier, blockedBy
-	else
-		---@cast dependencies dependency[]
-		return recipeTier, dependencies
-	end
+	return blockedOrDependency(recipeTier, dependencies, blockedBy)
 end
 ---Determine the tier of the given item or fluid
 ---@type fun(ItemID:data.ItemID|data.FluidID,value:LuaItemPrototype|LuaFluidPrototype):tier,blockedReason[]|dependency[]
@@ -562,7 +549,7 @@ tierSwitch["LuaFluidPrototype"] = function (ItemID, value)
 	end
 
 
-	local tier, dependencies = lib.getMinTierArray(
+	local tier, dependencies = lib.getMinTierInArray(
 		recipes, invalidReason.no_valid_recipe,
 		function (recipe)
 			---@type dependency[]
@@ -587,13 +574,7 @@ tierSwitch["LuaFluidPrototype"] = function (ItemID, value)
 			return tier, dependencies
 		end
 	)
-
-	if tier < 0 then
-		return tier, blockedBy
-	else
-		---@cast dependencies dependency[]
-		return tier, dependencies
-	end
+	return blockedOrDependency(tier, dependencies, blockedBy)
 end
 tierSwitch["LuaItemPrototype"] = tierSwitch["LuaFluidPrototype"] --[[@as fun(ItemID:data.ItemID|data.FluidID,value:LuaItemPrototype|LuaFluidPrototype):tier,blockedReason[]|dependency[] ]]
 --#endregion
@@ -688,7 +669,7 @@ local function uncalculate()
 	initTierMapTables(TierMaps, calculating, incalculable)
 end
 
----comment
+---Returns a tierArray for the given items
 ---@param itemIDs data.ItemID[]
 ---@param type "item"|"fluid"
 ---@return tierArray
