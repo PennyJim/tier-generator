@@ -1,7 +1,8 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.3
 Date: ????
-  Changes:
+  Bugfixes:
+    - Should no longer crash when it attempts to unhighlight the tier table after it got rebuilt.
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.2
 Date: 2024-05-26

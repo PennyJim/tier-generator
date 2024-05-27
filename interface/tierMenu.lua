@@ -187,6 +187,7 @@ end
 ---Goes through each player and calls `reset_frame`
 local function regenerate_menus()
 	for _, player in pairs(game.players) do
+		global.player_highlight[player.index] = nil
 		---@type LuaGuiElement
 		local frame = player.gui.screen["tiergen-menu"]
 		if frame then
@@ -228,18 +229,21 @@ local function highlightItems(player)
 		highlightArray,
 	function (elem)
 		elem.toggled = true
+		-- TODO: Do something special if elem.isDirect is true
 	end)
 end
 ---Highlights the items in the player's global highlight array
 ---@param player LuaPlayer
 local function unhighlightItems(player)
 	local highlightArray = global.player_highlight[player.index]
+	if not highlightArray then return end
 	traverseArray(
 		player.gui.screen["tiergen-menu"],
 		highlightArray,
 	function (elem)
 		elem.toggled = false
 	end)
+	global.player_highlight[player.index] = nil
 end
 
 script.on_event(defines.events.on_gui_click, function (EventData)

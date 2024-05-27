@@ -6,7 +6,7 @@ Considers what machine is required to craft, the ingredients, the technology, an
 
 ## Todo List:
 - [x] Dynamically determine what is hand-craftable
-- [ ] Add mining to the 'recipes'
+- [x] Add mining to the 'recipes'
 - [ ] Add considerations for generation
 - [x] Add offshore pumps
 - [x] Add boiling liquids to the 'recipes'
