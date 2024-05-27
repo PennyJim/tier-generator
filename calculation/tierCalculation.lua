@@ -323,13 +323,29 @@ tierSwitch["mining"] = function (ItemID, prototype)
 			)
 		end
 	)
+	return blockedOrDependency(tier, dependencies, blockedBy)
+end
+---Determine if a player can mine an item
+---@type fun(ItemID:data.ItemID,_:fakePrototype):tier,blockedReason[]|dependency[]
+tierSwitch["hand-mining"] = function (ItemID, _)
+	local miningRecipes = lookup.HandMining[ItemID]
+	---@type blockedReason[]
+	local blockedBy = {}
 
-	if tier < 0 then
-		return tier, blockedBy
-	else
-		---@cast dependencies dependency[]
-		return tier, dependencies
-	end
+	local tier, dependencies = lib.getMinTierInArray(
+		miningRecipes, invalidReason.not_player_minable,
+		function (category)
+			if category == "hand" then
+				return 0, {}
+			end
+			return doRecipe(
+				{},
+				category,
+				blockedBy
+			)
+		end
+	)
+	return blockedOrDependency(tier, dependencies, blockedBy)
 end
 ---Determine the tier of burning an item
 ---@type fun(ItemID:data.ItemID,_:fakePrototype):tier,blockedReason[]|dependency[]
@@ -544,8 +560,8 @@ tierSwitch["LuaFluidPrototype"] = function (ItemID, value)
 	-- Currently only need to do autoplace'ed items (like trees for wood)
 	if not recipes then
 		lib.debug(value.object_name..":"..ItemID.." has no recipes!")
-		-- return invalidReason.no_recipe, {}
-		return 0, {}
+		return invalidReason.no_recipe, {}
+		-- return 0, {}
 	end
 
 

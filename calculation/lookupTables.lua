@@ -28,6 +28,8 @@ lookup.CategoryItem = {}
 lookup.ItemMining = {}
 ---@type table<data.FluidID,OptionalFluidFakeRecipe[]>
 lookup.FluidMining = {}
+---@type table<data.ItemID,data.RecipeCategoryID[]>
+lookup.HandMining = {}
 ---@type table<data.ItemID,data.ItemID[]>
 lookup.Burning = {}
 ---@type table<data.ItemID,data.RecipeCategoryID[]>

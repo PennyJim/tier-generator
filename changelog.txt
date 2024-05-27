@@ -1,6 +1,8 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.3
 Date: ????
+  Features:
+    - Natural resources like trees and rocks are now accounted for in the chain. This also partially overwrote the mining resources, so now they might not appear if they don't have an autoplace.
   Bugfixes:
     - Should no longer crash when it attempts to unhighlight the tier table after it got rebuilt.
 ---------------------------------------------------------------------------------------------------

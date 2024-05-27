@@ -51,48 +51,88 @@ processFunctions[#processFunctions+1] = function ()
 	end
 end
 --#endregion
---#region Mining
+--#region Autoplace Processing
 
----Processes resources that exist
+-- ---Processes resources
+-- ---@param EntityID data.EntityID
+-- ---@param Resource LuaEntityPrototype
+-- function ProcessMining(EntityID, Resource)
+-- 	local mineable = Resource.mineable_properties
+-- 	if not mineable.minable then
+-- 		return lib.ignore(EntityID, "Is not mineable.")
+-- 	end
+-- 	local category = Resource.resource_category
+-- 	if not category then
+-- 		return lib.ignore(EntityID, "has no resource category!?")
+-- 	end
+
+-- 	for _, item in ipairs(mineable.products) do
+-- 		local recipeLookup = item.type == "item" and lookup.ItemRecipe or lookup.FluidRecipe
+-- 		local miningLookup = item.type == "item" and lookup.ItemMining or lookup.FluidMining
+-- 		category = "tiergen-mining-"..category
+-- 		local altCategory
+-- 		if not mineable.required_fluid then
+-- 			altCategory = category.."-noinput"
+-- 		end
+-- 		---@type OptionalFluidFakeRecipe
+-- 		local recipe = {
+-- 			input = mineable.required_fluid,
+-- 			category = altCategory or category
+-- 		}
+-- 		lib.appendToArrayInTable(recipeLookup, item.name, "tiergen-mining")
+-- 		lib.appendToArrayInTable(miningLookup, item.name, recipe)
+-- 	end
+-- end
+---Processes entities placed by autoplace
 ---@param EntityID data.EntityID
----@param Resource LuaEntityPrototype
-function ProcessMining(EntityID, Resource)
-	local mineable = Resource.mineable_properties
-	if not mineable.minable then
-		return lib.ignore(EntityID, "Is not mineable.")
-	end
-	local category = Resource.resource_category
-	if not category then
-		return lib.ignore(EntityID, "has no resource category!?")
+---@param placedEntity LuaEntityPrototype
+function ProcessAutoplace(EntityID, placedEntity)
+	local autoplace = placedEntity.autoplace_specification
+	if not autoplace then
+		return lib.ignore(EntityID, "has no autoplace!?")
 	end
 
-	for _, item in ipairs(mineable.products) do
+	local mining = placedEntity.mineable_properties
+	if not mining.minable then
+		return lib.ignore(EntityID, "is not mineable.")
+	end
+
+	local category = placedEntity.resource_category
+	local resource_category, player_category
+	if category then
+		resource_category = "tiergen-mining-"..category
+		player_category = "tiergen-hand-mining"..category
+	else
+		player_category = "hand"
+	end
+
+	for _, item in ipairs(mining.products) do
 		local recipeLookup = item.type == "item" and lookup.ItemRecipe or lookup.FluidRecipe
 		local miningLookup = item.type == "item" and lookup.ItemMining or lookup.FluidMining
-		category = "tiergen-mining-"..category
-		local altCategory
-		if not mineable.required_fluid then
-			altCategory = category.."-noinput"
+		if category then
+			lib.appendToArrayInTable(recipeLookup, item.name, "tiergen-mining")
+			lib.appendToArrayInTable(miningLookup, item.name, {
+				input = mining.required_fluid,
+				category = resource_category
+			})
 		end
-		---@type OptionalFluidFakeRecipe
-		local recipe = {
-			input = mineable.required_fluid,
-			category = altCategory or category
-		}
-		lib.appendToArrayInTable(recipeLookup, item.name, "tiergen-mining")
-		lib.appendToArrayInTable(miningLookup, item.name, recipe)
+		if item.type == "item" and not mining.required_fluid then
+			lib.appendToArrayInTable(recipeLookup, item.name, "tiergen-hand-mining")
+			lib.appendToArrayInTable(lookup.HandMining, item.name, player_category)
+		end
 	end
 end
 processFunctions[#processFunctions+1] = function ()
-	lib.log("\tProcessing resources")
+	lib.log("\tProcessing autoplace resources")
 	for EntityID, entityPrototype in pairs(game.get_filtered_entity_prototypes{
-		{filter = "type", type = "resource"}
+---@diagnostic disable-next-line: missing-fields
+		{filter = "autoplace"}
 	}) do
-		ProcessMining(EntityID, entityPrototype)
+		ProcessAutoplace(EntityID, entityPrototype)
 	end
 end
 --#endregion
---#region Technology Proesssing
+--#region Technology Processing
 
 ---Parses `data.raw.technology` items
 ---@param technologyID data.TechnologyID
@@ -196,11 +236,11 @@ end
 local function processCharacterMining(EntityID, CharacterPrototype)
 	local categories = CharacterPrototype.resource_categories
 	if not categories then
-		return lib.ignore(EntityID, "can't mine any resources.")
+		return lib.ignore(EntityID, "can't mine any ores.")
 	end
 
 	for category in pairs(categories) do
-		lib.prependToArrayInTable(lookup.CategoryItem, "tiergen-mining-"..category.."-noinput", "hand")
+		lib.prependToArrayInTable(lookup.CategoryItem, "tiergen-hand-mining"..category, "hand")
 	end
 end
 processFunctions[#processFunctions+1] = function ()
