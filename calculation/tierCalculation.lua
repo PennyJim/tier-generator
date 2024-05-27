@@ -40,12 +40,14 @@ setmetatable(invalidReason, {
 ---@class tierTableItem
 ---@field name string
 ---@field tier uint
+---@field isDirect boolean
 ---@class tierTable
 ---@field ["item"] tierTableItem[]
 ---@field ["fluid"] tierTableItem[]
 ---@class tierArrayItem
 ---@field name string
 ---@field type "item"|"fluid"
+---@field isDirect boolean
 ---@class tierArray
 ---@field [uint] tierArrayItem[]
 
@@ -627,7 +629,9 @@ end
 ---@param dependency dependency
 ---@param table tierTable
 ---@param processed table<tierSwitchTypes,{[string]:boolean}>
-local function resolveDependencies(dependency, table, processed)
+---@param passedTop boolean?
+local function resolveDependencies(dependency, table, processed, passedTop)
+	local isTop = passedTop == nil or passedTop
 	local item = TierMaps[dependency.type][dependency.id]
 	if processed[dependency.type][dependency.id] then return end
 	if dependency.type == "LuaFluidPrototype"
@@ -636,11 +640,13 @@ local function resolveDependencies(dependency, table, processed)
 		lib.appendToArrayInTable(table, type, {
 			name = dependency.id,
 			tier = item.tier,
+			isDirect = passedTop or false,
 		})
+		if passedTop then isTop = false end
 	end
 	processed[dependency.type][dependency.id] = true
 	for _, dependency in ipairs(item.dependencies) do
-		resolveDependencies(dependency, table, processed)
+		resolveDependencies(dependency, table, processed, isTop)
 	end
 end
 
@@ -656,6 +662,7 @@ local function depenenciesToArray(dependencies)
 			lib.appendToArrayInTable(tierArray, tierItem.tier+1, {
 				name = tierItem.name,
 				type = type,
+				isDirect = tierItem.isDirect,
 			})
 		end
     ::continue::

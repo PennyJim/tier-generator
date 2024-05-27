@@ -123,7 +123,7 @@ local function update_list(player)
 				type = "sprite-button",
 				name = sprite,
 				sprite = sprite,
-				style = "recipe_slot_button",
+				style = "slot_button",
 				tooltip = itemPrototype.localised_name
 			}
 		end
@@ -200,7 +200,7 @@ end
 
 ---Calls the callback on each item's element in the given array
 ---@param array tierArray
----@param callback fun(elem:LuaGuiElement)
+---@param callback fun(elem:LuaGuiElement,item:tierArrayItem)
 local function traverseArray(menu, array, callback)
 	array = array or {{}}
 	---@type LuaGuiElement
@@ -215,7 +215,7 @@ local function traverseArray(menu, array, callback)
 		for _, item in ipairs(items) do
 			local name = item.type.."/"..item.name
 			local button = item_table[name]
-			callback(button)
+			callback(button, item)
 		end
 	end
 end
@@ -227,9 +227,13 @@ local function highlightItems(player)
 	traverseArray(
 		player.gui.screen["tiergen-menu"],
 		highlightArray,
-	function (elem)
+	function (elem, item)
 		elem.toggled = true
 		-- TODO: Do something special if elem.isDirect is true
+		if item.isDirect then
+			-- Set a special style
+			-- elem.enabled = false -- to prove it's the right elements
+		end
 	end)
 end
 ---Highlights the items in the player's global highlight array
@@ -240,8 +244,12 @@ local function unhighlightItems(player)
 	traverseArray(
 		player.gui.screen["tiergen-menu"],
 		highlightArray,
-	function (elem)
+	function (elem, item)
 		elem.toggled = false
+		if item.isDirect then
+			-- Reset the style
+			-- elem.enabled = true
+		end
 	end)
 	global.player_highlight[player.index] = nil
 end
