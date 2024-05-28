@@ -1,19 +1,6 @@
 local lookup = require("__tier-generator__.calculation.lookupTables")
 local processFunctions = {}
 
----@type table<data.RecipeID, boolean>
-local ignored_recipes = {}
-function parseIgnoredRecipes()
-	ignored_recipes = {}
-	local ignoredRecipes = lib.getSetting("tiergen-ignored-recipes") --[[@as string]]
-	-- Turn array into lookup table
-	for index, recipeID in ipairs(lib.split(ignoredRecipes, ",")) do
-		-- Remove whitespace
-		recipeID = recipeID:match("^%s*(.-)%s*$")
-		ignored_recipes[recipeID] = true
-	end
-end
-
 --#region Process functions & loops
 --#region Recipe Processing
 
@@ -21,7 +8,7 @@ end
 ---@param recipeID data.RecipeID
 ---@param recipePrototype LuaRecipePrototype
 local function processRecipe(recipeID, recipePrototype)
-	if ignored_recipes[recipeID] then
+	if global.config.ignored_recipes[recipeID] then
 		return lib.ignore(recipeID, "was in ignored settings.")
 	end
 	if #recipePrototype.products == 0 then
@@ -44,7 +31,6 @@ local function processRecipe(recipeID, recipePrototype)
 end
 processFunctions[#processFunctions+1] = function ()
 	lib.log("\tProcessing recipes")
-	parseIgnoredRecipes()
 	for recipeID, rawRecipe in pairs(game.recipe_prototypes) do
 		processRecipe(recipeID, rawRecipe);
 	end

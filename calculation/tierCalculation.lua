@@ -44,12 +44,12 @@ setmetatable(invalidReason, {
 ---@class tierTable
 ---@field ["item"] tierTableItem[]
 ---@field ["fluid"] tierTableItem[]
----@class tierArrayItem
+---@class simpleItem
 ---@field name string
 ---@field type "item"|"fluid"
 -- ---@field isDirect boolean
 ---@class tierArray
----@field [uint] tierArrayItem[]
+---@field [uint] simpleItem[]
 
 ---@class dependency
 ---@field type tierSwitchTypes
@@ -604,15 +604,15 @@ local function calculateTier(itemID, type)
 end
 
 ---Directly set the tier of a given itemID
----@param itemID string
-local function setTier(itemID)
+---@param item simpleItem
+local function setTier(item)
 	checkLookup()
-	local isValid = pcall(lib.getItem, itemID)
+	local isValid = pcall(lib.getItemOrFluid, item.name, item.type)
 	if not isValid then
-		lib.log("\tWas given an invalid item: "..itemID)
+		lib.log("\tWas given an invalid item: "..item)
 		return
 	end
-	baseOverride[itemID] = true
+	baseOverride[item] = true
 end
 
 ---Clears the working tables

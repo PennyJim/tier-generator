@@ -1,38 +1,46 @@
 -- Should only ever need to be run once.
 -- No active code should be done outside a function
----@class defaultSettings
----@field ultimate_science data.ItemID
----@field all_sciences data.ItemID[]
----@field base_items data.ItemID[]
+---@class defaultConfigs
+---@field ultimate_science simpleItem
+---@field all_sciences simpleItem[]
+---@field base_items simpleItem[]
 ---@field ignored_recipes data.RecipeID[]
----@class settingTable
----@field [string] defaultSettings
+---@class defaultSettingsMap
+---@field [string] defaultConfigs
 
----@type settingTable
+---@type defaultSettingsMap
 local singleMods = {
 	["Ultracube"] = {
-		ultimate_science = "cube-complete-annihilation-card",
+		ultimate_science = lib.item("cube-complete-annihilation-card"),
 		all_sciences = {
-			"cube-basic-contemplation-unit",
-			"cube-fundamental-comprehension-card",
-			"cube-abstract-interrogation-card",
-			"cube-deep-introspection-card",
-			"cube-synthetic-premonition-card",
-			"cube-complete-annihilation-card"
+			lib.item("cube-basic-contemplation-unit"),
+			lib.item("cube-fundamental-comprehension-card"),
+			lib.item("cube-abstract-interrogation-card"),
+			lib.item("cube-deep-introspection-card"),
+			lib.item("cube-synthetic-premonition-card"),
+			lib.item("cube-complete-annihilation-card")
 		},
 		base_items = {
-			"cube-ultradense-utility-cube", -- It is the *core* of the mod
-			"cube-fabricator", -- You are given one
-			"cube-synthesizer", -- You are given one
-			"cube-construct-forbidden-ziggurat-dummy" -- BECAUSE A TECHNOLOGY REQUIRES THIS DUMMY ITEM
+			lib.item("cube-ultradense-utility-cube"), -- It is the *core* of the mod
+			lib.item("cube-fabricator"), -- You are given one
+			lib.item("cube-synthesizer"), -- You are given one
+			lib.item("cube-construct-forbidden-ziggurat-dummy") -- Because of a scripted technology
 		},
 		ignored_recipes = {}
 	}
 }
----@type defaultSettings
+---@type defaultConfigs
 local vanillaDefaults = {
-	ultimate_science = "space-science-pack",
-	all_sciences = {}, -- TODO
+	ultimate_science = lib.item{"space-science-pack"},
+	all_sciences = {
+		lib.item("automation-science-pack"),
+		lib.item("logistic-science-pack"),
+		lib.item("military-science-pack"),
+		lib.item("chemical-science-pack"),
+		lib.item("production-science-pack"),
+		lib.item("utility-science-pack"),
+		lib.item("space-science-typo"),
+	}, -- TODO
 	base_items = {},
 	ignored_recipes = {}
 }
@@ -50,28 +58,15 @@ local function DetermineMod()
 	return vanillaDefaults
 end
 
----Turns a array into a comma separated string
----@param array string[]
----@return string
-local function turnArrayIntoString(array)
-	local full_string = ""
-	for _, string in ipairs(array) do
-		full_string = full_string..", "..string
-	end
-	return full_string:sub(3)
-end
+-- ---Turns a array into a comma separated string
+-- ---@param array string[]
+-- ---@return string
+-- local function turnArrayIntoString(array)
+-- 	local full_string = ""
+-- 	for _, string in ipairs(array) do
+-- 		full_string = full_string..", "..string
+-- 	end
+-- 	return full_string:sub(3)
+-- end
 
-return function ()
-	local defaults = DetermineMod()
-
-	-- TODO: turn settings into configs
-	local ultimate = defaults.ultimate_science
-	local sciences = turnArrayIntoString(defaults.all_sciences)
-	local base_items = turnArrayIntoString(defaults.base_items)
-	local ignored_recipes = turnArrayIntoString(defaults.ignored_recipes)
-
-	-- FIXME: A testing hack. DO NOT USE THESE IN PROD
-	-- lib.setSetting("tiergen-item-calculation", ultimate)
-	-- lib.setSetting("tiergen-base-items", base_items)
-	-- lib.setSetting("tiergen-ignored-recipes", ignored_recipes)
-end
+return DetermineMod

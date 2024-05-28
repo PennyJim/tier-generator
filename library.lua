@@ -10,18 +10,12 @@ local library = {}
 ---| "tiergen-reduce-category"
 ---| "tiergen-consider-technology"
 ---| "tiergen-reduce-technology"
----| "tiergen-item-calculation"
----| "tiergen-base-items"
----| "tiergen-ignored-recipes"
 ---| "tiergen-debug-log"
 ---@type {[tierSettings]:any}
 local tiergenSettings = {
 	["tiergen-reduce-category"] = true,
 	["tiergen-consider-technology"] = true,
 	["tiergen-reduce-technology"] = true,
-	["tiergen-item-calculation"] = true,
-	["tiergen-base-items"] = true,
-	["tiergen-ignored-recipes"] = true,
 	["tiergen-debug-log"] = true,
 }
 local cachedSettings = {}
@@ -106,7 +100,7 @@ end
 ---@param key string
 ---@param newValue string
 ---@overload fun(table:tierTable,key:"fluid"|"item",newValue:tierTableItem)
----@overload fun(table:tierArray,key:uint,newValue:tierArrayItem)
+---@overload fun(table:tierArray,key:uint,newValue:simpleItem)
 ---@overload fun(table:table<data.FluidID,OptionalFluidFakeRecipe[]>,key:data.FluidID,newValue:OptionalFluidFakeRecipe)
 ---@overload fun(table:table<data.ItemID,SingleItemFakeRecipe[]>,key:data.ItemID,newValue:SingleItemFakeRecipe)
 ---@overload fun(table:table<data.FluidID,SingleFluidFakeRecipe[]>,key:data.FluidID,newValue:SingleFluidFakeRecipe)
@@ -120,7 +114,7 @@ end
 ---@param key string
 ---@param newValue string
 ---@overload fun(table:tierTable,key:"fluid"|"item",newValue:tierTableItem)
----@overload fun(table:tierArray,key:uint,newValue:tierArrayItem)
+---@overload fun(table:tierArray,key:uint,newValue:simpleItem)
 ---@overload fun(table:table<data.FluidID,OptionalFluidFakeRecipe[]>,key:data.FluidID,newValue:OptionalFluidFakeRecipe)
 ---@overload fun(table:table<data.ItemID,SingleItemFakeRecipe[]>,key:data.ItemID,newValue:SingleItemFakeRecipe)
 ---@overload fun(table:table<data.FluidID,SingleFluidFakeRecipe[]>,key:data.FluidID,newValue:SingleFluidFakeRecipe)
@@ -264,6 +258,23 @@ function library.getEntityItem(EntityID, entityPrototype)
 	end
 
 	return items
+end
+
+local itemMetatable = {
+	__tostring = function (self)
+		return self.type..":"..self.name
+	end
+}
+script.register_metatable("simple-item", itemMetatable)
+---Creates an item object
+---@param name data.ItemID|data.FluidID
+---@param type "item"|"fluid"?
+---@return simpleItem
+function library.item(name, type)
+	return setmetatable({
+		name = name,
+		type = type or "item"
+	}, itemMetatable)
 end
 --#endregion
 --#region GUI functions

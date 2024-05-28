@@ -25,29 +25,6 @@ data:extend{
 		order = "global-a[technology-b]"
 	},
 	{
-		type = "string-setting",
-		name = "tiergen-item-calculation",
-		setting_type = "runtime-global",
-		default_value = default_items,
-		order = "global-b"
-	},
-	{
-		type = "string-setting",
-		name = "tiergen-base-items",
-		setting_type = "runtime-global",
-		default_value = default_bases,
-		allow_blank = true,
-		order = "global-c"
-	},
-	{
-		type = "string-setting",
-		name = "tiergen-ignored-recipes",
-		setting_type = "runtime-global",
-		default_value = default_ignored,
-		allow_blank = true,
-		order = "global-d"
-	},
-	{
 		type = "bool-setting",
 		name = "tiergen-debug-log",
 		setting_type = "runtime-global",

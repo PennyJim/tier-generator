@@ -31,7 +31,7 @@ local function getNextDependencies(tierEntry, newDependencies, completedItems)
 end
 
 ---Turns the givenItems into dependencyEntries that the itterable uses
----@param givenItems tierArrayItem[]
+---@param givenItems simpleItem[]
 ---@return dependencyEntry[]
 local function getGivenAsDependency(givenItems)
 	---@type dependencyEntry[]
@@ -98,7 +98,7 @@ local function iterator(s)
 end
 
 ---Returns an itterable for the dependencies of givenItems
----@param givenItems tierArrayItem[]
+---@param givenItems simpleItem[]
 ---@return fun(s:DependencyIteratorState):tierResult?
 ---@return DependencyIteratorState
 local function eachDependency(givenItems)

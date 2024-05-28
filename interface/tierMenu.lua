@@ -73,7 +73,7 @@ local function update_list(player)
 	if table then
 		table.destroy()
 	end
-	if #global.tier_array == 0 then
+	if #global.default_tiers == 0 then
 		--- FIXME: Doesn't center???
 		local flow = scroll.add{
 			type = "flow",
@@ -94,7 +94,7 @@ local function update_list(player)
 		direction="vertical",
 	}
 	table.style.left_padding = 8
-	for tier, items in ipairs(global.tier_array) do
+	for tier, items in ipairs(global.default_tiers) do
 		local tier_label = table.add{
 			type = "label",
 			name = "tier-"..tier.."-label",
@@ -155,7 +155,7 @@ local function create_frame(player)
 	}
 	base.auto_center = true
 	local base_flow = create_titlebar(base, {"tiergen.menu"})
-	-- create_options(base_flow)
+	create_options(base_flow)
 	create_list(base_flow)
 	update_list(player)
 	return base
@@ -199,7 +199,7 @@ end
 
 ---Calls the callback on each item's element in the given array
 ---@param menu LuaGuiElement
----@param inputItem tierArrayItem[]
+---@param inputItem simpleItem[]
 ---@param callback fun(elem:LuaGuiElement,item:tierResult)
 local function traverseArray(menu, inputItem, callback)
 	---@type LuaGuiElement
@@ -281,7 +281,7 @@ end)
 
 return {
 	init = init,
-	join_player = new_player,
+	add_player = new_player,
 	set_visibility = set_visibility,
 	regenerate_menus = regenerate_menus,
 	migration = migrator,

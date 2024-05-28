@@ -7,12 +7,10 @@ local calculator = {}
 function calculator.updateBase()
 	core.unset()
 	lib.log("Setting base item overrides")
-	local baseItems = lib.getSetting("tiergen-base-items") --[[@as string]]
-	for _, itemID in pairs(lib.split(baseItems, ",")) do
-		-- Trim whitespace
-		itemID = itemID:match("^%s*(.-)%s*$")
-		lib.log("\tSetting "..itemID.." to tier 0")
-		core.set(itemID)
+	local baseItems = global.config.base_items
+	for _, item in pairs(baseItems) do
+		lib.log("\tSetting "..item.." to tier 0")
+		core.set(item)
 	end
 end
 
@@ -63,8 +61,8 @@ end
 -- end
 
 ---Calculates the tiers and returns items that were successful
----@param items tierArrayItem[]
----@return tierArrayItem[]
+---@param items simpleItem[]
+---@return simpleItem[]
 local function get(items)
 	lib.log("Calculating items")
 	local successfulItems, processed = {},{}
@@ -79,20 +77,20 @@ local function get(items)
 	return successfulItems
 end
 ---Returns an iterator for the items and their dependencies
----@param items tierArrayItem[]
+---@param items simpleItem[]
 ---@return fun(p1:DependencyIteratorState):tierResult?
 ---@return DependencyIteratorState
 function calculator.get(items)
 	return eachDependency(get(items))
 end
 ---Turns a tier result iterator into tierArrayItem[]
----@param items tierArrayItem[]
----@return tierArrayItem[]
+---@param items simpleItem[]
+---@return simpleItem[]
 local function toArray(items)
 	---@type tierArray
 	local array = {}
 	for item in eachDependency(items) do
-		---@type tierArrayItem
+		---@type simpleItem
 		lib.appendToArrayInTable(array, item.tier+1, {
 			name = item.name,
 			type = item.type
@@ -101,27 +99,10 @@ local function toArray(items)
 	return array
 end
 ---Returns an array of the items and their dependencies
----@param items tierArrayItem[]
----@return tierArrayItem[]
+---@param items simpleItem[]
+---@return simpleItem[]
 function calculator.getArray(items)
 	return toArray(get(items))
-end
----Just calls regular get for the item(s) set in the settings
-function calculator.calculate()
-	local itemString = lib.getSetting("tiergen-item-calculation") --[[@as string]]
-	local itemIDs = lib.split(itemString, ",")
-	---@type tierArrayItem[]
-	local items = {}
-	-- Trim whitespace
-	for index, itemID in pairs(lib.split(itemString, ",")) do
-		local cleanID = itemID:match("^%s*(.-)%s*$")
-		items[#items+1] = {
-			name = cleanID,
-			type = "item"
-		}
-	end
-
-	return calculator.getArray(items)
 end
 
 function calculator.reprocess()

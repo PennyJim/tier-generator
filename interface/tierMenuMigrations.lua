@@ -24,5 +24,7 @@ return function (migration)
 
 	global.player_highlight = {}
 	global.player_highlighted = {}
+	global.default_tiers = global.tier_array
+	global.tier_array = nil
 	::v0_2_5::
 end

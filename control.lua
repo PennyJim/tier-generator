@@ -1,4 +1,5 @@
 lib = require("__tier-generator__.library")
+config = require("__tier-generator__.interface.tierConfig")
 local calculator = require("__tier-generator__.calculation.calculator")
 local tierMenu = require("__tier-generator__.interface.tierMenu")
 
@@ -30,16 +31,17 @@ local function recalcTiers()
 		calculator.updateBase()
 		global.updateBase = nil
 	end
-	global.tier_array = calculator.calculate()
+	global.default_tiers = calculator.getArray(global.config[0].all_sciences)
 	tierMenu.regenerate_menus()
 end
 
 script.on_init(function ()
 	global.player_highlight = {}
 	global.player_highlighted = {}
-	global.tier_array = {}
+	global.default_tiers = {}
 	global.tick_later = {}
 	global.updateBase = true
+	config.init()
 	tierMenu.init()
 	tick_later(recalcTiers)
 end)
@@ -50,7 +52,8 @@ script.on_event(defines.events.on_player_created, function (EventData)
 		return log("No player pressed created??")
 	end
 
-	tierMenu.join_player(player)
+	config.add_player(EventData.player_index)
+	tierMenu.add_player(player)
 end)
 
 script.on_configuration_changed(function (ChangedData)
