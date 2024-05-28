@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.3
-Date: ????
+Date: 2024-05-28
   Features:
     - Natural resources like trees and rocks are now accounted for in the chain. This also partially overwrote the mining resources, so now they might not appear if they don't have an autoplace.
   Bugfixes:
