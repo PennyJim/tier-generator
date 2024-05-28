@@ -3,28 +3,6 @@ config = require("__tier-generator__.interface.tierConfig")
 local calculator = require("__tier-generator__.calculation.calculator")
 local tierMenu = require("__tier-generator__.interface.tierMenu")
 
----The handler for the next tick
----@param data NthTickEventData
-local function tick(data)
-	for _, func in ipairs(global.tick_later) do
-		local success, error = pcall(func, data)
-		if not success then
-			lib.log(error)
-		end
-	end
-	global.tick_later = {}
-	global.next_tick = nil
-	script.on_nth_tick(1, nil)
-end
----Calls the given function next tick
----@param func fun(data:NthTickEventData)
-local function tick_later(func)
-	global.tick_later[#global.tick_later+1] = func
-	if not global.next_tick then
-		global.next_tick = true
-		script.on_nth_tick(1, tick)
-	end
-end
 ---Recalculates the tiers
 local function recalcTiers()
 	if global.updateBase then
@@ -34,6 +12,8 @@ local function recalcTiers()
 	global.default_tiers = calculator.getArray(global.config[0].all_sciences)
 	tierMenu.regenerate_menus()
 end
+lib.register_func("recalc", recalcTiers)
+lib.register_func("tierMenu", tierMenu.init)
 
 script.on_init(function ()
 	global.player_highlight = {}
@@ -42,8 +22,8 @@ script.on_init(function ()
 	global.tick_later = {}
 	global.updateBase = true
 	config.init()
-	tierMenu.init()
-	tick_later(recalcTiers)
+	lib.tick_later("recalc")
+	lib.tick_later("tierMenu")
 end)
 
 script.on_event(defines.events.on_player_created, function (EventData)
@@ -71,7 +51,7 @@ script.on_configuration_changed(function (ChangedData)
 	or ChangedData.migration_applied then
 		global.player_highlight = {}
 		global.updateBase = true
-		tick_later(recalcTiers)
+		lib.tick_later("recalc")
 	end
 end)
 
@@ -101,12 +81,10 @@ script.on_event(defines.events.on_runtime_mod_setting_changed, function (EventDa
 	if not global.willRecalc
 	and lib.isOurSetting(setting)
 	and setting ~= "tiergen-debug-log" then
-		tick_later(recalcTiers)
+		lib.tick_later("recalc")
 	end
 end)
 
 script.on_load(function ()
-	if global.next_tick then
-		script.on_nth_tick(1, tick)
-	end
+	lib.register_load()
 end)

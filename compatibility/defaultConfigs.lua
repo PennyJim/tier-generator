@@ -31,7 +31,7 @@ local singleMods = {
 }
 ---@type defaultConfigs
 local vanillaDefaults = {
-	ultimate_science = lib.item{"space-science-pack"},
+	ultimate_science = lib.item("space-science-pack"),
 	all_sciences = {
 		lib.item("automation-science-pack"),
 		lib.item("logistic-science-pack"),
@@ -39,8 +39,8 @@ local vanillaDefaults = {
 		lib.item("chemical-science-pack"),
 		lib.item("production-science-pack"),
 		lib.item("utility-science-pack"),
-		lib.item("space-science-typo"),
-	}, -- TODO
+		lib.item("space-science-pack"),
+	},
 	base_items = {},
 	ignored_recipes = {}
 }
@@ -48,13 +48,10 @@ local vanillaDefaults = {
 local function DetermineMod()
 	for mod, defaults in pairs(singleMods) do
 		if game.active_mods[mod] then
-			game.print("Tier Calculator is using the "..mod.." configuration")
-			return defaults
+			return defaults, mod
 		end
 	end
 
-	-- Unknown mod(s)
-	game.print("Tier Calculator is using the default configuration")
 	return vanillaDefaults
 end
 

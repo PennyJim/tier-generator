@@ -292,5 +292,96 @@ function library.getRootElement(element)
 end
 
 --#endregion
+--#region Timing functions
+
+---@type {[string]:fun(d:NthTickEventData)}
+local nth_tick_handlers = {}
+---Puts the function in a table. Should be treated like
+---script.register_metatable for desync safety
+---@param name string
+---@param func fun(data:NthTickEventData)
+function library.register_func(name, func)
+	if nth_tick_handlers[name] then
+		error("Two handlers cannot share a name", 2)
+	end
+	nth_tick_handlers[name] = func
+end
+---The handler for the next tick
+---@param data NthTickEventData
+local function tick(data)
+	for _, funcName in ipairs(global.tick_later) do
+		local success, error = pcall(nth_tick_handlers[funcName], data)
+		if not success then
+			lib.log(error)
+		end
+	end
+	global.tick_later = {}
+	global.next_tick = nil
+	script.on_nth_tick(data.nth_tick, nil)
+end
+---Calls the given function next tick
+---@param func_name string
+function library.tick_later(func_name)
+	global.tick_later[#global.tick_later+1] = func_name
+	if not global.next_tick then
+		global.next_tick = true
+		script.on_nth_tick(1, tick)
+	end
+end
+
+---The handler for seconds_later
+---@param data NthTickEventData
+local function seconds_later_tick(data)
+	if data.nth_tick ~= data.tick then
+		error("Should only ever be called once for an nth_tick")
+	end
+	local func_name = global.seconds[data.tick]
+	local success, error = pcall(nth_tick_handlers[func_name], data)
+	if not success then
+		lib.log(error)
+	end
+	global.seconds[data.tick] = nil
+	script.on_nth_tick(data.nth_tick, nil)
+end
+---Will only be used when seconds_later is called on tick 0. Will run at tick 1
+local function register_all_seconds()
+	for time in pairs(global.seconds) do
+		script.on_nth_tick(time, seconds_later_tick)
+	end
+end
+library.register_func("register-seconds", register_all_seconds)
+---Calls the given functions at 60 the given seconds_later
+---If two functions need the same tick, the one registered later will
+---be pushed back to the next available tick
+---@param seconds number
+---@param func_name string
+function library.seconds_later(seconds, func_name)
+	local cur_tick = game.tick
+	local next_tick = math.floor(seconds*60 + cur_tick)
+	local registered_table = global.seconds or {}
+	while registered_table[next_tick] do
+		next_tick = next_tick + 1
+	end
+	registered_table[next_tick] = func_name
+	global.seconds = registered_table
+
+	if cur_tick == 0 then
+		library.tick_later("register-seconds")
+	else
+		script.on_nth_tick(next_tick, seconds_later_tick)
+	end
+end
+
+---To reregister the tick for tick_later.
+function library.register_load()
+	if global.next_tick then
+		script.on_nth_tick(1, tick)
+	end
+
+	if global.seconds and #global.seconds then
+		lib.tick_later("register-seconds")
+	end
+end
+--#endregion
 
 return library
