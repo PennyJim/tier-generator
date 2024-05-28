@@ -12,7 +12,7 @@ local function tick(data)
 	end
 	global.tick_later = {}
 	global.next_tick = nil
-	script.on_nth_tick(1)
+	script.on_nth_tick(1, nil)
 end
 ---Calls the given function next tick
 ---@param func fun(data:NthTickEventData)
