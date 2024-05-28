@@ -8,19 +8,19 @@ return function (migration)
 	elseif 	old == "0.2.3" then goto v0_2_3
 	elseif 	old == "0.2.4" then goto v0_2_4
 	elseif 	old == "0.2.5" then goto v0_2_5
-	end
+	else return end
 
 	::v0_2_0::
+	::v0_2_1::
+	::v0_2_2::
+	::v0_2_3::
+	::v0_2_4::
 	for _, player in pairs(game.players) do
 		local menu = player.gui.screen["tiergen-menu"]
 		if menu then
 			menu.destroy()
 		end
 	end
-	::v0_2_1::
-	::v0_2_2::
-	::v0_2_3::
-	::v0_2_4::
 
 	global.player_highlight = {}
 	global.player_highlighted = {}

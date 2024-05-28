@@ -46,6 +46,110 @@ local function create_titlebar(frame, caption)
 		style = "inset_frame_container_horizontal_flow"
 	}
 end
+---Creates the tab for item selection
+---@param tab_base LuaGuiElement
+---@param index integer
+---@param autopopulate simpleItem[]
+---@return LuaGuiElement
+local function create_item_selection_tab(tab_base, index, autopopulate)
+	local tab = tab_base.add{
+		type = "tab",
+		name = "tab"..index,
+		caption = {"tiergen.tab"..index}
+	}
+	tab.style.minimal_width = 40
+	local vert_flow = tab_base.add{
+		type = "flow",
+		direction = "vertical"
+	}
+	tab_base.add_tab(tab, vert_flow)
+	local item_scroll = vert_flow.add{
+		type = "frame",
+		style = "slot_button_deep_frame"
+	}.add{
+		type = "scroll-pane",
+		name = "scroll",
+		style = "naked_scroll_pane"
+	}
+	local item_table = item_scroll.add{
+		type = "table",
+		style = "filter_slot_table",
+		column_count = 5
+	}
+	item_table.style.width = 40*5
+	item_table.style.minimal_height = 40*3
+	item_scroll.style.height = 40*3
+	local fluid_scroll = vert_flow.add{
+		type = "frame",
+		style = "slot_button_deep_frame"
+	}.add{
+		type = "scroll-pane",
+		name = "scroll",
+		style = "naked_scroll_pane"
+	}
+	local fluid_table = fluid_scroll.add{
+		type = "table",
+		style = "filter_slot_table",
+		column_count = 5
+	}
+	fluid_table.style.width = 40*5
+	fluid_table.style.minimal_height = 40*2
+	fluid_scroll.style.height = 40*2
+	for _, item in ipairs(autopopulate) do
+		local table = item.type == "item" and item_table or fluid_table
+		table.add{
+			type = "choose-elem-button",
+			elem_type = item.type,
+			[item.type] = item.name
+		}
+	end
+	item_table.add{
+		type = "choose-elem-button",
+		elem_type = "item",
+		-- style = "slot_button",
+	}
+	fluid_table.add{
+		type = "choose-elem-button",
+		elem_type = "fluid",
+		-- style = "slot_button",
+	}
+	return tab
+end
+---Creates the pane for item selection
+---@param base_flow LuaGuiElement
+local function create_item_selection(base_flow)
+	local vert_flow = base_flow.add{
+		type = "frame",
+		name = "tiergen-items",
+		style = "bordered_frame_with_extra_side_margins"
+	}.add{
+		type = "flow",
+		direction = "vertical"
+	}
+	local label = vert_flow.add{
+		type = "label",
+		caption = "Testing Testing 1 2 3"
+	}
+	local tabs = vert_flow.add{
+		type = "tabbed-pane",
+	}
+	local playerConfig = global.config[tabs.player_index]
+	create_item_selection_tab(tabs, 1, playerConfig.ultimate_science)
+	create_item_selection_tab(tabs, 2, playerConfig.all_sciences)
+	create_item_selection_tab(tabs, 3, playerConfig.custom)
+
+	local confirm = vert_flow.add{
+		type = "button"
+	}
+end
+---Creates the pane for item selection
+---@param base_flow LuaGuiElement
+local function create_base_selection(base_flow)
+end
+---Creates the pane for item selection
+---@param base_flow LuaGuiElement
+local function create_ignored_selection(base_flow)
+end
 ---Creates the options interface
 ---@param base_flow LuaGuiElement
 local function create_options(base_flow)
@@ -57,10 +161,7 @@ local function create_options(base_flow)
 		direction = "vertical"
 	}
 	vert_flow.style.vertically_stretchable = true
-	local testing = vert_flow.add{
-		type = "label",
-		caption = "Testing Testing 1 2 3"
-	}
+	create_item_selection(vert_flow)
 end
 ---Updates the tier list for the player
 ---@param player LuaPlayer
@@ -113,7 +214,7 @@ local function update_list(player)
 			column_count = 12,
 			style = "filter_slot_table"
 		}
-		tier_list.style.width = 40*12
+		tier_list.style.width = 40*10
 
 		for _, item in ipairs(items) do
 			local itemPrototype = lib.getItemOrFluid(item.name, item.type)
@@ -175,6 +276,11 @@ end
 ---Initializes the menu for all players
 local function init()
 	for _, player in pairs(game.players) do
+		local oldMenu = player.gui.screen["tiergen-menu"]
+		if oldMenu then
+			--- Destroy remnants of last mod installation
+			oldMenu.destroy()
+		end
 		create_frame(player)
 	end
 end
