@@ -1,4 +1,3 @@
-local lib = require("__tier-generator__.library")
 local tier = require("__tier-generator__.calculation.tierCalculation")
 
 local function updateBase ()
@@ -12,6 +11,8 @@ local function updateBase ()
 		tier.set(itemID)
 	end
 end
+
+-- TODO: refactor some of tierCalculation into here
 
 return {
 	calculate = function ()

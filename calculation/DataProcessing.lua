@@ -1,5 +1,4 @@
 local lookup = require("__tier-generator__.calculation.lookupTables")
-local lib = require("__tier-generator__.library")
 local processFunctions = {}
 
 ---@type table<data.RecipeID, boolean>
@@ -27,7 +26,7 @@ local function processRecipe(recipeID, recipePrototype)
 	end
 	if #recipePrototype.products == 0 then
 		lib.log("\t\t"..recipeID.." didn't result in anything?")
-		lib.log(serpent.line(recipePrototype))
+		-- lib.log(serpent.line(recipePrototype)) -- Does not print anything useful
 		return
 	end
 	-- Ignore unbarreling recipes

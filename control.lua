@@ -1,3 +1,4 @@
+lib = require("__tier-generator__.library")
 local calculator = require("__tier-generator__.calculation.calculator")
 local tierMenu = require("__tier-generator__.interface.tierMenu")
 

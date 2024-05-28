@@ -1,6 +1,5 @@
 local calculator = require("__tier-generator__.calculation.calculator")
 local migrator = require("__tier-generator__.interface.tierMenuMigrations")
-lib = require("__tier-generator__.library")
 
 ---Adds a title_bar to the given frame, and returns the
 ---horizontal flow for elements to be put into

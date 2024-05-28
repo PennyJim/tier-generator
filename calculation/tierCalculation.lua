@@ -103,7 +103,7 @@ initTierMapTables(TierMaps, calculating, incalculable)
 local function unmarkIncalculable(type, prototypeID)
 	local incalculableItem = incalculable[type][prototypeID]
 	if not incalculableItem then
-		return lib.log("\tLikely was incalculable?? type: "..type.." id: "..prototypeID)
+		return -- Already marked calculable
 	end
 	if incalculableItem.reason == invalidReason.error
 	or incalculableItem.reason == invalidReason.no_machine
@@ -619,7 +619,7 @@ local function calculateTier(itemID, type)
 	end
 	local tier = tierSwitch(itemID, itemPrototype)
 	if tier < 0 then
-		lib.log("Failed to calculate "..itemID.."'s tier")
+		lib.log("Failed to calculate "..itemID.."'s tier: "..invalidReason[tier])
 		lib.debug(serpent.dump(incalculable))
 	else
 		lib.debug("\t"..itemID..": Tier "..tier)
