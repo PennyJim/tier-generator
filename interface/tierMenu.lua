@@ -198,24 +198,20 @@ local function regenerate_menus()
 end
 
 ---Calls the callback on each item's element in the given array
----@param array tierArray
----@param callback fun(elem:LuaGuiElement,item:tierArrayItem)
-local function traverseArray(menu, array, callback)
-	array = array or {{}}
+---@param menu LuaGuiElement
+---@param inputItem tierArrayItem[]
+---@param callback fun(elem:LuaGuiElement,item:tierResult)
+local function traverseArray(menu, inputItem, callback)
 	---@type LuaGuiElement
 	local table = menu["base"]["flow"]["scroll_frame"]["scroll"]["table"]
 	if table.type ~= "table" then
 		return -- No tiers error message
 	end
-	for tier, items in ipairs(array) do
+	for item in calculator.get{inputItem} do
 		---@type LuaGuiElement
-		local item_table = table.children[tier*2]["tierlist-items"]
-
-		for _, item in ipairs(items) do
-			local name = item.type.."/"..item.name
-			local button = item_table[name]
-			callback(button, item)
-		end
+		local item_table = table.children[(item.tier+1)*2]["tierlist-items"]
+		local button = item_table[item.type.."/"..item.name]
+		callback(button, item)
 	end
 end
 
@@ -238,11 +234,11 @@ end
 ---Highlights the items in the player's global highlight array
 ---@param player LuaPlayer
 local function unhighlightItems(player)
-	local highlightArray = global.player_highlight[player.index]
-	if not highlightArray then return end
+	local highlightItem = global.player_highlight[player.index]
+	if not highlightItem then return end
 	traverseArray(
 		player.gui.screen["tiergen-menu"],
-		highlightArray,
+		highlightItem,
 	function (elem, item)
 		elem.toggled = false
 		-- if item.isDirect then
@@ -260,18 +256,31 @@ script.on_event(defines.events.on_gui_click, function (EventData)
 	end
 	local rootElement = lib.getRootElement(EventData.element)
 	if rootElement.name == "tiergen-menu" then
-		unhighlightItems(player)
 	end
 	if EventData.element.name == "close_button" then
 		player.set_shortcut_toggled("tiergen-menu", false)
 		set_visibility(player, false)
-	elseif EventData.element.parent.name == "tierlist-items" then
+	end
+
+	if EventData.element.parent.name == "tierlist-items" then
 		local type_item = EventData.element.name
 		local type = type_item:match("^[^/]+")
 		local item = type_item:match("/.+"):sub(2)
-		local highlightArray = calculator.get{name=item,type=type}
-		global.player_highlight[EventData.player_index] = highlightArray
-		highlightItems(player)
+		local highlightItem = {name=item,type=type}
+		local oldHighlight = global.player_highlight[EventData.player_index]
+		if oldHighlight then
+			if oldHighlight.name ~= item
+			or oldHighlight.type ~= type then
+				unhighlightItems(player)
+				global.player_highlight[EventData.player_index] = highlightItem
+				highlightItems(player)
+			end
+		else
+			global.player_highlight[EventData.player_index] = highlightItem
+			highlightItems(player)
+		end
+	else
+		unhighlightItems(player)
 	end
 end)
 

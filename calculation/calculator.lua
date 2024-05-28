@@ -62,26 +62,10 @@ end
 -- 	return tierArray
 -- end
 
----Turns a tier result iterator into tierArrayItem[]
+---Calculates the tiers and returns items that were successful
 ---@param items tierArrayItem[]
 ---@return tierArrayItem[]
-local function toArray(items)
-	---@type tierArray
-	local array = {}
-	for item in eachDependency(items) do
-		---@type tierArrayItem
-		lib.appendToArrayInTable(array, item.tier, {
-			name = item.name,
-			type = item.type
-		})
-	end
-	return array
-end
-
----Returns an iterator for the items
----@param items tierArrayItem[]
----@return unknown
-function calculator.get(items)
+local function get(items)
 	lib.log("Calculating items")
 	local successfulItems, processed = {},{}
 	lib.initTierMapTables(processed)
@@ -91,11 +75,37 @@ function calculator.get(items)
 			successfulItems[#successfulItems+1] = item
 		end
 	end
-
 	lib.log("Done!\n")
-	return toArray(successfulItems)
+	return successfulItems
 end
-
+---Returns an iterator for the items and their dependencies
+---@param items tierArrayItem[]
+---@return fun(p1:DependencyIteratorState):tierResult?
+---@return DependencyIteratorState
+function calculator.get(items)
+	return eachDependency(get(items))
+end
+---Turns a tier result iterator into tierArrayItem[]
+---@param items tierArrayItem[]
+---@return tierArrayItem[]
+local function toArray(items)
+	---@type tierArray
+	local array = {}
+	for item in eachDependency(items) do
+		---@type tierArrayItem
+		lib.appendToArrayInTable(array, item.tier+1, {
+			name = item.name,
+			type = item.type
+		})
+	end
+	return array
+end
+---Returns an array of the items and their dependencies
+---@param items tierArrayItem[]
+---@return tierArrayItem[]
+function calculator.getArray(items)
+	return toArray(get(items))
+end
 ---Just calls regular get for the item(s) set in the settings
 function calculator.calculate()
 	local itemString = lib.getSetting("tiergen-item-calculation") --[[@as string]]
@@ -111,7 +121,7 @@ function calculator.calculate()
 		}
 	end
 
-	return calculator.get(items)
+	return calculator.getArray(items)
 end
 
 function calculator.reprocess()

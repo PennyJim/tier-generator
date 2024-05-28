@@ -99,11 +99,13 @@ end
 
 ---Returns an itterable for the dependencies of givenItems
 ---@param givenItems tierArrayItem[]
+---@return fun(s:DependencyIteratorState):tierResult?
+---@return DependencyIteratorState
 local function eachDependency(givenItems)
 	if #givenItems == 0 then
 		return function ()
 			return nil
-		end
+		end, {}
 	end
 	return iterator, {
 		nextDependencies = getGivenAsDependency(givenItems),
