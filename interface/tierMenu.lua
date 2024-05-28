@@ -218,35 +218,30 @@ end
 ---Highlights the items in the player's global highlight array
 ---@param player LuaPlayer
 local function highlightItems(player)
-	local highlightArray = global.player_highlight[player.index]
+	local highlightedList = global.player_highlighted[player.index] or {}
+	global.player_highlighted[player.index] = highlightedList
+	local highlightItem = global.player_highlight[player.index]
 	traverseArray(
 		player.gui.screen["tiergen-menu"],
-		highlightArray,
+		highlightItem,
 	function (elem, item)
 		elem.toggled = true
-		-- /TODO: Do something special if elem.isDirect is true
-		-- if item.isDirect then
-		-- 	-- Set a special style
-		-- 	-- elem.enabled = false -- to prove it's the right elements
-		-- end
+		highlightedList[#highlightedList+1] = elem
 	end)
 end
 ---Highlights the items in the player's global highlight array
 ---@param player LuaPlayer
 local function unhighlightItems(player)
-	local highlightItem = global.player_highlight[player.index]
-	if not highlightItem then return end
-	traverseArray(
-		player.gui.screen["tiergen-menu"],
-		highlightItem,
-	function (elem, item)
-		elem.toggled = false
-		-- if item.isDirect then
-		-- 	-- Reset the style
-		-- 	-- elem.enabled = true
-		-- end
-	end)
+	local highlightedList = global.player_highlighted[player.index]
+	if not highlightedList then return end
+	for _, highlightedElem in ipairs(highlightedList) do
+		---@cast highlightedElem LuaGuiElement
+		if not highlightedElem.valid then break end
+
+		highlightedElem.toggled = false
+	end
 	global.player_highlight[player.index] = nil
+	global.player_highlighted[player.index] = nil
 end
 
 script.on_event(defines.events.on_gui_click, function (EventData)

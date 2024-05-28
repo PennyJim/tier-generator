@@ -36,6 +36,7 @@ end
 
 script.on_init(function ()
 	global.player_highlight = {}
+	global.player_highlighted = {}
 	global.tier_array = {}
 	global.tick_later = {}
 	global.updateBase = true
