@@ -269,7 +269,7 @@ script.on_event(defines.events.on_gui_click, function (EventData)
 		local type_item = EventData.element.name
 		local type = type_item:match("^[^/]+")
 		local item = type_item:match("/.+"):sub(2)
-		local highlightArray = calculator.get({item}, type)
+		local highlightArray = calculator.get{name=item,type=type}
 		global.player_highlight[EventData.player_index] = highlightArray
 		highlightItems(player)
 	end

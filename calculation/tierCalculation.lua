@@ -1,7 +1,7 @@
 local processor = require("__tier-generator__.calculation.DataProcessing")
 lookup = nil ---@type LookupTables
 
----@alias fakeRecipes "burning"|"rocket-launch"|"boil"|"offshore-pump"
+---@alias fakeRecipes "mining"|"hand-mining"|"burning"|"rocket-launch"|"boil"|"offshore-pump"
 ---@class fakePrototype : LuaObject
 ---@field object_name fakeRecipes|"LuaRecipeCategoryPrototype"
 ---@field real_object_name LuaObject.object_name
@@ -603,51 +603,6 @@ local function calculateTier(itemID, type)
 	return tier
 end
 
----Takes an item and turns it into a table of item/fluid tiers
----@param dependency dependency
----@param table tierTable
----@param processed table<tierSwitchTypes,{[string]:boolean}>
----@param passedTop boolean?
-local function resolveDependencies(dependency, table, processed, passedTop)
-	local isTop = passedTop == nil or passedTop
-	local item = TierMaps[dependency.type][dependency.id]
-	if processed[dependency.type][dependency.id] then return end
-	if dependency.type == "LuaFluidPrototype"
-	or dependency.type == "LuaItemPrototype" then
-		local type = dependency.type == "LuaFluidPrototype" and "fluid" or "item"
-		lib.appendToArrayInTable(table, type, {
-			name = dependency.id,
-			tier = item.tier,
-			isDirect = passedTop or false,
-		})
-		if passedTop then isTop = false end
-	end
-	processed[dependency.type][dependency.id] = true
-	for _, dependency in ipairs(item.dependencies) do
-		resolveDependencies(dependency, table, processed, isTop)
-	end
-end
-
----Turns a table of resolved dependencies into a tier array
----@param dependencies tierTable
----@return tierArray
-local function depenenciesToArray(dependencies)
-	---@type tierArray
-	local tierArray = {}
-	for _, type in ipairs({"item","fluid"}) do
-		if not dependencies[type] then goto continue end
-		for _, tierItem in ipairs(dependencies[type]) do
-			lib.appendToArrayInTable(tierArray, tierItem.tier+1, {
-				name = tierItem.name,
-				type = type,
-				isDirect = tierItem.isDirect,
-			})
-		end
-    ::continue::
-	end
-	return tierArray
-end
-
 ---Directly set the tier of a given itemID
 ---@param itemID string
 local function setTier(itemID)
@@ -666,30 +621,10 @@ local function uncalculate()
 	lib.initTierMapTables(TierMaps, calculating, incalculable)
 end
 
----Returns a tierArray for the given items
----@param itemIDs data.ItemID[]
----@param type "item"|"fluid"
----@return tierArray
-local function getTier(itemIDs, type)
-	local table, processed = {},{}
-	initTierMapTables(processed)
-	for _, itemID in ipairs(itemIDs) do
-		local tier = calculateTier(itemID, type)
-		if tier >= 0 then
-			resolveDependencies({
-				type = type == "item" and "LuaItemPrototype" or "LuaFluidPrototype",
-				id = itemID
-			}, table, processed)
-		end
-	end
-	return depenenciesToArray(table)
-end
-
 return {
 	set = setTier,
 	unset = uncalculate,
 	calculate = calculateTier,
-	get = getTier,
 	reprocess = function ()
 		processor.unprocess()
 		uncalculate()
