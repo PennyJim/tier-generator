@@ -338,7 +338,7 @@ tierSwitch["hand-mining"] = function (ItemID, _)
 	local blockedBy = {}
 
 	local tier, dependencies = lib.getMinTierInArray(
-		miningRecipes, invalidReason.not_player_minable,
+		miningRecipes, invalidReason.not_player_mineable,
 		function (category)
 			if category == "hand" then
 				return 0, {}
