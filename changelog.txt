@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.4
-Date: ????
+Date: 2024-05-28
   Bugfixes:
     - Should no longer accidentally wipe the blocked list when an item that has blocked items from calculating finishes calculating
     - Actually send nil to unregister the nth tick. I didn't realize it was required and it worked for me (on linux).
