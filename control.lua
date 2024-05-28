@@ -1,6 +1,29 @@
 local calculator = require("__tier-generator__.calculation.calculator")
 local tierMenu = require("__tier-generator__.interface.tierMenu")
 
+---The handler for the next tick
+---@param data NthTickEventData
+local function tick(data)
+	for _, func in ipairs(global.tick_later) do
+		local success, error = pcall(func, data)
+		if not success then
+			lib.log(error)
+		end
+	end
+	global.tick_later = {}
+	global.next_tick = nil
+	script.on_nth_tick(1)
+end
+---Calls the given function next tick
+---@param func fun(data:NthTickEventData)
+local function tick_later(func)
+	global.tick_later[#global.tick_later+1] = func
+	if not global.next_tick then
+		global.next_tick = true
+		script.on_nth_tick(1, tick)
+	end
+end
+---Recalculates the tiers
 local function recalcTiers()
 	if global.updateBase then
 		calculator.updateBase()
@@ -8,15 +31,15 @@ local function recalcTiers()
 	end
 	global.tier_array = calculator.calculate()
 	tierMenu.regenerate_menus()
-	script.on_nth_tick(1, nil)
-	global.willRecalc = nil
 end
 
 script.on_init(function ()
 	global.player_highlight = {}
+	global.tier_array = {}
+	global.tick_later = {}
 	global.updateBase = true
 	tierMenu.init()
-	recalcTiers()
+	tick_later(recalcTiers)
 end)
 
 script.on_event(defines.events.on_player_created, function (EventData)
@@ -43,7 +66,7 @@ script.on_configuration_changed(function (ChangedData)
 	or ChangedData.migration_applied then
 		global.player_highlight = {}
 		global.updateBase = true
-		recalcTiers()
+		tick_later(recalcTiers)
 	end
 end)
 
@@ -73,13 +96,12 @@ script.on_event(defines.events.on_runtime_mod_setting_changed, function (EventDa
 	if not global.willRecalc
 	and lib.isOurSetting(setting)
 	and setting ~= "tiergen-debug-log" then
-		script.on_nth_tick(1, recalcTiers)
-		global.willRecalc = true
+		tick_later(recalcTiers)
 	end
 end)
 
 script.on_load(function ()
-	if global.willRecalc then
-		script.on_nth_tick(1, recalcTiers)
+	if global.next_tick then
+		script.on_nth_tick(1, tick)
 	end
 end)
