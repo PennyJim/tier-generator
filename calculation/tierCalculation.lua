@@ -1,6 +1,5 @@
 local processor = require("__tier-generator__.calculation.DataProcessing")
 lookup = nil ---@type LookupTables
-local lib = require("__tier-generator__.library")
 
 ---@alias fakeRecipes "burning"|"rocket-launch"|"boil"|"offshore-pump"
 ---@class fakePrototype : LuaObject
