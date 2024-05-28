@@ -536,9 +536,6 @@ tierSwitch["LuaFluidPrototype"] = function (ItemID, value)
 	---@type blockedReason[]
 	local blockedBy = {}
 
-	-- No recipes create it, then it's a base resource
-	-- TODO: remove once all (determinable) ways of getting a base item is accounted for
-	-- Currently only need to do autoplace'ed items (like trees for wood)
 	if not recipes then
 		lib.debug(value.object_name..":"..ItemID.." has no recipes!")
 		return invalidReason.no_recipe, {}

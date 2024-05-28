@@ -417,7 +417,6 @@ end
 --#endregion
 --#endregion
 
--- TODO: take into account whether a resource generates?
 local hasReturned = false
 return {
 	process = function ()
