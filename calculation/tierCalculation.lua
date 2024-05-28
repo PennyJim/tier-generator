@@ -179,10 +179,15 @@ local tierSwitch = setmetatable({}, {
 				unmarkIncalculable(type, prototypeID)
 			end
 		else -- Mark as incalculable
-			incalculable[type][prototypeID] = {
-				reason = tier.tier,
-				blocked = {}
-			}
+			local alreadyIncalculable = incalculable[type][prototypeID]
+			if not alreadyIncalculable then
+				incalculable[type][prototypeID] = {
+					reason = tier.tier,
+					blocked = {}
+				}
+			else
+				alreadyIncalculable.reason = math.min(tier.tier, alreadyIncalculable.reason)
+			end
 			for _, reason in ipairs(dependencies) do
 				incalculableItem = incalculable[reason.type][reason.id]
 				if not incalculableItem then
