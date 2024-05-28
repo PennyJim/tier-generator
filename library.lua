@@ -164,6 +164,31 @@ function library.getMinTierInArray(array, invalid, callback)
 	end
 	return tier, dependencies
 end
+
+---Takes the given table of tierSwitchTypes to arrays and resets them
+---@param ... table<tierSwitchTypes,any>
+function library.initTierMapTables(...)
+	local tables = {...}
+	local prototypes = {
+		"LuaRecipeCategoryPrototype",
+		"LuaTechnologyPrototype",
+		"LuaRecipePrototype",
+		"LuaFluidPrototype",
+		"LuaItemPrototype",
+		"mining",
+		"hand-mining",
+		"burning",
+		"rocket-launch",
+		"boil",
+		"offshore-pump",
+	}
+	for _, prototype in ipairs(prototypes) do
+		for _, table in ipairs(tables) do
+			table[prototype] = {}
+		end
+	end
+	return tables[1]
+end
 --#endregion
 --#region Item Resolvers
 

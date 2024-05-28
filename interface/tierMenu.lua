@@ -228,11 +228,11 @@ local function highlightItems(player)
 		highlightArray,
 	function (elem, item)
 		elem.toggled = true
-		-- TODO: Do something special if elem.isDirect is true
-		if item.isDirect then
-			-- Set a special style
-			-- elem.enabled = false -- to prove it's the right elements
-		end
+		-- /TODO: Do something special if elem.isDirect is true
+		-- if item.isDirect then
+		-- 	-- Set a special style
+		-- 	-- elem.enabled = false -- to prove it's the right elements
+		-- end
 	end)
 end
 ---Highlights the items in the player's global highlight array
@@ -245,10 +245,10 @@ local function unhighlightItems(player)
 		highlightArray,
 	function (elem, item)
 		elem.toggled = false
-		if item.isDirect then
-			-- Reset the style
-			-- elem.enabled = true
-		end
+		-- if item.isDirect then
+		-- 	-- Reset the style
+		-- 	-- elem.enabled = true
+		-- end
 	end)
 	global.player_highlight[player.index] = nil
 end

@@ -47,7 +47,7 @@ setmetatable(invalidReason, {
 ---@class tierArrayItem
 ---@field name string
 ---@field type "item"|"fluid"
----@field isDirect boolean
+-- ---@field isDirect boolean
 ---@class tierArray
 ---@field [uint] tierArrayItem[]
 
@@ -71,30 +71,7 @@ calculating = {};
 ---@field reason invalidReason
 ---@type table<tierSwitchTypes,table<string,{reason:invalidReason,blocked:dependency[]}>>
 incalculable = {}
-
----Takes the given table of tierSwitchTypes to arrays and resets them
----@param ... table<tierSwitchTypes,any>
-local function initTierMapTables(...)
-	local prototypes = {
-		"LuaRecipeCategoryPrototype",
-		"LuaTechnologyPrototype",
-		"LuaRecipePrototype",
-		"LuaFluidPrototype",
-		"LuaItemPrototype",
-		"mining",
-		"hand-mining",
-		"burning",
-		"rocket-launch",
-		"boil",
-		"offshore-pump",
-	}
-	for _, prototype in ipairs(prototypes) do
-		for _, table in ipairs{...} do
-			table[prototype] = {}
-		end
-	end
-end
-initTierMapTables(TierMaps, calculating, incalculable)
+lib.initTierMapTables(TierMaps, calculating, incalculable)
 
 ---Clears the incalculable table for the given item and what it blocked
 ---@param type tierSwitchTypes
@@ -686,7 +663,7 @@ end
 ---Clears the working tables
 local function uncalculate()
 	baseOverride = {}
-	initTierMapTables(TierMaps, calculating, incalculable)
+	lib.initTierMapTables(TierMaps, calculating, incalculable)
 end
 
 ---Returns a tierArray for the given items
