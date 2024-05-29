@@ -265,6 +265,8 @@ end
 ---@param player LuaPlayer
 ---@param is_toggled boolean
 local function set_visibility(player, is_toggled)
+	if not global.menu then return end
+	---@type LuaGuiElement
 	local menu = player.gui.screen["tiergen-menu"]
 	if not menu then
 		menu = create_frame(player)
@@ -275,6 +277,7 @@ end
 
 ---Initializes the menu for all players
 local function init()
+	global.menu = true
 	for _, player in pairs(game.players) do
 		local oldMenu = player.gui.screen["tiergen-menu"]
 		if oldMenu then
@@ -287,10 +290,12 @@ end
 ---Initializes the menu for new players
 ---@param player LuaPlayer
 local function new_player(player)
+	if not global.menu then return end
 	create_frame(player)
 end
 ---Goes through each player and calls `reset_frame`
 local function regenerate_menus()
+	if not global.menu then return end
 	for _, player in pairs(game.players) do
 		global.player_highlight[player.index] = nil
 		---@type LuaGuiElement
@@ -388,6 +393,7 @@ end)
 ---Toggles the menu open or close depending on the state of the shortcut
 ---@param player LuaPlayer
 local function open_close(player)
+	if not global.menu then return end
 	local isOpened = not player.is_shortcut_toggled("tiergen-menu")
 	player.set_shortcut_toggled("tiergen-menu", isOpened)
 	set_visibility(player, isOpened)
@@ -396,7 +402,6 @@ end
 return {
 	init = init,
 	add_player = new_player,
-	set_visibility = set_visibility,
 	regenerate_menus = regenerate_menus,
 	migration = migrator,
 	open_close = open_close

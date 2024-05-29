@@ -3,7 +3,8 @@ data:extend{
 	{
 		type = "custom-input",
 		name = "tiergen-menu",
-		key_sequence = "SHIFT + T"
+		key_sequence = "SHIFT + T",
+		action = "lua",
 	},
 	{
 		type = "shortcut",
