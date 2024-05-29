@@ -390,14 +390,40 @@ script.on_event(defines.events.on_gui_click, function (EventData)
 	end
 end)
 
+local function open(player)
+	player.set_shortcut_toggled("tiergen-menu", true)
+	set_visibility(player, true)
+	player.opened = player.gui.screen["tiergen-menu"]
+end
+local function close(player)
+	player.set_shortcut_toggled("tiergen-menu", false)
+	set_visibility(player, false)
+	if player.opened and player.opened.name == "tiergen-menu" then
+		player.opened = nil
+	end
+end
 ---Toggles the menu open or close depending on the state of the shortcut
 ---@param player LuaPlayer
 local function open_close(player)
 	if not global.menu then return end
 	local isOpened = not player.is_shortcut_toggled("tiergen-menu")
-	player.set_shortcut_toggled("tiergen-menu", isOpened)
-	set_visibility(player, isOpened)
+	if isOpened then
+		open(player)
+	else
+		player.opened = nil
+	end
 end
+
+script.on_event(defines.events.on_gui_closed, function (EventData)
+	if EventData.element and EventData.element.name == "tiergen-menu" then
+		local player = game.get_player(EventData.player_index)
+		if not player then
+			return log("Who's menu just closed!?")
+		end
+
+		close(player)
+	end
+end)
 
 return {
 	init = init,
