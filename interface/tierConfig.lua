@@ -9,7 +9,12 @@ local function MentionConfig()
 	else
 		message = {"tiergen.vanilla-config"}
 	end
-	game.print(message)
+
+	if remote.interfaces["better-chat"] then
+		remote.call("better-chat", "send", message, nil, "global")
+	else
+		game.print(message)
+	end
 end
 lib.register_func("config-alert", MentionConfig)
 
