@@ -62,10 +62,16 @@ script.on_event(defines.events.on_lua_shortcut, function (EventData)
 			return log("No player pressed that shortcut??")
 		end
 
-		local isOpened = not player.is_shortcut_toggled("tiergen-menu")
-		player.set_shortcut_toggled("tiergen-menu", isOpened)
-		tierMenu.set_visibility(player, isOpened)
+		tierMenu.open_close(player)
 	end
+end)
+script.on_event("tiergen-menu", function (EventData)
+	local player = game.get_player(EventData.player_index)
+	if not player then
+		return log("No player pressed that keybind??")
+	end
+
+	tierMenu.open_close(player)
 end)
 
 script.on_event(defines.events.on_runtime_mod_setting_changed, function (EventData)

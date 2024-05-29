@@ -385,10 +385,19 @@ script.on_event(defines.events.on_gui_click, function (EventData)
 	end
 end)
 
+---Toggles the menu open or close depending on the state of the shortcut
+---@param player LuaPlayer
+local function open_close(player)
+	local isOpened = not player.is_shortcut_toggled("tiergen-menu")
+	player.set_shortcut_toggled("tiergen-menu", isOpened)
+	set_visibility(player, isOpened)
+end
+
 return {
 	init = init,
 	add_player = new_player,
 	set_visibility = set_visibility,
 	regenerate_menus = regenerate_menus,
 	migration = migrator,
+	open_close = open_close
 }
