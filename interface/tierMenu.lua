@@ -82,6 +82,7 @@ local function make_elem_selector_table(base, type, width, height)
 	}
 	local table = frame.add{
 		type = "table",
+		name = "tiergen-item-selection-table",
 		style = "filter_slot_table",
 		column_count = width
 	}
@@ -123,6 +124,7 @@ local function create_item_selection_tab(tab_base, tab_num, autopopulate)
 	}
 	local fluid_table = make_elem_selector_table(vert_flow, "fluid", width, 1)
 	local fluid_index = 1
+	local elems = global.player[tab.player_index][tab_num].elems
 	for _, item in ipairs(autopopulate) do
 		local table, index
 		if item.type == "item" then
@@ -138,6 +140,7 @@ local function create_item_selection_tab(tab_base, tab_num, autopopulate)
 		if index >= #table.children - table.column_count then
 			add_elem_selector_row(table, item.type)
 		end
+		elems[item.type][index] = item.name
 		table.children[index].elem_value = item.name
 	end
 	return tab
@@ -171,16 +174,18 @@ local function create_item_selection(base_flow)
 	-- }.style.top_margin = 35
 	local tabs = vert_flow.add{
 		type = "tabbed-pane",
+		name = "tiergen-item-selection",
 		style = "tiergen_tabbed_pane"
 	}
 	-- tab_flow.add{
 	-- 	type = "sprite",
 	-- 	sprite = "bottom_right_inside_corner"
 	-- }.style.top_margin = 35
-	local playerConfig = global.config[tabs.player_index]
-	create_item_selection_tab(tabs, 1, playerConfig.ultimate_science)
-	create_item_selection_tab(tabs, 2, playerConfig.all_sciences)
+	local playerConfig = global.config[tabs.player_index] or global.config[0]
+	create_item_selection_tab(tabs, 1, playerConfig.all_sciences)
+	create_item_selection_tab(tabs, 2, playerConfig.ultimate_science)
 	create_item_selection_tab(tabs, 3, playerConfig.custom)
+	global.player[tabs.player_index].selected_tab = 1
 	tabs.selected_tab_index = 1
 
 	local confirm_flow = vert_flow.add{
@@ -198,6 +203,8 @@ local function create_item_selection(base_flow)
 	confirm.style.minimal_width = 0
 	confirm.style.right_margin = 4
 	confirm.style.top_margin = 4
+	confirm.enabled = false
+	global.player[confirm.player_index].calculate = confirm
 end
 ---Creates the pane for item selection
 ---@param base_flow LuaGuiElement
@@ -223,36 +230,26 @@ end
 ---Updates the tier list for the player
 ---@param player LuaPlayer
 local function update_list(player)
-	local menu = player.gui.screen["tiergen-menu"]
-	---@type LuaGuiElement
-	local scroll = menu["base"]["flow"]["scroll_frame"]["scroll"]
-	---@type LuaGuiElement
-	local table = scroll["table"]
+	local player_table = global.player[player.index]
+	local error = player_table.error
+	local table = player_table.table
 	if table then
-		table.destroy()
+		table.clear()
 	end
-	if #global.default_tiers == 0 then
-		--- FIXME: Doesn't center???
-		local flow = scroll.add{
-			type = "flow",
-			name = "table",
-		}
-		flow.style.padding = {100,40}
-		flow.add{
-			type = "label",
-			caption = {"tiergen.no-tiers"}
-		}
+
+	local tiers = player_table[player_table.selected_tab].result
+	if not tiers then
+		tiers = global.default_tiers
+		player_table[player_table.selected_tab].result = tiers
+	end
+	if #tiers == 0 then
+		error.visible = true
 		return
+	else
+		error.visible = false
 	end
-	table = scroll.add{
-		type = "table",
-		name = "table",
-		column_count = 2,
-		draw_horizontal_lines = true,
-		direction="vertical",
-	}
-	table.style.left_padding = 8
-	for tier, items in ipairs(global.default_tiers) do
+
+	for tier, items in ipairs(tiers) do
 		local tier_label = table.add{
 			type = "label",
 			name = "tier-"..tier.."-label",
@@ -289,17 +286,48 @@ end
 ---Creates the structure for the list
 ---@param base_flow LuaGuiElement
 local function create_list(base_flow)
-	local scroll = base_flow.add{
+	local horz_flow = base_flow.add{
 		type = "frame",
 		name = "scroll_frame",
 		style = "inside_shallow_frame"
 	}.add{
+		type = "flow",
+		name = "error_flow",
+		direction = "horizontal"
+	}
+	local error_flow = horz_flow.add{
+		type = "flow",
+		direction = "vertical"
+	}
+	error_flow.visible = false
+	error_flow.add{
+		type = "empty-widget"
+	}.style.vertically_stretchable = true
+	error_flow.add{
+		type = "label",
+		caption = {"tiergen.no-tiers"}
+	}
+	error_flow.add{
+		type = "empty-widget"
+	}.style.vertically_stretchable = true
+	local scroll = horz_flow.add{
 		type = "scroll-pane",
 		name = "scroll",
 		style = "naked_scroll_pane"
 	}
 	scroll.style.maximal_height = 16*44
 	scroll.style.left_padding = 8
+	local table = scroll.add{
+		type = "table",
+		name = "table",
+		column_count = 2,
+		draw_horizontal_lines = true,
+		direction="vertical",
+	}
+	table.style.left_padding = 8
+	local player_table = global.player[error_flow.player_index]
+	player_table.error = error_flow
+	player_table.table = table
 end
 ---Creates the menu for the player
 ---@param player LuaPlayer
@@ -353,8 +381,9 @@ end
 ---Goes through each player and calls `reset_frame`
 local function regenerate_menus()
 	if not global.menu then return end
-	for _, player in pairs(game.players) do
-		global.player_highlight[player.index] = nil
+	for index, player in pairs(game.players) do
+		global.player[index].highlight = nil
+		global.player[index].highlighted = nil
 		---@type LuaGuiElement
 		local frame = player.gui.screen["tiergen-menu"]
 		if frame then
@@ -366,13 +395,13 @@ local function regenerate_menus()
 end
 
 ---Calls the callback on each item's element in the given array
----@param menu LuaGuiElement
----@param inputItem simpleItem[]
+---@param player_table PlayerGlobal
+---@param inputItem simpleItem
 ---@param callback fun(elem:LuaGuiElement,item:tierResult)
-local function traverseArray(menu, inputItem, callback)
+local function traverseArray(player_table, inputItem, callback)
 	---@type LuaGuiElement
-	local table = menu["base"]["flow"]["scroll_frame"]["scroll"]["table"]
-	if table.type ~= "table" then
+	local table = player_table.table
+	if table.valid and not table.visible then
 		return -- No tiers error message
 	end
 	for item in calculator.get{inputItem} do
@@ -384,13 +413,14 @@ local function traverseArray(menu, inputItem, callback)
 end
 
 ---Highlights the items in the player's global highlight array
----@param player LuaPlayer
-local function highlightItems(player)
-	local highlightedList = global.player_highlighted[player.index] or {}
-	global.player_highlighted[player.index] = highlightedList
-	local highlightItem = global.player_highlight[player.index]
+---@param player_table PlayerGlobal
+local function highlightItems(player_table)
+	local highlightedList = player_table.highlighted or {}
+	player_table.highlighted = highlightedList
+	local highlightItem = player_table.highlight
+	if not highlightItem then return end
 	traverseArray(
-		player.gui.screen["tiergen-menu"],
+		player_table,
 		highlightItem,
 	function (elem, item)
 		elem.toggled = true
@@ -398,54 +428,20 @@ local function highlightItems(player)
 	end)
 end
 ---Highlights the items in the player's global highlight array
----@param player LuaPlayer
-local function unhighlightItems(player)
-	local highlightedList = global.player_highlighted[player.index]
+---@param player_table PlayerGlobal
+local function unhighlightItems(player_table)
+	local highlightedList = player_table.highlighted
 	if not highlightedList then return end
 	for _, highlightedElem in ipairs(highlightedList) do
 		---@cast highlightedElem LuaGuiElement
-		if not highlightedElem.valid then break end
-
-		highlightedElem.toggled = false
+		if highlightedElem.valid then
+			highlightedElem.toggled = false
+		end
 	end
-	global.player_highlight[player.index] = nil
-	global.player_highlighted[player.index] = nil
+	player_table.highlight = nil
+	player_table.highlighted = nil
 end
 
-script.on_event(defines.events.on_gui_click, function (EventData)
-	local player = game.get_player(EventData.player_index)
-	if not player then
-		return log("wtf")
-	end
-	local rootElement = lib.getRootElement(EventData.element)
-	if rootElement.name == "tiergen-menu" then
-	end
-	if EventData.element.name == "close_button" then
-		player.set_shortcut_toggled("tiergen-menu", false)
-		set_visibility(player, false)
-	end
-
-	if EventData.element.parent.name == "tierlist-items" then
-		local type_item = EventData.element.name
-		local type = type_item:match("^[^/]+")
-		local item = type_item:match("/.+"):sub(2)
-		local highlightItem = {name=item,type=type}
-		local oldHighlight = global.player_highlight[EventData.player_index]
-		if oldHighlight then
-			if oldHighlight.name ~= item
-			or oldHighlight.type ~= type then
-				unhighlightItems(player)
-				global.player_highlight[EventData.player_index] = highlightItem
-				highlightItems(player)
-			end
-		else
-			global.player_highlight[EventData.player_index] = highlightItem
-			highlightItems(player)
-		end
-	else
-		unhighlightItems(player)
-	end
-end)
 
 local function open(player)
 	player.set_shortcut_toggled("tiergen-menu", true)
@@ -471,6 +467,14 @@ local function open_close(player)
 	end
 end
 
+script.on_event("tiergen-menu", function (EventData)
+	local player = game.get_player(EventData.player_index)
+	if not player then
+		return log("No player pressed that keybind??")
+	end
+
+	open_close(player)
+end)
 script.on_event(defines.events.on_gui_closed, function (EventData)
 	if EventData.element and EventData.element.name == "tiergen-menu" then
 		local player = game.get_player(EventData.player_index)
@@ -480,6 +484,74 @@ script.on_event(defines.events.on_gui_closed, function (EventData)
 
 		close(player)
 	end
+end)
+script.on_event(defines.events.on_gui_click, function (EventData)
+	local player = game.get_player(EventData.player_index)
+	local player_table = global.player[EventData.player_index]
+	if not player then
+		return log("wtf")
+	end
+	local rootElement = lib.getRootElement(EventData.element)
+	if rootElement.name == "tiergen-menu" then
+	end
+	if EventData.element.name == "close_button" then
+		player.set_shortcut_toggled("tiergen-menu", false)
+		set_visibility(player, false)
+	end
+
+	if EventData.element.parent.name == "tierlist-items" then
+		local type_item = EventData.element.name
+		local type = type_item:match("^[^/]+")
+		local item = type_item:match("/.+"):sub(2)
+		---@type simpleItem
+		local highlightItem = {name=item,type=type}
+		local oldHighlight = player_table.highlight
+		if oldHighlight then
+			if oldHighlight.name ~= item
+			or oldHighlight.type ~= type then
+				unhighlightItems(player_table)
+				player_table.highlight = highlightItem
+				highlightItems(player_table)
+			end
+		else
+			player_table.highlight = highlightItem
+			highlightItems(player_table)
+		end
+	else
+		unhighlightItems(player_table)
+	end
+end)
+script.on_event(defines.events.on_gui_elem_changed, function (EventData)
+	if EventData.element.parent.name ~= "tiergen-item-selection-table" then
+		return
+	end
+
+	local player_table = global.player[EventData.player_index]
+	local player_tab = player_table[player_table.selected_tab]
+	player_tab.has_changed = true
+	player_table.calculate.enabled = true
+
+	local elem = EventData.element
+	local index = elem.get_index_in_parent()
+	local items = player_tab.elems[elem.elem_type --[[@as "item"|"fluid"]]]
+	items[index] = elem.elem_value --[[@as string]]
+end)
+script.on_event(defines.events.on_gui_selected_tab_changed, function (EventData)
+	if EventData.element.name ~= "tiergen-item-selection" then
+		return
+	end
+
+	local player_table = global.player[EventData.player_index]
+	local new_tab = EventData.element.selected_tab_index
+	---@cast new_tab integer
+	player_table.selected_tab = new_tab
+	if player_table.calculated_tab ~= new_tab then
+		player_table.calculate.enabled = true
+		return
+	end
+
+	local player_tab = player_table[new_tab]
+	player_table.calculate.enabled = player_tab.has_changed
 end)
 
 return {

@@ -39,7 +39,7 @@ function calculator.get(items)
 end
 ---Turns a tier result iterator into tierArrayItem[]
 ---@param items simpleItem[]
----@return simpleItem[]
+---@return {[integer]:simpleItem[]}
 local function toArray(items)
 	---@type tierArray
 	local array = {}
@@ -54,7 +54,7 @@ local function toArray(items)
 end
 ---Returns an array of the items and their dependencies
 ---@param items simpleItem[]
----@return simpleItem[]
+---@return {[integer]:simpleItem[]}
 function calculator.getArray(items)
 	return toArray(get(items))
 end

@@ -3,6 +3,54 @@ config = require("__tier-generator__.interface.tierConfig")
 local calculator = require("__tier-generator__.calculation.calculator")
 local tierMenu = require("__tier-generator__.interface.tierMenu")
 
+---@class PlayerGlobal.tab
+---@field elems {["item"|"fluid"]:{[int]:string}}
+---@field result {[integer]:tierResult[]}?
+---@field has_changed boolean
+
+---@class PlayerGlobal
+---@field highlight simpleItem?
+---@field highlighted LuaGuiElement[]?
+---@field calculate LuaGuiElement
+---@field calculated_tab integer
+---@field selected_tab integer
+---@field calculated simpleItem[]
+---@field elem_has_changed boolean
+---@field error LuaGuiElement
+---@field table LuaGuiElement
+---@field [1] PlayerGlobal.tab
+---@field [2] PlayerGlobal.tab
+---@field [3] PlayerGlobal.tab
+
+
+---Initializes the player's global variables
+---@param player_index integer
+local function setupPlayerGlobal(player_index)
+	---@type PlayerGlobal
+	local player = global.player[player_index] or {}
+	global.player[player_index] = player
+	player.calculated_tab = player.calculated_tab or 1
+	for tab = 1, 3, 1 do
+		player[tab] = player[tab] or {}
+		player[tab].elems = player[tab].elems or {}
+		player[tab].elems["item"] = player[tab].elems["item"] or {}
+		player[tab].elems["fluid"] = player[tab].elems["fluid"] or {}
+	end
+end
+---Initializes the global variables
+local function setupGlobal()
+	---@type simpleItem[]
+	global.default_tiers = global.default_tiers or {}
+	---@type string[]
+	global.tick_later = global.tick_later or {}
+	---@type PlayerGlobal[]
+	global.player = global.player or {}
+	for player_index in pairs(game.players) do
+		---@cast player_index integer
+		setupPlayerGlobal(player_index)
+	end
+end
+
 ---Recalculates the tiers
 local function recalcTiers()
 	if global.updateBase then
@@ -16,11 +64,9 @@ lib.register_func("recalc", recalcTiers)
 lib.register_func("tierMenu", tierMenu.init)
 
 script.on_init(function ()
-	global.player_highlight = {}
-	global.player_highlighted = {}
-	global.default_tiers = {}
-	global.tick_later = {}
 	global.updateBase = true
+	---@type string[]
+	setupGlobal()
 	config.init()
 	lib.tick_later("recalc")
 	lib.tick_later("tierMenu")
@@ -32,11 +78,13 @@ script.on_event(defines.events.on_player_created, function (EventData)
 		return log("No player pressed created??")
 	end
 
+	setupPlayerGlobal(EventData.player_index)
 	config.add_player(EventData.player_index)
 	tierMenu.add_player(player)
 end)
 
 script.on_configuration_changed(function (ChangedData)
+	setupGlobal()
 	local tiergen_migration = ChangedData.mod_changes["tier-generator"]
 	if tiergen_migration then
 		tierMenu.migration(tiergen_migration)
@@ -64,14 +112,6 @@ script.on_event(defines.events.on_lua_shortcut, function (EventData)
 
 		tierMenu.open_close(player)
 	end
-end)
-script.on_event("tiergen-menu", function (EventData)
-	local player = game.get_player(EventData.player_index)
-	if not player then
-		return log("No player pressed that keybind??")
-	end
-
-	tierMenu.open_close(player)
 end)
 
 script.on_event(defines.events.on_runtime_mod_setting_changed, function (EventData)
