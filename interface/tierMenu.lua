@@ -34,7 +34,7 @@ local function create_titlebar(frame, caption)
 	title_flow.add{
 		type = "sprite-button",
 		name = "close_button",
-		style = "frame_action_button",
+		style = "close_button",
 		sprite = "utility/close_white",
 		hovered_sprite = "utility/close_black",
 		clicked_sprite = "utility/close_black",
@@ -46,101 +46,158 @@ local function create_titlebar(frame, caption)
 		style = "inset_frame_container_horizontal_flow"
 	}
 end
+
+---Adds a row of empty buttons to a selector table
+---Just like the logistic requests table
+---@param table LuaGuiElement
+---@param type ElemType
+local function add_elem_selector_row(table, type)
+	local width = table.column_count
+	for i = 1, width, 1 do
+		table.add{
+			type = "choose-elem-button",
+			elem_type = type,
+			-- style = "slot_button",
+		}
+	end
+end
+---Creates a scrollable table of a given width and height
+---@param base LuaGuiElement
+---@param type ElemType
+---@param width integer
+---@param height integer
+---@return LuaGuiElement
+local function make_elem_selector_table(base, type, width, height)
+	local scroll_frame = base.add{
+		type = "frame",
+		style = "deep_frame_in_shallow_frame"
+	}
+	local scroll = scroll_frame.add{
+		type = "scroll-pane",
+		style = "naked_scroll_pane"
+	}
+	local frame = scroll.add{
+		type = "frame",
+		style = "slot_button_deep_frame"
+	}
+	local table = frame.add{
+		type = "table",
+		style = "filter_slot_table",
+		column_count = width
+	}
+	table.style.width = 40*width
+	table.style.minimal_height = 40*height
+	scroll.style.height = 40*height
+	scroll_frame.style.left_margin = 12
+	add_elem_selector_row(table, type)
+	return table
+end
 ---Creates the tab for item selection
 ---@param tab_base LuaGuiElement
----@param index integer
+---@param tab_num integer
 ---@param autopopulate simpleItem[]
 ---@return LuaGuiElement
-local function create_item_selection_tab(tab_base, index, autopopulate)
+local function create_item_selection_tab(tab_base, tab_num, autopopulate)
 	local tab = tab_base.add{
 		type = "tab",
-		name = "tab"..index,
-		caption = {"tiergen.tab"..index}
+		name = "tab"..tab_num,
+		caption = {"tiergen.tab", tab_num}
 	}
 	tab.style.minimal_width = 40
 	local vert_flow = tab_base.add{
 		type = "flow",
 		direction = "vertical"
 	}
+	local width = 5
+	vert_flow.style.minimal_width = width*40 + 24
 	tab_base.add_tab(tab, vert_flow)
-	local item_scroll = vert_flow.add{
-		type = "frame",
-		style = "slot_button_deep_frame"
-	}.add{
-		type = "scroll-pane",
-		name = "scroll",
-		style = "naked_scroll_pane"
+	vert_flow.add{
+		type = "label",
+		caption = {"tiergen.items"}
 	}
-	local item_table = item_scroll.add{
-		type = "table",
-		style = "filter_slot_table",
-		column_count = 5
+	local item_table = make_elem_selector_table(vert_flow, "item", width, 2)
+	local item_index = 1
+	vert_flow.add{
+		type = "label",
+		caption = {"tiergen.fluids"}
 	}
-	item_table.style.width = 40*5
-	item_table.style.minimal_height = 40*3
-	item_scroll.style.height = 40*3
-	local fluid_scroll = vert_flow.add{
-		type = "frame",
-		style = "slot_button_deep_frame"
-	}.add{
-		type = "scroll-pane",
-		name = "scroll",
-		style = "naked_scroll_pane"
-	}
-	local fluid_table = fluid_scroll.add{
-		type = "table",
-		style = "filter_slot_table",
-		column_count = 5
-	}
-	fluid_table.style.width = 40*5
-	fluid_table.style.minimal_height = 40*2
-	fluid_scroll.style.height = 40*2
+	local fluid_table = make_elem_selector_table(vert_flow, "fluid", width, 1)
+	local fluid_index = 1
 	for _, item in ipairs(autopopulate) do
-		local table = item.type == "item" and item_table or fluid_table
-		table.add{
-			type = "choose-elem-button",
-			elem_type = item.type,
-			[item.type] = item.name
-		}
+		local table, index
+		if item.type == "item" then
+			table = item_table
+			index = item_index
+			item_index = item_index + 1
+		else
+			table = fluid_table
+			index = fluid_index
+			fluid_index = fluid_index + 1
+		end
+
+		if index >= #table.children - table.column_count then
+			add_elem_selector_row(table, item.type)
+		end
+		table.children[index].elem_value = item.name
 	end
-	item_table.add{
-		type = "choose-elem-button",
-		elem_type = "item",
-		-- style = "slot_button",
-	}
-	fluid_table.add{
-		type = "choose-elem-button",
-		elem_type = "fluid",
-		-- style = "slot_button",
-	}
 	return tab
 end
 ---Creates the pane for item selection
 ---@param base_flow LuaGuiElement
 local function create_item_selection(base_flow)
-	local vert_flow = base_flow.add{
+	local base_frame = base_flow.add{
 		type = "frame",
 		name = "tiergen-items",
 		style = "bordered_frame_with_extra_side_margins"
-	}.add{
+	}
+	base_frame.style.top_margin = 8
+	base_frame.style.bottom_padding = 4
+	local vert_flow = base_frame.add{
 		type = "flow",
 		direction = "vertical"
 	}
 	local label = vert_flow.add{
 		type = "label",
-		caption = "Testing Testing 1 2 3"
+		caption = {"tiergen.item-selection"}
 	}
+	-- local tab_flow = vert_flow.add{
+	-- 	type = "flow",
+	-- 	style = "tiergen_wide_horizontal_flow",
+	-- 	direction = "horizontal"
+	-- }
+	-- tab_flow.add{
+	-- 	type = "sprite",
+	-- 	sprite = "bottom_left_inside_corner"
+	-- }.style.top_margin = 35
 	local tabs = vert_flow.add{
 		type = "tabbed-pane",
+		style = "tiergen_tabbed_pane"
 	}
+	-- tab_flow.add{
+	-- 	type = "sprite",
+	-- 	sprite = "bottom_right_inside_corner"
+	-- }.style.top_margin = 35
 	local playerConfig = global.config[tabs.player_index]
 	create_item_selection_tab(tabs, 1, playerConfig.ultimate_science)
 	create_item_selection_tab(tabs, 2, playerConfig.all_sciences)
 	create_item_selection_tab(tabs, 3, playerConfig.custom)
+	tabs.selected_tab_index = 1
 
-	local confirm = vert_flow.add{
-		type = "button"
+	local confirm_flow = vert_flow.add{
+		type = "flow",
+		direction = "horizontal"
 	}
+	confirm_flow.add{
+		type = "empty-widget",
+	}.style.horizontally_stretchable = true
+	local confirm = confirm_flow.add{
+		type = "button",
+		caption = {"tiergen.calculate"},
+		style = "confirm_button_without_tooltip"
+	}
+	confirm.style.minimal_width = 0
+	confirm.style.right_margin = 4
+	confirm.style.top_margin = 4
 end
 ---Creates the pane for item selection
 ---@param base_flow LuaGuiElement
@@ -155,7 +212,7 @@ end
 local function create_options(base_flow)
 	local vert_flow = base_flow.add{
 		type = "frame",
-		style = "inside_shallow_frame_with_padding"
+		style = "inside_shallow_frame"
 	}.add{
 		type = "flow",
 		direction = "vertical"
