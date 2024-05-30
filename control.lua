@@ -82,13 +82,12 @@ script.on_event(defines.events.on_player_created, function (EventData)
 	config.add_player(EventData.player_index)
 	tierMenu.add_player(player)
 end)
+script.on_event(defines.events.on_player_removed, function (EventData)
+	global.player[EventData.player_index] = nil
+end)
 
 script.on_configuration_changed(function (ChangedData)
 	setupGlobal()
-	local tiergen_migration = ChangedData.mod_changes["tier-generator"]
-	if tiergen_migration then
-		tierMenu.migration(tiergen_migration)
-	end
 	local mods_have_changed = false
 	for _ in pairs(ChangedData.mod_changes) do
 		mods_have_changed = true

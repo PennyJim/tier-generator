@@ -9,6 +9,10 @@ Date: ????
     - Added compatibility for Science Packs Galore (as well as Forked)
     - Added compatibility for MoreSciencePacks-for1_1
     - Added compatibility for my other mod better-chat (the compatibility message prints using the interface)
+  Changes:
+    - Actually use the migration feature instead of faking it
+  Bugfixes:
+    - Removed the crash for on_configuration_changed by basically entirely rewriting how global is structured and handled
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.4
 Date: 2024-05-28
