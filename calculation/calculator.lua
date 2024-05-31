@@ -9,7 +9,7 @@ function calculator.updateBase()
 	lib.log("Setting base item overrides")
 	local baseItems = global.config.base_items
 	for _, item in pairs(baseItems) do
-		lib.log("\tSetting "..item.." to tier 0")
+		lib.log("\tSetting "..tostring(item).." to tier 0")
 		core.set(item)
 	end
 end
@@ -27,7 +27,6 @@ local function get(items)
 			successfulItems[#successfulItems+1] = item
 		end
 	end
-	lib.log("Done!\n")
 	return successfulItems
 end
 ---Returns an iterator for the items and their dependencies

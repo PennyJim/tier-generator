@@ -1,6 +1,8 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.5
 Date: ???? 
+  Major Features:
+    - Finally lets each player choose and save 3 tabs of items to calculate tiers with
   Features:
     - Added automatic compatibility! It'll choose a few defaults based on the detected mod and written compatibility
     - Finally added a keybind for opening the menu

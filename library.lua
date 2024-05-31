@@ -263,6 +263,9 @@ end
 local itemMetatable = {
 	__tostring = function (self)
 		return self.type..":"..self.name
+	end,
+	__eq = function (self, other)
+		return self.type == other.type and self.name == other.name
 	end
 }
 script.register_metatable("simple-item", itemMetatable)

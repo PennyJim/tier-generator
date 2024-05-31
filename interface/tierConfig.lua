@@ -19,39 +19,18 @@ end
 lib.register_func("config-alert", MentionConfig)
 
 function configTable.init()
-	---@class config
+	---@class config : defaultConfigs
+	---@field all_sciences simpleItem[]
+	---@field ultimate_science simpleItem
 	---@field base_items simpleItem[]
 	---@field ignored_recipes data.RecipeID[]
-	---@field [0] defaultPlayer
-	---@field [uint] playerConfig
 	---@field mod string?
-	local config = {}
-	global.config = config
-	local defaultConfigs, mod = autoConfigure()
+	local config, mod = autoConfigure()
+	---@cast config config
 	config.mod = mod
-	config.base_items = defaultConfigs.base_items
-	config.ignored_recipes = defaultConfigs.ignored_recipes
-	---@class playerConfig
-	---@field all_sciences simpleItem[]
-	---@field ultimate_science simpleItem[]
-	---@class defaultPlayer : playerConfig
-	local defaultPlayer = {
-		all_sciences = defaultConfigs.all_sciences,
-		ultimate_science = {defaultConfigs.ultimate_science},
-		custom = {},
-	}
-	config[0] = defaultPlayer
-
-	for player_index in pairs(game.players) do
-		config[player_index] = defaultPlayer
-	end
+	global.config = config
 
 	lib.seconds_later(2, "config-alert")
-end
----Sets the player's config to the defaultConfigs
----@param player_index uint
-function configTable.add_player(player_index)
-	global.config[player_index] = global.config[0]
 end
 
 return configTable

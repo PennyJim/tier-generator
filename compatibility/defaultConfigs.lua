@@ -139,6 +139,10 @@ local vanillaDefaults = {
 	ignored_recipes = {}
 }
 
+---Returns the chosen defaultConfigs and the mod associated with them
+---If it has no compatibility available, then the second parameter returns nil
+---@return defaultConfigs
+---@return string?
 local function DetermineMod()
 	for mod, defaults in pairs(singleMods) do
 		if game.active_mods[mod] then

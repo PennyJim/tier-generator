@@ -6,8 +6,7 @@ for _, player in pairs(game.players) do
 	end
 end
 
--- Migrate the tier_array into the default array
-global.default_tiers = global.tier_array
+-- Clear the unecessary array
 global.tier_array = nil
 
 -- Migrate the highlight and highlighted table into the new global player structure
