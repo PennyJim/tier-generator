@@ -13,12 +13,14 @@ global.tier_array = nil
 global.player = global.player or {}
 if global.player_highlight then
 	for player_index, highlight in pairs(global.player_highlight) do
+		global.player[player_index] = global.player[player_index] or {}
 		global.player[player_index].highlight = highlight
 	end
 end
 global.player_highlight = nil
 if global.player_highlighted then
 	for player_index, highlighted in pairs(global.player_highlighted) do
+		global.player[player_index] = global.player[player_index] or {}
 		global.player[player_index].highlighted = highlighted
 	end
 end

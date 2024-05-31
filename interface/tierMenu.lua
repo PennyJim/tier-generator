@@ -5,6 +5,8 @@ local table_size = {
 	fluid_height = 1
 }
 
+local menu = {}
+
 ---Adds a title_bar to the given frame, and returns the
 ---horizontal flow for elements to be put into
 ---@param frame LuaGuiElement
@@ -448,7 +450,7 @@ end
 ---@param player LuaPlayer
 ---@param is_toggled boolean
 local function set_visibility(player, is_toggled)
-	if not global.menu then return end
+	if not global.menu then return menu.init() end
 	---@type LuaGuiElement
 	local menu = player.gui.screen["tiergen-menu"]
 	if not menu then
@@ -460,12 +462,12 @@ end
 
 ---Initializes the menu for new players
 ---@param player LuaPlayer
-local function new_player(player)
-	if not global.menu then return end
+function menu.add_player(player)
+	if not global.menu then return menu.init() end
 	global.player[player.index].menu = create_frame(player)
 end
 ---Initializes the menu for all players
-local function init()
+function menu.init()
 	global.menu = true
 	for _, player in pairs(game.players) do
 		local oldMenu = player.gui.screen["tiergen-menu"]
@@ -473,16 +475,16 @@ local function init()
 			--- Destroy remnants of last mod installation
 			oldMenu.destroy()
 		end
-		new_player(player)
+		menu.add_player(player)
 	end
 end
 ---Goes through each player and calls `reset_frame`
-local function regenerate_menus()
-	if not global.menu then return end
+function menu.regenerate_menus()
+	if not global.menu then return menu.init() end
 	for index, player in pairs(game.players) do
 		local player_table = global.player[index]
 		if not player_table.menu and not player_table.menu.valid then
-			new_player(player)
+			menu.add_player(player)
 			goto continue
 		end
 
@@ -575,12 +577,14 @@ local function close(player)
 end
 ---Toggles the menu open or close depending on the state of the shortcut
 ---@param player LuaPlayer
-local function open_close(player)
-	if not global.menu then return end
+function menu.open_close(player)
+	if not global.menu then return menu.init() end
 	local isOpened = not player.is_shortcut_toggled("tiergen-menu")
 	if isOpened then
 		open(player)
 	else
+		-- Set the shortcut to off just in case the menu was invalidated
+		player.set_shortcut_toggled("tiergen-menu", false)
 		player.opened = nil
 	end
 end
@@ -679,11 +683,11 @@ script.on_event("tiergen-menu", function (EventData)
 	end
 
 	if not player_table.menu or not player_table.menu.valid then
-		new_player(player)
+		menu.add_player(player)
 		lib.log("Generating new menu for "..player.name.." as their reference was invalid")
 	end
 
-	open_close(player)
+	menu.open_close(player)
 end)
 script.on_event(defines.events.on_gui_closed, function (EventData)
 	if EventData.element and EventData.element.name == "tiergen-menu" then
@@ -694,7 +698,7 @@ script.on_event(defines.events.on_gui_closed, function (EventData)
 		end
 
 		if not player_table.menu or not player_table.menu.valid then
-			new_player(player)
+			menu.add_player(player)
 			return lib.log("Generating new menu for "..player.name.." as their reference was invalid")
 		end
 
@@ -709,7 +713,7 @@ script.on_event(defines.events.on_gui_click, function (EventData)
 	end
 
 	if not player_table.menu or not player_table.menu.valid then
-		new_player(player)
+		menu.add_player(player)
 		return lib.log("Generating new menu for "..player.name.." as their reference was invalid")
 	end
 
@@ -735,7 +739,7 @@ script.on_event(defines.events.on_gui_elem_changed, function (EventData)
 	if not player_table.menu or not player_table.menu.valid then
 		local player = game.get_player(EventData.player_index)
 		if not player then return end
-		new_player(player)
+		menu.add_player(player)
 		return lib.log("Generating new menu for "..player.name.." as their reference was invalid")
 	end
 
@@ -796,7 +800,7 @@ script.on_event(defines.events.on_gui_selected_tab_changed, function (EventData)
 	if not player_table.menu or not player_table.menu.valid then
 		local player = game.get_player(EventData.player_index)
 		if not player then return end
-		new_player(player)
+		menu.add_player(player)
 		return lib.log("Generating new menu for "..player.name.." as their reference was invalid")
 	end
 
@@ -812,9 +816,4 @@ script.on_event(defines.events.on_gui_selected_tab_changed, function (EventData)
 	player_table.calculate.enabled = player_tab.elems.has_changed
 end)
 
-return {
-	init = init,
-	add_player = new_player,
-	regenerate_menus = regenerate_menus,
-	open_close = open_close
-}
+return menu

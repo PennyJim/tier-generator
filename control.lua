@@ -125,6 +125,10 @@ end)
 
 script.on_configuration_changed(function (ChangedData)
 	setupGlobal()
+	if not global.config then
+		config.init()
+	end
+
 	local mods_have_changed = false
 	for _ in pairs(ChangedData.mod_changes) do
 		mods_have_changed = true
