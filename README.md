@@ -5,9 +5,9 @@ Considers what machine is required to craft, the ingredients, the technology, an
 
 
 ## Todo List:
-- [x] Dynamically determine what is hand-craftable
-- [x] Add mining to the 'recipes'
-- [x] Add considerations for generation
-- [x] Add offshore pumps
-- [x] Add boiling liquids to the 'recipes'
-- [x] Add setting to disable/enable considering the tier of technology
+-- [ ] Implement the Base Items config pane
+-- [ ] Implement the Ignored Recipes config pane
+-- [ ] Refactor to use a GUI library?
+-- [ ] See if the Base Items pane can support numbers, so the exact tier can be set
+-- [ ] Make the empty space below the tier-display that style of background like the trains schedule
+-- [ ] Make recipe ignoring happen inside the calculation core again. It was put in preprocessing to enable 'no recipes' to be a usable base case. That is no longer needed
