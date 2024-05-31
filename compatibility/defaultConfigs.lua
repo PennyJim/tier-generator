@@ -3,7 +3,7 @@
 ---@class defaultConfigs
 ---@field ultimate_science simpleItem
 ---@field all_sciences simpleItem[]
----@field base_items simpleItem[]
+---@field base_items (simpleItem|tierResult)[]
 ---@field ignored_recipes data.RecipeID[]
 ---@class defaultSettingsMap
 ---@field [string] defaultConfigs

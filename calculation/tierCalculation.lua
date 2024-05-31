@@ -61,8 +61,6 @@ setmetatable(invalidReason, {
 ---@field [string] tierEntry
 ---@type {[tierSwitchTypes]:tierMap}
 TierMaps = {};
----@type {[string]:boolean}
-local baseOverride = {};
 ---@type table<tierSwitchTypes,{[string]:boolean}>
 calculating = {};
 ---@class blockedReason: dependency
@@ -107,13 +105,6 @@ local tierSwitch = setmetatable({}, {
 
 		local tier = TierMaps[type][prototypeID]
 		if tier ~= nil then return tier.tier end
-		if type == "LuaItemPrototype" and baseOverride[prototypeID] then
-			TierMaps[type][prototypeID] = {
-				tier = 0,
-				dependencies = {}
-			}
-			return 0
-		end
 		if calculating[type][prototypeID] then return invalidReason.busy_calculating end
 		local incalculableItem = incalculable[type][prototypeID]
 		if incalculableItem then -- and incalculableItem.reason ~= invalidReason.calculating then
@@ -601,20 +592,22 @@ local function calculateTier(itemID, type)
 end
 
 ---Directly set the tier of a given itemID
----@param item simpleItem
+---@param item simpleItem|tierResult
 local function setTier(item)
 	checkLookup()
-	local isValid = pcall(lib.getItemOrFluid, item.name, item.type)
+	local isValid, prototype = pcall(lib.getItemOrFluid, item.name, item.type)
 	if not isValid then
 		lib.log("\tWas given an invalid item: "..item)
 		return
 	end
-	baseOverride[item] = true
+	TierMaps[prototype.object_name][item.name] = {
+		tier = item.tier or 0,
+		dependencies = {}
+	}
 end
 
 ---Clears the working tables
 local function uncalculate()
-	baseOverride = {}
 	lib.initTierMapTables(TierMaps, calculating, incalculable)
 end
 
