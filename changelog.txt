@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.0
-Date: ???? 
+Date: 2024-05-31
   Major Features:
     - Finally allows each player to choose and save 3 tabs of items to calculate tiers with
   Features:
