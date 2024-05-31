@@ -484,16 +484,6 @@ local function regenerate_menus()
 			goto continue
 		end
 
-		player_table.highlight = nil
-		player_table.highlighted = nil
-		player_table.calculated_tab = 0
-		if not player_table.base_elems.has_changed then
-			-- TODO: update player_table.base_elems
-		end
-		if not player_table.ignored_elems.has_changed then
-			-- TODO: update player_table.base_items
-		end
-
 		local recalc_tab = player_table.calculated_tab
 		for tab = 1, 3, 1 do
 			if tab ~= recalc_tab then
@@ -503,7 +493,18 @@ local function regenerate_menus()
 			end
 		end
 
-		player_table[recalc_tab].result = calculator.getArray(player_table.calculated)
+		player_table.highlight = nil
+		player_table.highlighted = nil
+		if not player_table.base_elems.has_changed then
+			-- TODO: update player_table.base_elems
+		end
+		if not player_table.ignored_elems.has_changed then
+			-- TODO: update player_table.base_items
+		end
+
+		if recalc_tab ~= 0 then
+			player_table[recalc_tab].result = calculator.getArray(player_table.calculated)
+		end
 	    ::continue::
 	end
 end
