@@ -505,6 +505,7 @@ local function regenerate_menus()
 		if recalc_tab ~= 0 then
 			player_table[recalc_tab].result = calculator.getArray(player_table.calculated)
 		end
+		update_list(player_table)
 	    ::continue::
 	end
 end

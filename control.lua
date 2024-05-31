@@ -95,6 +95,7 @@ local function recalcTiers()
 		calculator.updateBase()
 		global.updateBase = nil
 	end
+	calculator.uncalculate()
 	tierMenu.regenerate_menus()
 end
 lib.register_func("recalc", recalcTiers)
@@ -155,7 +156,7 @@ script.on_event(defines.events.on_runtime_mod_setting_changed, function (EventDa
 		lib.clearSettingCache(setting)
 	end
 	if setting == "tiergen-ignored-recipes" then
-		calculator.reprocess()
+		calculator.unprocess()
 	elseif setting == "tiergen-base-items" then
 		global.updateBase = true
 	end

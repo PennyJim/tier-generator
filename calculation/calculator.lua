@@ -58,8 +58,12 @@ function calculator.getArray(items)
 	return toArray(get(items))
 end
 
-function calculator.reprocess()
-	core.reprocess()
+function calculator.unprocess()
+	core.unprocess()
+	calculator.updateBase()
+end
+function calculator.uncalculate()
+	core.uncalculate()
 	calculator.updateBase()
 end
 

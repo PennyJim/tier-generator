@@ -615,7 +615,8 @@ return {
 	set = setTier,
 	unset = uncalculate,
 	calculate = calculateTier,
-	reprocess = function ()
+	uncalculate = uncalculate,
+	unprocess = function ()
 		processor.unprocess()
 		uncalculate()
 ---@diagnostic disable-next-line: cast-local-type
