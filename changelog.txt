@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------------------------------
-Version: 0.2.5
+Version: 0.3.0
 Date: ???? 
   Major Features:
     - Finally lets each player choose and save 3 tabs of items to calculate tiers with
