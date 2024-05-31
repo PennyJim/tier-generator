@@ -2,7 +2,7 @@
 Version: 0.3.0
 Date: ???? 
   Major Features:
-    - Finally lets each player choose and save 3 tabs of items to calculate tiers with
+    - Finally allows each player to choose and save 3 tabs of items to calculate tiers with
   Features:
     - Added automatic compatibility! It'll choose a few defaults based on the detected mod and written compatibility
     - Finally added a keybind for opening the menu
@@ -13,8 +13,11 @@ Date: ????
     - Added compatibility for my other mod better-chat (the compatibility message prints using the interface)
   Changes:
     - Actually use the migration feature instead of faking it
+    - Made walking the dependency tree an itterable. Reduces the amount of times it has to loop by one time for general calculation and two times for highlighting
   Bugfixes:
     - Removed the crash for on_configuration_changed by basically entirely rewriting how global is structured and handled
+    - Make changing the technology setting actually update things again
+    - Now is actually treated like a window. Wasn't technically a bug, just unimplemented, but it felt like one so it is.
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.4
 Date: 2024-05-28
