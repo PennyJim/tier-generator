@@ -137,7 +137,6 @@ script.on_configuration_changed(function (ChangedData)
 	if ChangedData.mod_startup_settings_changed
 	or mods_have_changed
 	or ChangedData.migration_applied then
-		global.player_highlight = {}
 		global.updateBase = true
 		lib.tick_later("recalc")
 	end
@@ -159,14 +158,15 @@ script.on_event(defines.events.on_runtime_mod_setting_changed, function (EventDa
 	if EventData.setting_type == "runtime-global" then
 		lib.clearSettingCache(setting)
 	end
-	if setting == "tiergen-ignored-recipes" then
-		calculator.unprocess()
-	elseif setting == "tiergen-base-items" then
-		global.updateBase = true
-	end
+	-- Currently doesn't do anything because it's not a setting
+	-- Keeping it to remind myself that `unprocess` is the right function to use
+	-- if setting == "tiergen-ignored-recipes" then
+	-- 	calculator.unprocess()
+	-- end
 	if not global.willRecalc
 	and lib.isOurSetting(setting)
 	and setting ~= "tiergen-debug-log" then
+		-- Do it a tick later so we don't recalculate multiple times a tick
 		lib.tick_later("recalc")
 	end
 end)
