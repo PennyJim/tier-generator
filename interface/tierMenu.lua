@@ -363,7 +363,9 @@ local function update_list(player_table)
 			column_count = 12,
 			style = "filter_slot_table"
 		}
-		tier_list.style.width = 40*10
+		-- Do minimal because if something messes up,
+		-- I'd rather it grow than hide something
+		tier_list.style.minimal_width = 40*12
 
 		for _, item in ipairs(items) do
 			local itemPrototype = lib.getItemOrFluid(item.name, item.type)
@@ -754,6 +756,11 @@ script.on_event(defines.events.on_gui_elem_changed, function (EventData)
 		items.count[type] = items.count[type] + 1
 	end
 
+	items.has_changed = true
+	player_tab.calculated = nil
+	items[type][index] = elem.elem_value --[[@as string]]
+	player_table.calculate.enabled = true
+
 	local elem_table = elem.parent --[[@as LuaGuiElement]]
 	if index > items.last[type] then
 		-- Don't have to worry about setting nil as the last value
@@ -766,8 +773,9 @@ script.on_event(defines.events.on_gui_elem_changed, function (EventData)
 	elseif index == items.last[type] then
 		-- Decrement the last_index to the last item with a value
 		for new_last = index, 0, -1 do
-			if items[new_last] or new_last == 0 then
+			if items[type][new_last] or new_last == 0 then
 				items.last[type] = new_last
+				break
 			end
 		end
 		-- Remove as many rows as needed
@@ -778,11 +786,6 @@ script.on_event(defines.events.on_gui_elem_changed, function (EventData)
 			elem_table.children[remove_index].destroy()
 		end
 	end
-
-	items.has_changed = true
-	player_tab.calculated = nil
-	items[type][index] = elem.elem_value --[[@as string]]
-	player_table.calculate.enabled = true
 end)
 script.on_event(defines.events.on_gui_selected_tab_changed, function (EventData)
 	if EventData.element.name ~= "tiergen-item-selection" then
