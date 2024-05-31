@@ -352,10 +352,6 @@ local function register_all_seconds()
 		script.on_nth_tick(time, seconds_later_tick)
 	end
 end
-local function register_all_seconds_on_load()
-	register_all_seconds()
-	script.on_nth_tick(2, nil)
-end
 library.register_func("register-seconds", register_all_seconds)
 ---Calls the given functions at 60 the given seconds_later
 ---If two functions need the same tick, the one registered later will
@@ -386,7 +382,7 @@ function library.register_load()
 	end
 	
 	if global.seconds and #global.seconds > 0 then
-		script.on_nth_tick(2, register_all_seconds_on_load)
+		register_all_seconds()
 	end
 end
 --#endregion
