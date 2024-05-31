@@ -18,7 +18,6 @@ end
 ---@param items simpleItem[]
 ---@return simpleItem[]
 local function get(items)
-	lib.log("Calculating items")
 	local successfulItems, processed = {},{}
 	lib.initTierMapTables(processed)
 	for _, item in ipairs(items) do
