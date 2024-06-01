@@ -1,7 +1,11 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.1
 Date: ????
-  Changes:
+  Locale:
+    - Added Ukranian translations (crowdin)
+    - Started translations for other languages (crowdin)
+  Bugfixes:
+    - Fixed a possible desync for on_load
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.0
 Date: 2024-05-31
