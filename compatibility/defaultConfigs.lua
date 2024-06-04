@@ -6,6 +6,7 @@
 ---@field all_sciences simpleItem[]
 ---@field base_items (simpleItem|tierResult)[]
 ---@field ignored_recipes table<data.RecipeID,true> --An array of lua patterns
+---@field ignored_patterns string[]?
 ---@field consider_technology boolean?
 ---@class defaultSettingsMap
 ---@field [string] defaultConfigs
@@ -169,7 +170,20 @@ local vanillaDefaults = {
 ---@return string?
 local function DetermineMod()
 	for mod, defaults in pairs(singleMods) do
+		---@cast defaults defaultConfigs
 		if game.active_mods[mod] then
+			local ignored_recipes = defaults.ignored_recipes
+			local ignored_patterns = defaults.ignored_patterns or {}
+			-- Process the patterns into ignored_recipes
+			for _, pattern in pairs(ignored_patterns) do
+				for key in pairs(game.recipe_prototypes) do
+					if ignored_recipes[key] then
+					elseif key:match(pattern) then
+						ignored_recipes[key] = true
+					end
+				end
+			end
+			defaults.ignored_patterns = nil
 			return defaults, mod
 		end
 	end
