@@ -16,6 +16,7 @@
 			"gallery/ultracube.png",
 			"gallery/py-ae.png"
 		],
+		"readme": "README.md",
 		"ignore": [
 			"gallery/**"
 		],
