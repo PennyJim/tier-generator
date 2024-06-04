@@ -8,5 +8,17 @@
 	"dependencies": [
 		"base >= 1.1",
 		"? better-chat >= 0.3"
-	]
+	],
+	"package": {
+		"gallery": [
+			"gallery/base.png",
+			"gallery/spg.png",
+			"gallery/ultracube.png",
+			"gallery/py-ae.png"
+		],
+		"ignore": [
+			"gallery/**"
+		],
+		"sync_portal_details": true
+	}
 }
