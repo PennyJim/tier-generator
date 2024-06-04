@@ -13,10 +13,12 @@ local function processRecipe(recipeID, recipePrototype)
 		-- lib.log(serpent.line(recipePrototype)) -- Does not print anything useful
 		return
 	end
-	-- Ignore unbarreling recipes
-	if recipePrototype.subgroup.name == "empty-barrel" then
-		return lib.ignore(recipeID, "is unbarreling.")
-	end
+	-- No longer necessary as fluids should have other ways of being crafted
+	-- _Needs_ to get removed, because at least Py creates something directly into a barrel >:(
+	-- -- Ignore unbarreling recipes
+	-- if recipePrototype.subgroup.name == "empty-barrel" then
+	-- 	return lib.ignore(recipeID, "is unbarreling.")
+	-- end
 
 	for _, result in pairs(recipePrototype.products) do
 		if result.type == "fluid" then

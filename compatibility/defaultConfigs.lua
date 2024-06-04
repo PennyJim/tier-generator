@@ -49,6 +49,9 @@ singleMods["pyalternativeenergy"] = {
 	},
 	base_items = {},
 	ignored_recipes = {},
+	ignored_patterns = {
+		"%-turd$", --Ignore all turd recipes
+	},
 	consider_technology = false,
 }
 singleMods["MoreSciencePacks-for1_1"] = {
