@@ -6,6 +6,8 @@ Date: ????
     - Started translations for other languages (crowdin)
   Features:
     - Compatibility can now disable considering technology
+  Minor Features:
+    - Added compatibility for PyAE
   Bugfixes:
     - Fixed a possible desync for on_load
     - A mineable resource that has no results now doesn't crash

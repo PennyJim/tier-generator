@@ -29,6 +29,25 @@ singleMods["Ultracube"] = {
 	},
 	ignored_recipes = {},
 }
+singleMods["pyalternativeenergy"] = {
+	ultimate_science = lib.item("space-science-pack"),
+	all_sciences = {
+		lib.item("automation-science-pack"),
+		lib.item("py-science-pack-1"),
+		lib.item("logistic-science-pack"),
+		lib.item("military-science-pack"),
+		lib.item("py-science-pack-2"),
+		lib.item("chemical-science-pack"),
+		lib.item("py-science-pack-3"),
+		lib.item("production-science-pack"),
+		lib.item("py-science-pack-4"),
+		lib.item("utility-science-pack"),
+		lib.item("space-science-pack"),
+	},
+	base_items = {},
+	ignored_recipes = {},
+	consider_technology = false,
+}
 singleMods["MoreSciencePacks-for1_1"] = {
 	ultimate_science = lib.item("space-science-pack"),
 	all_sciences = {
