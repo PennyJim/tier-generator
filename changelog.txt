@@ -12,6 +12,7 @@ Date: ????
     - Fixed a possible desync for on_load
     - A mineable resource that has no results now doesn't crash
     - Stop adding C levels within the recursion (stack overflow). Does mean it's less resistant to errors during calculation, but they should hopefully be tested out of existence before release.
+    - Stopped a second extra row being added when putting an item into the final slot of the 2nd to last row
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.0
 Date: 2024-05-31

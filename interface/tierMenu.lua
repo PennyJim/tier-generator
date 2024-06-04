@@ -771,7 +771,7 @@ script.on_event(defines.events.on_gui_elem_changed, function (EventData)
 		-- Because then old_value (a later index) would have had to be a value
 		items.last[type] = index
 		-- Add a row if needed
-		if index >= #elem_table.children - elem_table.column_count then
+		if index > #elem_table.children - elem_table.column_count then
 			add_elem_selector_row(elem_table, type)
 		end
 	elseif index == items.last[type] then
