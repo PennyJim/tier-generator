@@ -1,5 +1,5 @@
 local core = require("__tier-generator__.calculation.tierCalculation")
-local eachDependency = require("__tier-generator__.calculation.itterableDependencies")
+local eachDependency = require("__tier-generator__.calculation.iterableDependencies")
 ---@class Calculator
 local calculator = {}
 

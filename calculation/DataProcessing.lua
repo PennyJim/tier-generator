@@ -86,7 +86,7 @@ function ProcessAutoplace(EntityID, placedEntity)
 	local resource_category, player_category
 	if category then
 		resource_category = "tiergen-mining-"..category
-		player_category = "tiergen-hand-mining"..category
+		player_category = "tiergen-hand-mining-"..category
 	else
 		player_category = "hand"
 	end
@@ -225,7 +225,7 @@ local function processCharacterMining(EntityID, CharacterPrototype)
 	end
 
 	for category in pairs(categories) do
-		lib.prependToArrayInTable(lookup.CategoryItem, "tiergen-hand-mining"..category, "hand")
+		lib.prependToArrayInTable(lookup.CategoryItem, "tiergen-hand-mining-"..category, "hand")
 	end
 end
 processFunctions[#processFunctions+1] = function ()
