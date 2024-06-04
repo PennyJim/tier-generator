@@ -5,6 +5,7 @@
 ---@field all_sciences simpleItem[]
 ---@field base_items (simpleItem|tierResult)[]
 ---@field ignored_recipes data.RecipeID[]
+---@field consider_technology boolean?
 ---@class defaultSettingsMap
 ---@field [string] defaultConfigs
 
@@ -26,7 +27,7 @@ singleMods["Ultracube"] = {
 		lib.item("cube-synthesizer"), -- You are given one
 		lib.item("cube-construct-forbidden-ziggurat-dummy") -- Because of a scripted technology
 	},
-	ignored_recipes = {}
+	ignored_recipes = {},
 }
 singleMods["MoreSciencePacks-for1_1"] = {
 	ultimate_science = lib.item("space-science-pack"),
@@ -70,7 +71,7 @@ singleMods["MoreSciencePacks-for1_1"] = {
 		lib.item("more-science-pack-30"),
 	},
 	base_items = {},
-	ignored_recipes = {}
+	ignored_recipes = {},
 }
 singleMods["SciencePackGalore"] = {
 	ultimate_science = lib.item("space-science-pack"),
@@ -120,7 +121,7 @@ singleMods["SciencePackGalore"] = {
 		lib.item("sem:spg_science-pack-36"),
 	},
 	base_items = {},
-	ignored_recipes = {}
+	ignored_recipes = {},
 }
 singleMods["SciencePackGaloreForked"] = singleMods["SciencePackGalore"]
 ---@type defaultConfigs
@@ -136,7 +137,7 @@ local vanillaDefaults = {
 		lib.item("space-science-pack"),
 	},
 	base_items = {},
-	ignored_recipes = {}
+	ignored_recipes = {},
 }
 
 ---Returns the chosen defaultConfigs and the mod associated with them

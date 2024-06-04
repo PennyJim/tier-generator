@@ -30,6 +30,12 @@ function configTable.init()
 	config.mod = mod
 	global.config = config
 
+	if config.consider_technology ~= nil
+	and config.consider_technology ~= lib.getSetting("tiergen-consider-technology") then
+		settings.global["tiergen-consider-technology"] = {value=config.consider_technology}
+		lib.clearSettingCache("tiergen-consider-technology")
+	end
+
 	lib.seconds_later(2, "config-alert")
 end
 
