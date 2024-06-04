@@ -20,8 +20,9 @@ invalidReason = {
 	no_valid_recipe = -7,
 	no_valid_boiler = -8,
 	no_valid_offshore_pump = -9,
-	not_player_mineable = -95,
-	not_unlockable = -96,
+	not_player_mineable = -94,
+	not_unlockable = -95,
+	ingored_recipe = -96,
 	no_recipe = -97,
 	no_machine = -98,
 	error = -99,
@@ -79,9 +80,7 @@ local function unmarkIncalculable(type, prototypeID)
 	if not incalculableItem then
 		return -- Already marked calculable
 	end
-	if incalculableItem.reason == invalidReason.error
-	or incalculableItem.reason == invalidReason.no_machine
-	or incalculableItem.reason == invalidReason.not_unlockable then
+	if incalculableItem.reason <= invalidReason.not_player_mineable then
 		return lib.log("\tWill not unmark an item marked invalid for a static reason. type: "..type.." id: "..prototypeID)
 	end
 	incalculable[type][prototypeID] = nil
@@ -475,6 +474,11 @@ end
 tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 	---@type blockedReason[]
 	local blockedBy = {}
+
+	if global.config.ignored_recipes[recipeID] then
+		lib.ignore(recipeID, "is currently ignored")
+		return invalidReason.ingored_recipe, blockedBy
+	end
 
 	local considerTechnology
 	if lib.getSetting("tiergen-consider-technology") and not recipe.enabled then

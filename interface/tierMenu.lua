@@ -284,7 +284,9 @@ local function create_ignored_selection(base_flow)
 			local count = #global.config.ignored_recipes
 			elems.count.recipe = count
 			elems.last.recipe = count
-			for index, recipeID in pairs(global.config.ignored_recipes) do
+			local index = 0
+			for recipeID in pairs(global.config.ignored_recipes) do
+				index = index + 1
 				if index >= #table.children - table.column_count then
 					add_elem_selector_row(table, "recipe")
 				end
@@ -303,9 +305,10 @@ local function create_ignored_selection(base_flow)
 	label.tooltip = {"tiergen.not-implemented"}
 	label.caption = {"", label.caption, " [img=info]"}
 
-	area_children[2].ignored_by_interaction = true
+	-- area_children[2].ignored_by_interaction = true
 	for _,table_elem in pairs(area_children[2].children[1].children[1].children[1].children) do
 		table_elem.enabled = false
+		table_elem.ignored_by_interaction = true
 	end
 	area_children[3].ignored_by_interaction = true
 	area_children[3].children[2].enabled = false

@@ -8,9 +8,6 @@ local processFunctions = {}
 ---@param recipeID data.RecipeID
 ---@param recipePrototype LuaRecipePrototype
 local function processRecipe(recipeID, recipePrototype)
-	if global.config.ignored_recipes[recipeID] then
-		return lib.ignore(recipeID, "was in ignored settings.")
-	end
 	if #recipePrototype.products == 0 then
 		lib.log("\t\t"..recipeID.." didn't result in anything?")
 		-- lib.log(serpent.line(recipePrototype)) -- Does not print anything useful

@@ -5,7 +5,7 @@
 ---@field ultimate_science simpleItem
 ---@field all_sciences simpleItem[]
 ---@field base_items (simpleItem|tierResult)[]
----@field ignored_recipes data.RecipeID[]
+---@field ignored_recipes table<data.RecipeID,true> --An array of lua patterns
 ---@field consider_technology boolean?
 ---@class defaultSettingsMap
 ---@field [string] defaultConfigs
