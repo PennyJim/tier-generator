@@ -6,6 +6,7 @@ Date: ????
     - Started translations for other languages (crowdin)
   Features:
     - Compatibility can now disable considering technology
+    - Can now use a localized string instead of raw mod name
   Minor Features:
     - Added compatibility for PyAE
   Bugfixes:

@@ -1,6 +1,7 @@
 -- Should only ever need to be run once.
 -- No active code should be done outside a function
 ---@class defaultConfigs
+---@field name LocalisedString?
 ---@field ultimate_science simpleItem
 ---@field all_sciences simpleItem[]
 ---@field base_items (simpleItem|tierResult)[]
@@ -30,6 +31,7 @@ singleMods["Ultracube"] = {
 	ignored_recipes = {},
 }
 singleMods["pyalternativeenergy"] = {
+	name = {"tiergen-configs.py-ae"},
 	ultimate_science = lib.item("space-science-pack"),
 	all_sciences = {
 		lib.item("automation-science-pack"),
@@ -49,6 +51,7 @@ singleMods["pyalternativeenergy"] = {
 	consider_technology = false,
 }
 singleMods["MoreSciencePacks-for1_1"] = {
+	name = {"tiergen-configs.msp"},
 	ultimate_science = lib.item("space-science-pack"),
 	all_sciences = {
 		lib.item("automation-science-pack"),
@@ -93,6 +96,7 @@ singleMods["MoreSciencePacks-for1_1"] = {
 	ignored_recipes = {},
 }
 singleMods["SciencePackGalore"] = {
+	name = {"tiergen-configs.science-pack-galore"},
 	ultimate_science = lib.item("space-science-pack"),
 	all_sciences = {
 		lib.item("automation-science-pack"),

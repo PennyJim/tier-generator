@@ -5,7 +5,7 @@ local configTable = {}
 local function MentionConfig()
 	local mod = global.config.mod
 	if mod then
-		message = {"tiergen.mod-config", mod}
+		message = {"tiergen.mod-config", global.config.name or mod}
 	else
 		message = {"tiergen.vanilla-config"}
 	end
