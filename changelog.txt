@@ -7,6 +7,7 @@ Date: ????
   Bugfixes:
     - Fixed a possible desync for on_load
     - A mineable resource that has no results now doesn't crash
+    - Stop adding C levels within the recursion (stack overflow). Does mean it's less resistant to errors during calculation, but they should hopefully be tested out of existence before release.
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.0
 Date: 2024-05-31

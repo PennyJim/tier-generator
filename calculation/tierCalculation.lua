@@ -93,93 +93,91 @@ end
 --#region Tier calculation
 ---@class TierSwitch
 ---@field [tierSwitchTypes] fun(prototypeID:string, value:tierSwitchValues):tier,blockedReason[]
----@overload fun(prototypeID:string,value:tierSwitchValues):tier
-local tierSwitch = setmetatable({}, {
-	---Base switching case of tierSwitch
-	---@param self TierSwitch
-	---@param prototypeID string
-	---@param value tierSwitchValues
-	---@return tier
-	__call = function(self, prototypeID, value)
-		local type = value.object_name
+local tierSwitch = {}
 
-		local tier = TierMaps[type][prototypeID]
-		if tier ~= nil then return tier.tier end
-		if calculating[type][prototypeID] then return invalidReason.busy_calculating end
-		local incalculableItem = incalculable[type][prototypeID]
-		if incalculableItem then -- and incalculableItem.reason ~= invalidReason.calculating then
-			return incalculableItem.reason
+---Base switching case of tierSwitch
+---@param prototypeID string
+---@param value tierSwitchValues
+---@return tier
+local function CallTierSwitch(prototypeID, value)
+	local type = value.object_name
+
+	local tier = TierMaps[type][prototypeID]
+	if tier ~= nil then return tier.tier end
+	if calculating[type][prototypeID] then return invalidReason.busy_calculating end
+	local incalculableItem = incalculable[type][prototypeID]
+	if incalculableItem then -- and incalculableItem.reason ~= invalidReason.calculating then
+		return incalculableItem.reason
+	end
+
+	-- Attempt to calculate
+	calculating[type][prototypeID] = true
+	lib.debug("Starting to calculate "..type..":"..prototypeID)
+	local success, result, dependencies = false, -math.huge, {}
+	result, dependencies = tierSwitch[type](prototypeID, value)
+	-- if not success then
+	-- 	-- _log({"error-calculating", prototypeID, type, serpent.dump(value)})
+	-- 	lib.log("Error calculating the "..type.." of "..prototypeID..":\n"..result)
+	-- 	result = invalidReason.error
+	-- 	dependencies = {}
+	-- end
+	lib.debug("Done calculating "..type..":"..prototypeID.." with a tier of "..result.." or error "..invalidReason[result])
+	tier = {
+		tier = result,
+		dependencies = dependencies
+	}
+
+	-- Finish calculating
+	calculating[type][prototypeID] = nil
+	if result >= 0 then -- Discard negative values
+		TierMaps[type][prototypeID] = tier
+		-- if type == "LuaFluidPrototype" or type == "LuaItemPrototype" then
+		-- 	local itemType = (type == "LuaItemPrototype") and "item" or "fluid"
+		-- 	lib.appendToArrayInTable(tierArray, tier+1, {
+		-- 		name = prototypeID,
+		-- 		type = itemType,
+		-- 	})
+		-- end
+
+		--Remove blocked items, if it was marked incalculable during calculating
+		incalculableItem = incalculable[type][prototypeID]
+		if incalculableItem then
+			unmarkIncalculable(type, prototypeID)
 		end
-
-		-- Attempt to calculate
-		calculating[type][prototypeID] = true
-		lib.debug("Starting to calculate "..type..":"..prototypeID)
-		local success, result, dependencies = false, -math.huge, {}
-		success, result, dependencies = pcall(self[type], prototypeID, value)
-		if not success then
-			-- _log({"error-calculating", prototypeID, type, serpent.dump(value)})
-			lib.log("Error calculating the "..type.." of "..prototypeID..":\n"..result)
-			result = invalidReason.error
-			dependencies = {}
+	else -- Mark as incalculable
+		local alreadyIncalculable = incalculable[type][prototypeID]
+		if not alreadyIncalculable then
+			incalculable[type][prototypeID] = {
+				reason = tier.tier,
+				blocked = {}
+			}
+		else
+			alreadyIncalculable.reason = math.min(tier.tier, alreadyIncalculable.reason)
 		end
-		lib.debug("Done calculating "..type..":"..prototypeID.." with a tier of "..result.." or error "..invalidReason[result])
-		tier = {
-			tier = result,
-			dependencies = dependencies
-		}
-
-		-- Finish calculating
-		calculating[type][prototypeID] = nil
-		if result >= 0 then -- Discard negative values
-			TierMaps[type][prototypeID] = tier
-			-- if type == "LuaFluidPrototype" or type == "LuaItemPrototype" then
-			-- 	local itemType = (type == "LuaItemPrototype") and "item" or "fluid"
-			-- 	lib.appendToArrayInTable(tierArray, tier+1, {
-			-- 		name = prototypeID,
-			-- 		type = itemType,
-			-- 	})
-			-- end
-
-			--Remove blocked items, if it was marked incalculable during calculating
-			incalculableItem = incalculable[type][prototypeID]
-			if incalculableItem then
-				unmarkIncalculable(type, prototypeID)
-			end
-		else -- Mark as incalculable
-			local alreadyIncalculable = incalculable[type][prototypeID]
-			if not alreadyIncalculable then
-				incalculable[type][prototypeID] = {
-					reason = tier.tier,
+		for _, reason in ipairs(dependencies) do
+			incalculableItem = incalculable[reason.type][reason.id]
+			if not incalculableItem then
+				if reason.reason ~= invalidReason.busy_calculating then
+					lib.log("\tMarking "..reason.id.." as incalculable because "..reason.reason)
+				end
+				incalculableItem = {
+					reason = reason.reason,
 					blocked = {}
 				}
-			else
-				alreadyIncalculable.reason = math.min(tier.tier, alreadyIncalculable.reason)
-			end
-			for _, reason in ipairs(dependencies) do
-				incalculableItem = incalculable[reason.type][reason.id]
-				if not incalculableItem then
-					if reason.reason ~= invalidReason.busy_calculating then
-						lib.log("\tMarking "..reason.id.." as incalculable because "..reason.reason)
-					end
-					incalculableItem = {
-						reason = reason.reason,
-						blocked = {}
-					}
-					incalculable[reason.type][reason.id] = incalculableItem
+				incalculable[reason.type][reason.id] = incalculableItem
 
-				-- Lower numbers are more static reasons and therefore more important
-				elseif incalculableItem.reason > reason.reason then
-					incalculableItem.reason = reason.reason
-				end
-				incalculableItem.blocked[#incalculableItem.blocked+1] = {
-					type = type,
-					id = prototypeID
-				}
+			-- Lower numbers are more static reasons and therefore more important
+			elseif incalculableItem.reason > reason.reason then
+				incalculableItem.reason = reason.reason
 			end
+			incalculableItem.blocked[#incalculableItem.blocked+1] = {
+				type = type,
+				id = prototypeID
+			}
 		end
-		return tier.tier
 	end
-})
+	return tier.tier
+end
 
 ---Like calling tierSwitch but without having to handle the dependency
 ---@param id string
@@ -187,7 +185,7 @@ local tierSwitch = setmetatable({}, {
 ---@param blockedArray blockedReason[]
 ---@param dependencyArray dependency[]
 local function resolveTierWithDependency(id, value, dependencyArray, blockedArray)
-	local tier = tierSwitch(id, value)
+	local tier = CallTierSwitch(id, value)
 	local dependency = {
 		type = type(value) == "table" and value.object_name or value,
 		id = id
@@ -581,7 +579,10 @@ local function calculateTier(itemID, type)
 		lib.log("\tWas given an invalid item: "..itemID)
 		return invalidReason.not_an_item
 	end
-	local tier = tierSwitch(itemID, itemPrototype)
+	local success, tier = pcall(CallTierSwitch, itemID, itemPrototype)
+	if not success then
+		tier = invalidReason.error
+	end
 	if tier < 0 then
 		lib.log("Failed to calculate "..itemID.."'s tier: "..invalidReason[tier])
 		lib.debug(serpent.dump(incalculable))
