@@ -1,5 +1,6 @@
 -- Should only ever need to be run once.
 -- No active code should be done outside a function
+
 ---@class defaultConfigs
 ---@field name LocalisedString?
 ---@field ultimate_science simpleItem
