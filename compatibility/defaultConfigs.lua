@@ -47,7 +47,9 @@ singleMods["pyalternativeenergy"] = {
 		lib.item("utility-science-pack"),
 		lib.item("space-science-pack"),
 	},
-	base_items = {},
+	base_items = {
+		lib.item("guano"),
+	},
 	ignored_recipes = {},
 	ignored_patterns = {
 		"%-turd$", --Ignore all turd recipes

@@ -23,7 +23,7 @@ function configTable.init()
 	---@field all_sciences simpleItem[]
 	---@field ultimate_science simpleItem
 	---@field base_items simpleItem[]
-	---@field ignored_recipes data.RecipeID[]
+	---@field ignored_recipes table<data.RecipeID,true>
 	---@field mod string?
 	local config, mod = autoConfigure()
 	---@cast config config
