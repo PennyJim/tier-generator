@@ -11,6 +11,22 @@
 ---@class defaultSettingsMap
 ---@field [string] defaultConfigs
 
+---@type defaultConfigs
+local vanillaDefaults = {
+	ultimate_science = lib.item("space-science-pack"),
+	all_sciences = {
+		lib.item("automation-science-pack"),
+		lib.item("logistic-science-pack"),
+		lib.item("military-science-pack"),
+		lib.item("chemical-science-pack"),
+		lib.item("production-science-pack"),
+		lib.item("utility-science-pack"),
+		lib.item("space-science-pack"),
+	},
+	base_items = {},
+	ignored_recipes = {},
+}
+
 ---@type defaultSettingsMap
 local singleMods = {}
 singleMods["Ultracube"] = {
@@ -54,7 +70,15 @@ singleMods["pyalternativeenergy"] = {
 	ignored_patterns = {
 		"%-turd$", --Ignore all turd recipes
 	},
-	consider_technology = false,
+	-- consider_technology = false, -- Isn't actually necessary?
+}
+singleMods["pypostprocessing"] = {
+	name = {"tiergen-configs.py"},
+	ultimate_science = vanillaDefaults.ultimate_science,
+	all_sciences = vanillaDefaults.all_sciences,
+	base_items = {},
+	ignored_recipes = {},
+	ignored_patterns = singleMods["pyalternativeenergy"].ignored_patterns
 }
 singleMods["MoreSciencePacks-for1_1"] = {
 	name = {"tiergen-configs.msp"},
@@ -153,21 +177,6 @@ singleMods["SciencePackGalore"] = {
 	ignored_recipes = {},
 }
 singleMods["SciencePackGaloreForked"] = singleMods["SciencePackGalore"]
----@type defaultConfigs
-local vanillaDefaults = {
-	ultimate_science = lib.item("space-science-pack"),
-	all_sciences = {
-		lib.item("automation-science-pack"),
-		lib.item("logistic-science-pack"),
-		lib.item("military-science-pack"),
-		lib.item("chemical-science-pack"),
-		lib.item("production-science-pack"),
-		lib.item("utility-science-pack"),
-		lib.item("space-science-pack"),
-	},
-	base_items = {},
-	ignored_recipes = {},
-}
 
 ---Returns the chosen defaultConfigs and the mod associated with them
 ---If it has no compatibility available, then the second parameter returns nil
