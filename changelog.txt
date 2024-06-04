@@ -6,6 +6,7 @@ Date: ????
     - Started translations for other languages (crowdin)
   Bugfixes:
     - Fixed a possible desync for on_load
+    - A mineable resource that has no results now doesn't crash
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.0
 Date: 2024-05-31

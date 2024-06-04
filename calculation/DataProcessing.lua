@@ -91,7 +91,7 @@ function ProcessAutoplace(EntityID, placedEntity)
 		player_category = "hand"
 	end
 
-	for _, item in ipairs(mining.products) do
+	for _, item in ipairs(mining.products or {}) do
 		local recipeLookup = item.type == "item" and lookup.ItemRecipe or lookup.FluidRecipe
 		local miningLookup = item.type == "item" and lookup.ItemMining or lookup.FluidMining
 		if category then
