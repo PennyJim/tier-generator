@@ -2,6 +2,7 @@
 Version: 0.3.2
 Date: ????
   Changes:
+    - Added ability to inject recipes from within compatibility configs
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.1
 Date: 2024-06-04

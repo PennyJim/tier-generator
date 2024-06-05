@@ -104,6 +104,7 @@ end
 ---@overload fun(table:table<data.FluidID,OptionalFluidFakeRecipe[]>,key:data.FluidID,newValue:OptionalFluidFakeRecipe)
 ---@overload fun(table:table<data.ItemID,SingleItemFakeRecipe[]>,key:data.ItemID,newValue:SingleItemFakeRecipe)
 ---@overload fun(table:table<data.FluidID,SingleFluidFakeRecipe[]>,key:data.FluidID,newValue:SingleFluidFakeRecipe)
+---@overload fun(table:table<data.ItemID,CompleteFakeRecipe[]>,key:data.ItemID,newValue:CompleteFakeRecipe)
 function library.appendToArrayInTable(table, key, newValue)
 	local array = table[key] or {}
 	array[#array+1] = newValue;
@@ -118,6 +119,7 @@ end
 ---@overload fun(table:table<data.FluidID,OptionalFluidFakeRecipe[]>,key:data.FluidID,newValue:OptionalFluidFakeRecipe)
 ---@overload fun(table:table<data.ItemID,SingleItemFakeRecipe[]>,key:data.ItemID,newValue:SingleItemFakeRecipe)
 ---@overload fun(table:table<data.FluidID,SingleFluidFakeRecipe[]>,key:data.FluidID,newValue:SingleFluidFakeRecipe)
+---@overload fun(table:table<data.ItemID,CompleteFakeRecipe[]>,key:data.ItemID,newValue:CompleteFakeRecipe)
 function library.prependToArrayInTable(table, key, newValue)
 	local array = table[key] or {}
 	local shiftedValue = newValue
@@ -175,6 +177,7 @@ function library.initTierMapTables(...)
 		"rocket-launch",
 		"boil",
 		"offshore-pump",
+		"injected",
 	}
 	for _, prototype in ipairs(prototypes) do
 		for _, table in ipairs(tables) do

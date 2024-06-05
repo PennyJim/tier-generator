@@ -414,6 +414,27 @@ processFunctions[#processFunctions+1] = function ()
 	end
 end
 --#endregion
+--#region PostProcessing
+
+---Injects the given recipe
+---@param itemID data.ItemID
+---@param recipe CompleteFakeRecipe
+local function injectRecipe(itemID, recipe)
+	local recipeLookup
+	if recipe.isFluid then
+		recipeLookup = lookup.FluidRecipe
+	else
+		recipeLookup = lookup.ItemRecipe
+	end
+	lib.prependToArrayInTable(recipeLookup, itemID, "tiergen-injected")
+	lib.appendToArrayInTable(lookup.Injected, itemID, recipe)
+end
+processFunctions[#processFunctions+1] = function ()
+	for itemID, recipe in pairs(global.config.injected_recipes or {}) do
+		injectRecipe(itemID, recipe)
+	end
+end
+--#endregion
 --#endregion
 
 local hasReturned = false

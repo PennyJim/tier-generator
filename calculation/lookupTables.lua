@@ -11,6 +11,14 @@ local lookup = {}
 ---@class SingleItemFakeRecipe
 ---@field input data.ItemID
 ---@field category data.RecipeCategoryID
+---@class CompleteFakeRecipe : fakePrototype
+---@field id data.RecipeID
+---@field isFluid boolean?
+---@field enabled boolean
+---@field category data.RecipeCategoryID
+---@field technologies data.TechnologyID[]?
+---@field ingredients Ingredient.base[]
+---@field object_name "LuaRecipePrototype"
 
 --#region Standard lookup tables
 ---@type table<data.ItemID,data.RecipeID[]>
@@ -38,6 +46,8 @@ lookup.Rocket = {}
 lookup.Boiling = {}
 ---@type table<data.FluidID,data.RecipeCategoryID[]>
 lookup.OffshorePumping = {}
+---@type table<data.ItemID,CompleteFakeRecipe[]>
+lookup.Injected = {}
 --#endregion
 
 return lookup

@@ -9,8 +9,7 @@
 ---@field ignored_recipes table<data.RecipeID,true> --An array of lua patterns
 ---@field ignored_patterns string[]?
 ---@field consider_technology boolean?
----@class defaultSettingsMap
----@field [string] defaultConfigs
+---@field injected_recipes table<data.ItemID,CompleteFakeRecipe[]>?
 
 ---@type defaultConfigs
 local vanillaDefaults = {
@@ -28,7 +27,8 @@ local vanillaDefaults = {
 	ignored_recipes = {},
 }
 
----@type defaultSettingsMap
+---@class defaultSettingsMap
+---@field [string] defaultConfigs
 local singleMods = {}
 singleMods["Ultracube"] = {
 	ultimate_science = lib.item("cube-complete-annihilation-card"),

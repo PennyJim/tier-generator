@@ -20,6 +20,7 @@ invalidReason = {
 	no_valid_recipe = -7,
 	no_valid_boiler = -8,
 	no_valid_offshore_pump = -9,
+	no_valid_injection = -10,
 	not_player_mineable = -94,
 	not_unlockable = -95,
 	ingored_recipe = -96,
@@ -395,6 +396,22 @@ tierSwitch["offshore-pump"] = function (FluidID, _)
 	)
 	return blockedOrDependency(tier, dependencies, blockedBy)
 end
+tierSwitch["injected"] = function (RecipeID, _)
+	local recipes = lookup.Injected[RecipeID]
+	---@type blockedReason[]
+	local blockedBy = {}
+
+	local recipeTier, dependencies = lib.getMinTierInArray(
+		recipes, invalidReason.no_valid_injection,
+		function (recipe)
+			local dependencies = {}
+			return resolveTierWithDependency(
+				recipe.id, recipe, dependencies, blockedBy
+			), dependencies
+		end
+	)
+	return blockedOrDependency(recipeTier, dependencies, blockedBy)
+end
 
 ---Determine the tier of the given technology
 ---@type fun(technologyID:data.TechnologyID,technology:LuaTechnologyPrototype):tier,blockedReason[]|dependency[]
@@ -470,7 +487,7 @@ tierSwitch["LuaRecipeCategoryPrototype"] = function (CategoryID)
 	return tier, dependencies
 end
 ---Determine the tier of the given recipe
----@type fun(recipeID:data.RecipeID,recipe:LuaRecipePrototype):tier,blockedReason[]|dependency[]
+---@type fun(recipeID:data.RecipeID,recipe:LuaRecipePrototype|CompleteFakeRecipe):tier,blockedReason[]|dependency[]
 tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 	---@type blockedReason[]
 	local blockedBy = {}
@@ -482,7 +499,7 @@ tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 
 	local considerTechnology
 	if lib.getSetting("tiergen-consider-technology") and not recipe.enabled then
-		local technologies = lookup.RecipeTechnology[recipeID]
+		local technologies = lookup.RecipeTechnology[recipeID] or rawget(recipe, "technologies")
 		if not technologies then
 			print("\t"..recipeID.." is not an unlockable recipe.")
 			return invalidReason.not_unlockable, {}
