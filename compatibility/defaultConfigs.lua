@@ -9,7 +9,7 @@
 ---@field ignored_recipes table<data.RecipeID,true> --An array of lua patterns
 ---@field ignored_patterns string[]?
 ---@field consider_technology boolean?
----@field injected_recipes table<data.ItemID,CompleteFakeRecipe[]>?
+---@field injected_recipes table<data.ItemID,CompleteFakeRecipe>?
 
 ---@type defaultConfigs
 local vanillaDefaults = {
@@ -64,14 +64,25 @@ singleMods["pyalternativeenergy"] = {
 		lib.item("utility-science-pack"),
 		lib.item("space-science-pack"),
 	},
-	base_items = {
-		lib.item("guano"),
+	base_items = {},
+	ignored_recipes = {
+		["bioport-hidden-recipe"] = true, -- Ignore this one, just use the injected recipe
 	},
-	ignored_recipes = {},
 	ignored_patterns = {
-		"%-turd$", --Ignore all turd recipes
+		"%-turd$", --Ignore all T.U.R.D. recipes
 	},
-	-- consider_technology = false, -- Isn't actually necessary?
+	injected_recipes = {
+		["guano"] = {
+			id = "injected-guano",
+			enabled = true,
+			category = "biofluid", -- FIXME: currently gets the logistic tanks instead of the biopyanoport
+			ingredients = {
+				{type="item",name="workers-food",amount=1},
+				{type="item",name="gobachov",amount=1}
+			},
+			object_name = "LuaRecipePrototype"
+		}
+	}
 }
 singleMods["pypostprocessing"] = {
 	name = {"tiergen-configs.py"},

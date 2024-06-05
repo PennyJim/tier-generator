@@ -1,6 +1,8 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.2
 Date: ????
+  Minor Features:
+    - PyAE's Guano problem is mostly fixed
   Changes:
     - Added ability to inject recipes from within compatibility configs
 ---------------------------------------------------------------------------------------------------
