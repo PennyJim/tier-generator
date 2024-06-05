@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.2
-Date: ????
+Date: 2024-06-05
   Minor Features:
     - PyAE's Guano problem is mostly fixed
   Changes:
