@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.3
-Date: ????
+Date: 2024-06-12
   Minor Features:
     - Added compatibility for SimpleSeablock. Stone and Coal still are base resources due to rocks still getting autoplaced, but that's not easy to fix.
   Bugfixes:
