@@ -37,36 +37,6 @@ end
 --#endregion
 --#region Autoplace Processing
 
--- ---Processes resources
--- ---@param EntityID data.EntityID
--- ---@param Resource LuaEntityPrototype
--- function ProcessMining(EntityID, Resource)
--- 	local mineable = Resource.mineable_properties
--- 	if not mineable.minable then
--- 		return lib.ignore(EntityID, "Is not mineable.")
--- 	end
--- 	local category = Resource.resource_category
--- 	if not category then
--- 		return lib.ignore(EntityID, "has no resource category!?")
--- 	end
-
--- 	for _, item in ipairs(mineable.products) do
--- 		local recipeLookup = item.type == "item" and lookup.ItemRecipe or lookup.FluidRecipe
--- 		local miningLookup = item.type == "item" and lookup.ItemMining or lookup.FluidMining
--- 		category = "tiergen-mining-"..category
--- 		local altCategory
--- 		if not mineable.required_fluid then
--- 			altCategory = category.."-noinput"
--- 		end
--- 		---@type OptionalFluidFakeRecipe
--- 		local recipe = {
--- 			input = mineable.required_fluid,
--- 			category = altCategory or category
--- 		}
--- 		lib.appendToArrayInTable(recipeLookup, item.name, "tiergen-mining")
--- 		lib.appendToArrayInTable(miningLookup, item.name, recipe)
--- 	end
--- end
 ---Processes entities placed by autoplace
 ---@param EntityID data.EntityID
 ---@param placedEntity LuaEntityPrototype
@@ -74,6 +44,16 @@ function ProcessAutoplace(EntityID, placedEntity)
 	local autoplace = placedEntity.autoplace_specification
 	if not autoplace then
 		return lib.ignore(EntityID, "has no autoplace!?")
+	end
+
+	-- TODO: See if there's a way to make a 'recipe' for getting to other surfaces
+	-- Might just need to make compatibility for specific mods.
+	local control = autoplace.control
+	if control then
+		local controls = game.surfaces.nauvis.map_gen_settings.autoplace_controls[control]
+		if controls.size == 0 then
+			return lib.ignore(EntityID, "is disabled for Nauvis.")
+		end
 	end
 
 	local mining = placedEntity.mineable_properties
