@@ -94,7 +94,7 @@ singleMods["pypostprocessing"] = {
 }
 singleMods["MoreSciencePacks-for1_1"] = {
 	name = {"tiergen-configs.msp"},
-	ultimate_science = lib.item("space-science-pack"),
+	ultimate_science = vanillaDefaults.ultimate_science,
 	all_sciences = {
 		lib.item("automation-science-pack"),
 		lib.item("logistic-science-pack"),
@@ -139,7 +139,7 @@ singleMods["MoreSciencePacks-for1_1"] = {
 }
 singleMods["SciencePackGalore"] = {
 	name = {"tiergen-configs.science-pack-galore"},
-	ultimate_science = lib.item("space-science-pack"),
+	ultimate_science = vanillaDefaults.ultimate_science,
 	all_sciences = {
 		lib.item("automation-science-pack"),
 		lib.item("logistic-science-pack"),
@@ -189,6 +189,19 @@ singleMods["SciencePackGalore"] = {
 	ignored_recipes = {},
 }
 singleMods["SciencePackGaloreForked"] = singleMods["SciencePackGalore"]
+singleMods["SimpleSeablock"] = {
+	ultimate_science = vanillaDefaults.ultimate_science,
+	all_sciences = vanillaDefaults.all_sciences,
+	base_items = {
+		lib.item("seablock-electrolyzer"),
+		lib.item("offshore-pump"),
+	},
+	ignored_recipes = {
+		-- ["tiergen-hand-mining"] = true -- Crashes the UI
+		-- Since it's basically a category, rather than a recipe, it might
+		-- have unintended consequences, so I don't like it even if it worked
+	}
+}
 
 ---Returns the chosen defaultConfigs and the mod associated with them
 ---If it has no compatibility available, then the second parameter returns nil
