@@ -51,7 +51,7 @@ function ProcessAutoplace(EntityID, placedEntity)
 	local control = autoplace.control
 	if control then
 		local controls = game.surfaces.nauvis.map_gen_settings.autoplace_controls[control]
-		if controls.size == 0 then
+		if controls and controls.size == 0 then
 			return lib.ignore(EntityID, "is disabled for Nauvis.")
 		end
 	end
