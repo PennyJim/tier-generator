@@ -202,6 +202,47 @@ singleMods["SimpleSeablock"] = {
 		-- have unintended consequences, so I don't like it even if it worked
 	}
 }
+singleMods["nullius"] = {
+	ultimate_science = lib.item("nullius-astronomy-pack"),
+	all_sciences = {
+		-- Regular sciences
+		lib.item("nullius-geology-pack"),
+		lib.item("nullius-climatology-pack"),
+		lib.item("nullius-mechanical-pack"),
+		lib.item("nullius-electrical-pack"),
+		lib.item("nullius-chemical-pack"),
+		lib.item("nullius-physics-pack"),
+		lib.item("nullius-astronomy-pack"),
+
+		-- Biology Sciences
+		lib.item("nullius-biochemistry-pack"),
+		lib.item("nullius-microbiology-pack"),
+		lib.item("nullius-botany-pack"),
+		lib.item("nullius-dendrology-pack"),
+		lib.item("nullius-nematology-pack"),
+		lib.item("nullius-ichthyology-pack"),
+		lib.item("nullius-zoology-pack"),
+	},
+	base_items = {
+		-- Spaceship
+		lib.item("nullius-chemical-plant-1"),
+		lib.item("nullius-distillery-1"),
+		lib.item("nullius-hydro-plant-1"),
+		lib.item("nullius-foundry-1"),
+		lib.item("nullius-air-filter-1"),
+		lib.item("nullius-seawater-intake-1"),
+		lib.item("nullius-medium-assembler-1"),
+		lib.item("nullius-small-furnace-2"), -- 2??
+		lib.item("nullius-broken-electrolyzer"),
+
+		--For checkpoint sciences
+		lib.item("nullius-checkpoint"),
+		lib.item("nullius-requirement-build"),
+		lib.item("nullius-requirement-consume"),
+	},
+	ignored_recipes = {},
+	-- consider_technology = false,
+}
 
 ---Returns the chosen defaultConfigs and the mod associated with them
 ---If it has no compatibility available, then the second parameter returns nil
