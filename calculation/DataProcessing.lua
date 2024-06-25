@@ -48,11 +48,14 @@ function ProcessAutoplace(EntityID, placedEntity)
 
 	-- TODO: See if there's a way to make a 'recipe' for getting to other surfaces
 	-- Might just need to make compatibility for specific mods.
-	local control = autoplace.control
-	if control then
-		local controls = game.surfaces.nauvis.map_gen_settings.autoplace_controls[control]
-		if controls and controls.size == 0 then
-			return lib.ignore(EntityID, "is disabled for Nauvis.")
+	if lib.getSetting("tiergen-consider-autoplace-setting") then
+		local control = autoplace.control
+		if control then
+			local settings = game.surfaces.nauvis.map_gen_settings
+			local controls = settings.autoplace_controls[control]
+			if not controls or controls.size == 0 then
+				return lib.ignore(EntityID, "is disabled for Nauvis.")
+			end
 		end
 	end
 

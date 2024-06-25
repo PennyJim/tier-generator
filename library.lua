@@ -11,6 +11,7 @@ local library = {}
 ---| "tiergen-consider-technology"
 ---| "tiergen-reduce-technology"
 ---| "tiergen-debug-log"
+---| "tiergen-consider-autoplace-setting"
 ---@type {[tierSettings]:any}
 local tiergenSettings = {
 	["tiergen-reduce-category"] = true,

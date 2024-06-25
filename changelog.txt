@@ -1,6 +1,8 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.4
 Date: ????
+  Features:
+    - Added setting to disable considering autplace controls. Now mods that have higher tier resources on other surfaces can kind of work. 
   Minor Features:
     - Added compatibility for Nullius
   Bugfixes:

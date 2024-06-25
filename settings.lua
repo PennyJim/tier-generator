@@ -5,10 +5,10 @@ local default_ignored = ""
 data:extend{
 	{
 		type = "bool-setting",
-		name = "tiergen-reduce-category",
+		name = "tiergen-consider-autoplace-setting",
 		setting_type = "runtime-global",
 		default_value = true,
-		order = "global-a[category]"
+		order = "global-a[autoplace]"
 	},
 	{
 		type = "bool-setting",
@@ -23,6 +23,13 @@ data:extend{
 		setting_type = "runtime-global",
 		default_value = true,
 		order = "global-a[technology-b]"
+	},
+	{
+		type = "bool-setting",
+		name = "tiergen-reduce-category",
+		setting_type = "runtime-global",
+		default_value = true,
+		order = "global-b[category]"
 	},
 	{
 		type = "bool-setting",
