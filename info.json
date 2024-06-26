@@ -14,7 +14,8 @@
 			"gallery/base.png",
 			"gallery/spg.png",
 			"gallery/ultracube.png",
-			"gallery/py-ae.png"
+			"gallery/py-ae.png",
+			"gallery/nullius.png"
 		],
 		"readme": "README.md",
 		"ignore": [

@@ -9,6 +9,7 @@ Considers what machine is required to craft, the ingredients, the technology, an
 - [Ultracube](https://mods.factorio.com/mod/Ultracube)
 - [Pyanodons Alternative Energy](https://mods.factorio.com/mod/pyalternativeenergy)
 	- Guano currently considers the provider and requester tank as valid machines to make it. Meaning the dependency graph follows the provider tank rather than biopyanoport
+- [Nullius](https://mods.factorio.com/mod/nullius)
 
 
 ## Todo List:
