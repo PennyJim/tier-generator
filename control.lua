@@ -129,13 +129,8 @@ script.on_configuration_changed(function (ChangedData)
 		config.init()
 	end
 
-	local mods_have_changed = false
-	for _ in pairs(ChangedData.mod_changes) do
-		mods_have_changed = true
-		break
-	end
 	if ChangedData.mod_startup_settings_changed
-	or mods_have_changed
+	or next(ChangedData.mod_changes)
 	or ChangedData.migration_applied then
 		global.updateBase = true
 		lib.tick_later("recalc")
@@ -158,11 +153,12 @@ script.on_event(defines.events.on_runtime_mod_setting_changed, function (EventDa
 	if EventData.setting_type == "runtime-global" then
 		lib.clearSettingCache(setting)
 	end
-	-- Currently doesn't do anything because it's not a setting
-	-- Keeping it to remind myself that `unprocess` is the right function to use
-	-- if setting == "tiergen-ignored-recipes" then
-	-- 	calculator.unprocess()
-	-- end
+
+	-- Need to reprocess data if autoplace rules are changed
+	if setting == "tiergen-consider-autoplace-setting" then
+		calculator.unprocess()
+	end
+
 	if not global.willRecalc
 	and lib.isOurSetting(setting)
 	and setting ~= "tiergen-debug-log" then

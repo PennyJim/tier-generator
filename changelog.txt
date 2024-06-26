@@ -1,7 +1,11 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.5
 Date: ????
-  Changes:
+  Bugfixes:
+    - ACTUALLY TEST THE NEW SETTING :facepalm:
+    - Actually add locale for new setting
+    - Actually recalculate when new setting is changed
+    - Reprocess data when new setting is changed
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.4
 Date: 2024-06-26

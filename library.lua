@@ -7,16 +7,17 @@ local library = {}
 
 --#region Settings
 ---@alias tierSettings
----| "tiergen-reduce-category"
+---| "tiergen-consider-autoplace-setting"
 ---| "tiergen-consider-technology"
 ---| "tiergen-reduce-technology"
+---| "tiergen-reduce-category"
 ---| "tiergen-debug-log"
----| "tiergen-consider-autoplace-setting"
 ---@type {[tierSettings]:any}
 local tiergenSettings = {
-	["tiergen-reduce-category"] = true,
+	["tiergen-consider-autoplace-setting"] = true,
 	["tiergen-consider-technology"] = true,
 	["tiergen-reduce-technology"] = true,
+	["tiergen-reduce-category"] = true,
 	["tiergen-debug-log"] = true,
 }
 local cachedSettings = {}
