@@ -202,6 +202,22 @@ singleMods["SimpleSeablock"] = {
 		-- have unintended consequences, so I don't like it even if it worked
 	}
 }
+---Shorthand for the nullius asteroid mining 'recipes'
+---@param resource string
+---@return CompleteFakeRecipe
+local function nullius_guide_resources(resource)
+	---@type CompleteFakeRecipe
+	return {
+		id = "injected-nullius-asteroid-mining-"..resource,
+		enabled = true,
+		category = "crafting",
+		ingredients = {
+			{type="item",name="nullius-guide-drone-"..resource.."-1",amount=1},
+			{type="item",name="nullius-guide-remote-"..resource,amount=1},
+		},
+		object_name = "LuaRecipePrototype"
+	}
+end
 singleMods["nullius"] = {
 	-- ultimate_science = lib.item("nullius-astronomy-pack"),
 	ultimate_science = lib.item("nullius-zoology-pack"), -- Has a higher tier...
@@ -242,6 +258,14 @@ singleMods["nullius"] = {
 		lib.item("nullius-requirement-consume"),
 	},
 	ignored_recipes = {},
+	injected_recipes = {
+		["iron-ore"] = nullius_guide_resources("iron"),
+		["nullius-bauxite"] = nullius_guide_resources("bauxite"),
+		["copper-ore"] = nullius_guide_resources("copper"),
+		["nullius-sandstone"] = nullius_guide_resources("sandstone"),
+		["nullius-limestone"] = nullius_guide_resources("limestone"),
+		["uranium-ore"] = nullius_guide_resources("uranium"),
+	},
 	-- consider_technology = false,
 }
 
