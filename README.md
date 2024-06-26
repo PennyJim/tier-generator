@@ -1,3 +1,5 @@
+[![shield](https://img.shields.io/badge/Crowdin-Translate-brightgreen)](https://crowdin.com/project/factorio-mods-localization)
+
 # Tier Generator
 calculates the `tier`, or the complexity of an item.
 
