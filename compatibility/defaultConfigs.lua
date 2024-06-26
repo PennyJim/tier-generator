@@ -203,7 +203,8 @@ singleMods["SimpleSeablock"] = {
 	}
 }
 singleMods["nullius"] = {
-	ultimate_science = lib.item("nullius-astronomy-pack"),
+	-- ultimate_science = lib.item("nullius-astronomy-pack"),
+	ultimate_science = lib.item("nullius-zoology-pack"), -- Has a higher tier...
 	all_sciences = {
 		-- Regular sciences
 		lib.item("nullius-geology-pack"),
@@ -224,7 +225,7 @@ singleMods["nullius"] = {
 		lib.item("nullius-zoology-pack"),
 	},
 	base_items = {
-		-- Spaceship
+		-- Given items
 		lib.item("nullius-chemical-plant-1"),
 		lib.item("nullius-distillery-1"),
 		lib.item("nullius-hydro-plant-1"),
