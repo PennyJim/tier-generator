@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.5
-Date: ????
+Date: 2024-06-26
   Bugfixes:
     - ACTUALLY TEST THE NEW SETTING :facepalm:
     - Actually add locale for new setting
