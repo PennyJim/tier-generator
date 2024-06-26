@@ -52,8 +52,27 @@ function ProcessAutoplace(EntityID, placedEntity)
 		local control = autoplace.control
 		if control then
 			local settings = game.surfaces.nauvis.map_gen_settings
+			local ignore = false
+
 			local controls = settings.autoplace_controls[control]
-			if not controls or controls.size == 0 then
+			if not controls then
+				ignore = settings.default_enable_all_autoplace_controls ~= false
+			elseif controls.size == 0 then
+				ignore = true
+			end
+
+			-- I'm not sure *what* this is, but I wrote code just in case
+			-- local entity_settings = settings.autoplace_settings["entity"]
+			-- if entity_settings then
+			-- 	local entity_control = entity_settings.settings[control]
+			-- 	if not entity_control then
+			-- 		ignore = entity_settings.treat_missing_as_default
+			-- 	elseif entity_control.size == 0 then
+			-- 		ignore = true
+			-- 	end
+			-- end
+
+			if ignore then
 				return lib.ignore(EntityID, "is disabled for Nauvis.")
 			end
 		end
