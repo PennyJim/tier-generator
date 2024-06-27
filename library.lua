@@ -53,6 +53,23 @@ end
 ---A renamed version of `type` so it can be used as a local variable
 ---without losing the function
 library.type = type
+---Splits a string at 'sep'
+---@param s string
+---@param sep string
+---@return string[]
+function library.split(s, sep)
+	local fields = {}
+	
+	local sep = sep or " "
+	local pattern = string.format("([^%s]+)", sep)
+---@diagnostic disable-next-line: discard-returns
+	string.gsub(s, pattern, function(c) fields[#fields + 1] = c end)
+	
+	return fields
+end
+--#endregion
+--#region Logging
+
 ---Logs from a centralized point
 ---@param ... any
 ---@see log
@@ -80,19 +97,41 @@ end
 function library.noItems(id)
 	library.log("\t\t"..id.." has no items placing it? Ignoring...")
 end
----Splits a string at 'sep'
----@param s string
----@param sep string
----@return string[]
-function library.split(s, sep)
-	local fields = {}
-	
-	local sep = sep or " "
-	local pattern = string.format("([^%s]+)", sep)
----@diagnostic disable-next-line: discard-returns
-	string.gsub(s, pattern, function(c) fields[#fields + 1] = c end)
-	
-	return fields
+--#endregion
+--#region Printing
+
+---Prints a message to a player
+---@param player_index integer
+---@param message LocalisedString
+function library.print(player_index, message)
+	if remote.interfaces["better-chat"] then
+		remote.call("better-chat", "send", message, nil, "player", player_index)
+	else
+		local player = game.get_player(player_index)
+		if not player then return end
+		player.print(message)
+	end
+end
+
+---Prints a message to a player
+---@param force_index integer
+---@param message LocalisedString
+function library.force_print(force_index, message)
+	if remote.interfaces["better-chat"] then
+		remote.call("better-chat", "send", message, nil, "player", force_index)
+	else
+		local force = game.forces[force_index]
+		if not force then return end
+		force.print(message)
+	end
+end
+
+function library.global_print(message)
+	if remote.interfaces["better-chat"] then
+		remote.call("better-chat", "send", message, nil, "global")
+	else
+		game.print(message)
+	end
 end
 --#endregion
 --#region Array Operations
