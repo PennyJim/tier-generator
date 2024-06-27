@@ -23,7 +23,7 @@ invalidReason = {
 	no_valid_injection = -10,
 	not_player_mineable = -94,
 	not_unlockable = -95,
-	ingored_recipe = -96,
+	ignored_recipe = -96,
 	no_recipe = -97,
 	no_machine = -98,
 	error = -99,
@@ -494,7 +494,7 @@ tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 
 	if global.config.ignored_recipes[recipeID] then
 		lib.ignore(recipeID, "is currently ignored")
-		return invalidReason.ingored_recipe, blockedBy
+		return invalidReason.ignored_recipe, blockedBy
 	end
 
 	local considerTechnology
