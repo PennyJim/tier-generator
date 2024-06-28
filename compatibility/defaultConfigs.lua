@@ -30,6 +30,47 @@ local vanillaDefaults = {
 ---@class defaultSettingsMap
 ---@field [string] defaultConfigs
 local singleMods = {}
+singleMods["space-exploration"] = {
+	ultimate_science = lib.item("se-deep-space-science-pack-4"),
+	all_sciences = {
+		-- Basic research
+		lib.item("automation-science-pack"),
+		lib.item("logistic-science-pack"),
+		lib.item("military-science-pack"),
+		lib.item("chemical-science-pack"),
+		lib.item("se-rocket-science-pack"),
+		lib.item("space-science-pack"),
+		lib.item("utility-science-pack"),
+		lib.item("production-science-pack"),
+		-- advanced research
+		lib.item("se-astronomic-science-pack-1"),
+		lib.item("se-astronomic-science-pack-2"),
+		lib.item("se-astronomic-science-pack-3"),
+		lib.item("se-astronomic-science-pack-4"),
+
+		lib.item("se-biological-science-pack-1"),
+		lib.item("se-biological-science-pack-2"),
+		lib.item("se-biological-science-pack-3"),
+		lib.item("se-biological-science-pack-4"),
+
+		lib.item("se-energy-science-pack-1"),
+		lib.item("se-energy-science-pack-2"),
+		lib.item("se-energy-science-pack-3"),
+		lib.item("se-energy-science-pack-4"),
+
+		lib.item("se-material-science-pack-1"),
+		lib.item("se-material-science-pack-2"),
+		lib.item("se-material-science-pack-3"),
+		lib.item("se-material-science-pack-4"),
+
+		lib.item("se-deep-space-science-pack-1"),
+		lib.item("se-deep-space-science-pack-2"),
+		lib.item("se-deep-space-science-pack-3"),
+		lib.item("se-deep-space-science-pack-4"),
+	},
+	base_items = {},
+	ignored_recipes = {},
+}
 singleMods["Ultracube"] = {
 	ultimate_science = lib.item("cube-complete-annihilation-card"),
 	all_sciences = {
