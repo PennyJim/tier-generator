@@ -12,11 +12,11 @@
 	"package": {
 		"gallery": [
 			"gallery/base.png",
-			"gallery/spg.png",
 			"gallery/ultracube.png",
 			"gallery/py-ae.png",
 			"gallery/nullius.png",
-			"gallery/space-exploration"
+			"gallery/space-exploration",
+			"gallery/spg.png"
 		],
 		"readme": "README.md",
 		"ignore": [

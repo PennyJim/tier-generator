@@ -31,85 +31,7 @@ local vanillaDefaults = {
 ---@class defaultSettingsMap
 ---@field [string] defaultConfigs
 local singleMods = {}
-
----Generates the core fragment recipes
----@param fragments string[]
----@return table<data.ItemID,CompleteFakeRecipe>
-local function se_core_fragements(fragments)
-	---@type table<data.ItemID,CompleteFakeRecipe>
-	local recipes = {}
-	for _, fragment in pairs(fragments) do
-		recipes["se-core-fragment-"..fragment] = {
-			id = "injected-se-core-fragment-"..fragment,
-			category = "crafting",
-			ingredients = {
-				{name="se-core-miner", type="item", amount = 1}
-			},
-			enabled = true,
-			object_name = "LuaRecipePrototype"
-		}
-	end
-	return recipes
-end
-
-singleMods["space-exploration"] = {
-	name = {"tiergen-config.se"},
-	ultimate_science = lib.item("se-deep-space-science-pack-4"),
-	all_sciences = {
-		-- Basic research
-		lib.item("automation-science-pack"),
-		lib.item("logistic-science-pack"),
-		lib.item("military-science-pack"),
-		lib.item("chemical-science-pack"),
-		lib.item("se-rocket-science-pack"),
-		lib.item("space-science-pack"),
-		lib.item("utility-science-pack"),
-		lib.item("production-science-pack"),
-		-- advanced research
-		lib.item("se-astronomic-science-pack-1"),
-		lib.item("se-astronomic-science-pack-2"),
-		lib.item("se-astronomic-science-pack-3"),
-		lib.item("se-astronomic-science-pack-4"),
-
-		lib.item("se-biological-science-pack-1"),
-		lib.item("se-biological-science-pack-2"),
-		lib.item("se-biological-science-pack-3"),
-		lib.item("se-biological-science-pack-4"),
-
-		lib.item("se-energy-science-pack-1"),
-		lib.item("se-energy-science-pack-2"),
-		lib.item("se-energy-science-pack-3"),
-		lib.item("se-energy-science-pack-4"),
-
-		lib.item("se-material-science-pack-1"),
-		lib.item("se-material-science-pack-2"),
-		lib.item("se-material-science-pack-3"),
-		lib.item("se-material-science-pack-4"),
-
-		lib.item("se-deep-space-science-pack-1"),
-		lib.item("se-deep-space-science-pack-2"),
-		lib.item("se-deep-space-science-pack-3"),
-		lib.item("se-deep-space-science-pack-4"),
-	},
-	base_items = {},
-	ignored_recipes = {},
-	injected_recipes = se_core_fragements{
-		"omni",
-		"coal",
-		"crude-oil",
-		"stone",
-		"iron-ore",
-		"copper-ore",
-		"uranium-ore",
-		"se-vulcanite",
-		"se-cryonite",
-		"se-beryllium-ore",
-		"se-holmium-ore",
-		"se-iridium-ore",
-		"se-vitamelange",
-	},
-	consider_autoplace_setting = false
-}
+-- Overhauls
 singleMods["Ultracube"] = {
 	ultimate_science = lib.item("cube-complete-annihilation-card"),
 	all_sciences = {
@@ -182,6 +104,150 @@ singleMods["pypostprocessing"] = {
 	ignored_recipes = {},
 	ignored_patterns = singleMods["pyalternativeenergy"].ignored_patterns
 }
+---Shorthand for the nullius asteroid mining 'recipes'
+---@param resource string
+---@return CompleteFakeRecipe
+local function nullius_guide_resources(resource)
+	---@type CompleteFakeRecipe
+	return {
+		id = "injected-nullius-asteroid-mining-"..resource,
+		enabled = true,
+		category = "crafting",
+		ingredients = {
+			{type="item",name="nullius-guide-drone-"..resource.."-1",amount=1},
+			{type="item",name="nullius-guide-remote-"..resource,amount=1},
+		},
+		object_name = "LuaRecipePrototype"
+	}
+end
+singleMods["nullius"] = {
+	-- ultimate_science = lib.item("nullius-astronomy-pack"),
+	ultimate_science = lib.item("nullius-zoology-pack"), -- Has a higher tier...
+	all_sciences = {
+		-- Regular sciences
+		lib.item("nullius-geology-pack"),
+		lib.item("nullius-climatology-pack"),
+		lib.item("nullius-mechanical-pack"),
+		lib.item("nullius-electrical-pack"),
+		lib.item("nullius-chemical-pack"),
+		lib.item("nullius-physics-pack"),
+		lib.item("nullius-astronomy-pack"),
+
+		-- Biology Sciences
+		lib.item("nullius-biochemistry-pack"),
+		lib.item("nullius-microbiology-pack"),
+		lib.item("nullius-botany-pack"),
+		lib.item("nullius-dendrology-pack"),
+		lib.item("nullius-nematology-pack"),
+		lib.item("nullius-ichthyology-pack"),
+		lib.item("nullius-zoology-pack"),
+	},
+	base_items = {
+		-- Given items
+		lib.item("nullius-chemical-plant-1"),
+		lib.item("nullius-distillery-1"),
+		lib.item("nullius-hydro-plant-1"),
+		lib.item("nullius-foundry-1"),
+		lib.item("nullius-air-filter-1"),
+		lib.item("nullius-seawater-intake-1"),
+		lib.item("nullius-medium-assembler-1"),
+		lib.item("nullius-small-furnace-2"), -- 2??
+		lib.item("nullius-broken-electrolyzer"),
+
+		--For checkpoint sciences
+		lib.item("nullius-checkpoint"),
+		lib.item("nullius-requirement-build"),
+		lib.item("nullius-requirement-consume"),
+	},
+	ignored_recipes = {},
+	injected_recipes = {
+		["iron-ore"] = nullius_guide_resources("iron"),
+		["nullius-bauxite"] = nullius_guide_resources("bauxite"),
+		["copper-ore"] = nullius_guide_resources("copper"),
+		["nullius-sandstone"] = nullius_guide_resources("sandstone"),
+		["nullius-limestone"] = nullius_guide_resources("limestone"),
+		["uranium-ore"] = nullius_guide_resources("uranium"),
+	},
+}
+---Generates the core fragment recipes
+---@param fragments string[]
+---@return table<data.ItemID,CompleteFakeRecipe>
+local function se_core_fragements(fragments)
+	---@type table<data.ItemID,CompleteFakeRecipe>
+	local recipes = {}
+	for _, fragment in pairs(fragments) do
+		recipes["se-core-fragment-"..fragment] = {
+			id = "injected-se-core-fragment-"..fragment,
+			category = "crafting",
+			ingredients = {
+				{type="item",name="se-core-miner",amount=1}
+			},
+			enabled = true,
+			object_name = "LuaRecipePrototype"
+		}
+	end
+	return recipes
+end
+singleMods["space-exploration"] = {
+	name = {"tiergen-config.se"},
+	ultimate_science = lib.item("se-deep-space-science-pack-4"),
+	all_sciences = {
+		-- Basic research
+		lib.item("automation-science-pack"),
+		lib.item("logistic-science-pack"),
+		lib.item("military-science-pack"),
+		lib.item("chemical-science-pack"),
+		lib.item("se-rocket-science-pack"),
+		lib.item("space-science-pack"),
+		lib.item("utility-science-pack"),
+		lib.item("production-science-pack"),
+		-- advanced research
+		lib.item("se-astronomic-science-pack-1"),
+		lib.item("se-astronomic-science-pack-2"),
+		lib.item("se-astronomic-science-pack-3"),
+		lib.item("se-astronomic-science-pack-4"),
+
+		lib.item("se-biological-science-pack-1"),
+		lib.item("se-biological-science-pack-2"),
+		lib.item("se-biological-science-pack-3"),
+		lib.item("se-biological-science-pack-4"),
+
+		lib.item("se-energy-science-pack-1"),
+		lib.item("se-energy-science-pack-2"),
+		lib.item("se-energy-science-pack-3"),
+		lib.item("se-energy-science-pack-4"),
+
+		lib.item("se-material-science-pack-1"),
+		lib.item("se-material-science-pack-2"),
+		lib.item("se-material-science-pack-3"),
+		lib.item("se-material-science-pack-4"),
+
+		lib.item("se-deep-space-science-pack-1"),
+		lib.item("se-deep-space-science-pack-2"),
+		lib.item("se-deep-space-science-pack-3"),
+		lib.item("se-deep-space-science-pack-4"),
+	},
+	base_items = {},
+	ignored_recipes = {},
+	injected_recipes = se_core_fragements{
+		"omni",
+		"coal",
+		"crude-oil",
+		"stone",
+		"iron-ore",
+		"copper-ore",
+		"uranium-ore",
+		"se-vulcanite",
+		"se-cryonite",
+		"se-beryllium-ore",
+		"se-holmium-ore",
+		"se-iridium-ore",
+		"se-vitamelange",
+	},
+	consider_autoplace_setting = false
+}
+
+-- Small mods
 singleMods["MoreSciencePacks-for1_1"] = {
 	name = {"tiergen-config.msp"},
 	ultimate_science = vanillaDefaults.ultimate_science,
@@ -291,72 +357,6 @@ singleMods["SimpleSeablock"] = {
 		-- Since it's basically a category, rather than a recipe, it might
 		-- have unintended consequences, so I don't like it even if it worked
 	}
-}
----Shorthand for the nullius asteroid mining 'recipes'
----@param resource string
----@return CompleteFakeRecipe
-local function nullius_guide_resources(resource)
-	---@type CompleteFakeRecipe
-	return {
-		id = "injected-nullius-asteroid-mining-"..resource,
-		enabled = true,
-		category = "crafting",
-		ingredients = {
-			{type="item",name="nullius-guide-drone-"..resource.."-1",amount=1},
-			{type="item",name="nullius-guide-remote-"..resource,amount=1},
-		},
-		object_name = "LuaRecipePrototype"
-	}
-end
-singleMods["nullius"] = {
-	-- ultimate_science = lib.item("nullius-astronomy-pack"),
-	ultimate_science = lib.item("nullius-zoology-pack"), -- Has a higher tier...
-	all_sciences = {
-		-- Regular sciences
-		lib.item("nullius-geology-pack"),
-		lib.item("nullius-climatology-pack"),
-		lib.item("nullius-mechanical-pack"),
-		lib.item("nullius-electrical-pack"),
-		lib.item("nullius-chemical-pack"),
-		lib.item("nullius-physics-pack"),
-		lib.item("nullius-astronomy-pack"),
-
-		-- Biology Sciences
-		lib.item("nullius-biochemistry-pack"),
-		lib.item("nullius-microbiology-pack"),
-		lib.item("nullius-botany-pack"),
-		lib.item("nullius-dendrology-pack"),
-		lib.item("nullius-nematology-pack"),
-		lib.item("nullius-ichthyology-pack"),
-		lib.item("nullius-zoology-pack"),
-	},
-	base_items = {
-		-- Given items
-		lib.item("nullius-chemical-plant-1"),
-		lib.item("nullius-distillery-1"),
-		lib.item("nullius-hydro-plant-1"),
-		lib.item("nullius-foundry-1"),
-		lib.item("nullius-air-filter-1"),
-		lib.item("nullius-seawater-intake-1"),
-		lib.item("nullius-medium-assembler-1"),
-		lib.item("nullius-small-furnace-2"), -- 2??
-		lib.item("nullius-broken-electrolyzer"),
-
-		--For checkpoint sciences
-		lib.item("nullius-checkpoint"),
-		lib.item("nullius-requirement-build"),
-		lib.item("nullius-requirement-consume"),
-	},
-	ignored_recipes = {},
-	injected_recipes = {
-		["iron-ore"] = nullius_guide_resources("iron"),
-		["nullius-bauxite"] = nullius_guide_resources("bauxite"),
-		["copper-ore"] = nullius_guide_resources("copper"),
-		["nullius-sandstone"] = nullius_guide_resources("sandstone"),
-		["nullius-limestone"] = nullius_guide_resources("limestone"),
-		["uranium-ore"] = nullius_guide_resources("uranium"),
-	},
-	-- consider_technology = false,
 }
 
 ---Returns the chosen defaultConfigs and the mod associated with them

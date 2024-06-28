@@ -6,13 +6,13 @@ calculates the `tier`, or the complexity of an item.
 Considers what machine is required to craft, the ingredients, the technology, and its science packs.
 
 ## Explicit compatibility
-- [More Science Packs](https://mods.factorio.com/mod/MoreSciencePacks-for1_1)
-- [Science Packs Galore](https://mods.factorio.com/mod/SciencePackGalore) ([Forked](https://mods.factorio.com/mod/SciencePackGaloreForked))
 - [Ultracube](https://mods.factorio.com/mod/Ultracube)
 - [Pyanodons](https://mods.factorio.com/mod/pypostprocessing) [Alternative Energy](https://mods.factorio.com/mod/pyalternativeenergy) or [Hard Mode](https://mods.factorio.com/mod/pyhardmode)
 - [Nullius](https://mods.factorio.com/mod/nullius)
 - [Space Exploration](https://mods.factorio.com/mod/space-exploration)
 	- Does not properly handle off-planet resources yet
+- [More Science Packs](https://mods.factorio.com/mod/MoreSciencePacks-for1_1)
+- [Science Packs Galore](https://mods.factorio.com/mod/SciencePackGalore) ([Forked](https://mods.factorio.com/mod/SciencePackGaloreForked))
 
 
 ## Todo List:
