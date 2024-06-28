@@ -15,7 +15,8 @@
 			"gallery/spg.png",
 			"gallery/ultracube.png",
 			"gallery/py-ae.png",
-			"gallery/nullius.png"
+			"gallery/nullius.png",
+			"gallery/space-exploration"
 		],
 		"readme": "README.md",
 		"ignore": [

@@ -9,9 +9,10 @@ Considers what machine is required to craft, the ingredients, the technology, an
 - [More Science Packs](https://mods.factorio.com/mod/MoreSciencePacks-for1_1)
 - [Science Packs Galore](https://mods.factorio.com/mod/SciencePackGalore) ([Forked](https://mods.factorio.com/mod/SciencePackGaloreForked))
 - [Ultracube](https://mods.factorio.com/mod/Ultracube)
-- [Pyanodons Alternative Energy](https://mods.factorio.com/mod/pyalternativeenergy)
-	- Guano currently considers the provider and requester tank as valid machines to make it. Meaning the dependency graph follows the provider tank rather than biopyanoport
+- [Pyanodons](https://mods.factorio.com/mod/pypostprocessing) [Alternative Energy](https://mods.factorio.com/mod/pyalternativeenergy) or [Hard Mode](https://mods.factorio.com/mod/pyhardmode)
 - [Nullius](https://mods.factorio.com/mod/nullius)
+- [Space Exploration](https://mods.factorio.com/mod/space-exploration)
+	- Does not properly handle off-planet resources yet
 
 
 ## Todo List:
