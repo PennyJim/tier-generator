@@ -155,8 +155,9 @@ singleMods["pyhardmode"] = {
 		["guano"] = {
 			id = "injected-guano",
 			enabled = true,
-			category = "biofluid", -- FIXME: currently gets the logistic tanks instead of the biopyanoport
+			category = "crafting",
 			ingredients = {
+				{type="item",name="bioport",amount=1},
 				{type="item",name="workers-food",amount=1},
 				{type="item",name="gobachov",amount=1}
 			},

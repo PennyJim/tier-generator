@@ -2,6 +2,8 @@
 Version: 0.3.7
 Date: ????
   Compatibility:
+    - Fixed compatibility for Pyanodons Alternative Energy
+      * Made the machine an ingredient rather than the category
     - Added compatibility for Pyanodons Hard Mode
     - Added compatibility for Space Exploration
       * Haven't added 'recipes' to properly handle off-planet resources.
