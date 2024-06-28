@@ -48,9 +48,9 @@ singleMods["Ultracube"] = {
 	},
 	ignored_recipes = {},
 }
-singleMods["pyalternativeenergy"] = {
-	name = {"tiergen-configs.py-ae"},
-	ultimate_science = lib.item("space-science-pack"),
+singleMods["pyhardmode"] = {
+	name = {"tiergen-configs.pyhardmode"},
+	ultimate_science = vanillaDefaults.ultimate_science,
 	all_sciences = {
 		lib.item("automation-science-pack"),
 		lib.item("py-science-pack-1"),
@@ -64,7 +64,7 @@ singleMods["pyalternativeenergy"] = {
 		lib.item("utility-science-pack"),
 		lib.item("space-science-pack"),
 	},
-	base_items = {},
+	base_items = {lib.item("burner-mining-drill"), lib.item("offshore-pump")},
 	ignored_recipes = {
 		["bioport-hidden-recipe"] = true, -- Ignore this one, just use the injected recipe
 	},
@@ -83,6 +83,15 @@ singleMods["pyalternativeenergy"] = {
 			object_name = "LuaRecipePrototype"
 		}
 	}
+}
+singleMods["pyalternativeenergy"] = {
+	name = {"tiergen-configs.py-ae"},
+	ultimate_science = singleMods["pyhardmode"].ultimate_science,
+	all_sciences = singleMods["pyhardmode"].all_sciences,
+	base_items = {},
+	ignored_recipes = singleMods["pyhardmode"].ignored_recipes,
+	ignored_patterns = singleMods["pyhardmode"].ignored_patterns,
+	injected_recipes = singleMods["pyhardmode"].injected_recipes
 }
 singleMods["pypostprocessing"] = {
 	name = {"tiergen-configs.py"},
