@@ -52,6 +52,7 @@ local function se_core_fragements(fragments)
 end
 
 singleMods["space-exploration"] = {
+	name = {"tiergen-config.se"},
 	ultimate_science = lib.item("se-deep-space-science-pack-4"),
 	all_sciences = {
 		-- Basic research
@@ -105,7 +106,7 @@ singleMods["space-exploration"] = {
 		"se-holmium-ore",
 		"se-iridium-ore",
 		"se-vitamelange",
-	}
+	},
 }
 singleMods["Ultracube"] = {
 	ultimate_science = lib.item("cube-complete-annihilation-card"),
@@ -126,7 +127,7 @@ singleMods["Ultracube"] = {
 	ignored_recipes = {},
 }
 singleMods["pyhardmode"] = {
-	name = {"tiergen-configs.pyhardmode"},
+	name = {"tiergen-config.pyhardmode"},
 	ultimate_science = vanillaDefaults.ultimate_science,
 	all_sciences = {
 		lib.item("automation-science-pack"),
@@ -162,7 +163,7 @@ singleMods["pyhardmode"] = {
 	}
 }
 singleMods["pyalternativeenergy"] = {
-	name = {"tiergen-configs.py-ae"},
+	name = {"tiergen-config.py-ae"},
 	ultimate_science = singleMods["pyhardmode"].ultimate_science,
 	all_sciences = singleMods["pyhardmode"].all_sciences,
 	base_items = {},
@@ -171,7 +172,7 @@ singleMods["pyalternativeenergy"] = {
 	injected_recipes = singleMods["pyhardmode"].injected_recipes
 }
 singleMods["pypostprocessing"] = {
-	name = {"tiergen-configs.py"},
+	name = {"tiergen-config.py"},
 	ultimate_science = vanillaDefaults.ultimate_science,
 	all_sciences = vanillaDefaults.all_sciences,
 	base_items = {},
@@ -179,7 +180,7 @@ singleMods["pypostprocessing"] = {
 	ignored_patterns = singleMods["pyalternativeenergy"].ignored_patterns
 }
 singleMods["MoreSciencePacks-for1_1"] = {
-	name = {"tiergen-configs.msp"},
+	name = {"tiergen-config.msp"},
 	ultimate_science = vanillaDefaults.ultimate_science,
 	all_sciences = {
 		lib.item("automation-science-pack"),
@@ -224,7 +225,7 @@ singleMods["MoreSciencePacks-for1_1"] = {
 	ignored_recipes = {},
 }
 singleMods["SciencePackGalore"] = {
-	name = {"tiergen-configs.science-pack-galore"},
+	name = {"tiergen-config.science-pack-galore"},
 	ultimate_science = vanillaDefaults.ultimate_science,
 	all_sciences = {
 		lib.item("automation-science-pack"),
