@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.7
-Date: ????
+Date: 2024-06-28
   Compatibility:
     - Fixed compatibility for Pyanodons Alternative Energy
       * Made the machine an ingredient rather than the category
