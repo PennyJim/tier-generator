@@ -9,6 +9,7 @@
 ---@field ignored_recipes table<data.RecipeID,true> --An array of lua patterns
 ---@field ignored_patterns string[]?
 ---@field consider_technology boolean?
+---@field consider_autoplace_setting boolean?
 ---@field injected_recipes table<data.ItemID,CompleteFakeRecipe>?
 
 ---@type defaultConfigs
@@ -107,6 +108,7 @@ singleMods["space-exploration"] = {
 		"se-iridium-ore",
 		"se-vitamelange",
 	},
+	consider_autoplace_setting = false
 }
 singleMods["Ultracube"] = {
 	ultimate_science = lib.item("cube-complete-annihilation-card"),

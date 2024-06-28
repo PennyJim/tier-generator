@@ -4,6 +4,7 @@ local configTable = {}
 
 local function MentionConfig()
 	local mod = global.config.mod
+	local message
 	if mod then
 		message = {"tiergen.mod-config", global.config.name or mod}
 	else
@@ -30,6 +31,12 @@ function configTable.init()
 	and config.consider_technology ~= lib.getSetting("tiergen-consider-technology") then
 		settings.global["tiergen-consider-technology"] = {value=config.consider_technology}
 		lib.clearSettingCache("tiergen-consider-technology")
+	end
+
+	if config.consider_autoplace_setting ~= nil
+	and config.consider_autoplace_setting ~= lib.getSetting("tiergen-consider-autoplace-setting") then
+		settings.global["tiergen-consider-autoplace-setting"] = {value=config.consider_autoplace_setting}
+		lib.clearSettingCache("tiergen-consider-autoplace-setting")
 	end
 
 	lib.seconds_later(2, "config-alert")
