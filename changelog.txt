@@ -1,7 +1,7 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.7
 Date: ????
-  Minor Features:
+  Compatibility:
     - Added compatibility for Pyanodons Hard Mode
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.6
@@ -21,21 +21,21 @@ Version: 0.3.4
 Date: 2024-06-26
   Features:
     - Added setting to disable considering autplace controls. Now mods that have higher tier resources on other surfaces can kind of work. 
-  Minor Features:
+  Compatibility:
     - Added compatibility for Nullius
   Bugfixes:
     - Removed a crash with processing autoplace
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.3
 Date: 2024-06-12
-  Minor Features:
+  Compatibility:
     - Added compatibility for SimpleSeablock. Stone and Coal still are base resources due to rocks still getting autoplaced, but that's not easy to fix.
   Bugfixes:
     - No longer considers resources disabled during map creation as available
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.2
 Date: 2024-06-05
-  Minor Features:
+  Compatibility:
     - PyAE's Guano problem is mostly fixed
   Changes:
     - Added ability to inject recipes from within compatibility configs
@@ -48,7 +48,7 @@ Date: 2024-06-04
   Features:
     - Compatibility can now disable considering technology
     - Can now use a localized string instead of raw mod name
-  Minor Features:
+  Compatibility:
     - Added compatibility for Py Alternative Energy
     - Added general compatibility for all of Pyanodons (probably)
   Bugfixes:
@@ -64,7 +64,7 @@ Date: 2024-05-31
   Features:
     - Added automatic compatibility! It'll choose a few defaults based on the detected mod and written compatibility
     - Finally added a keybind for opening the menu
-  Minor Features:
+  Compatibility:
     - Added compatibility for Ultracube
     - Added compatibility for Science Packs Galore (as well as Forked)
     - Added compatibility for MoreSciencePacks-for1_1
