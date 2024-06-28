@@ -356,15 +356,18 @@ end
 ---The handler for the next tick
 ---@param data NthTickEventData
 local function tick(data)
-	for _, funcName in ipairs(global.tick_later) do
+	-- reset tick data so handlers can re-register without fear
+	local this_tick = global.tick_later
+	global.tick_later = {}
+	global.next_tick = nil
+	script.on_nth_tick(data.nth_tick, nil)
+
+	for _, funcName in ipairs(this_tick) do
 		local success, error = pcall(nth_tick_handlers[funcName], data)
 		if not success then
 			lib.log(error)
 		end
 	end
-	global.tick_later = {}
-	global.next_tick = nil
-	script.on_nth_tick(data.nth_tick, nil)
 end
 ---Calls the given function next tick
 ---@param func_name string
