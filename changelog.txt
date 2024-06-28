@@ -4,7 +4,7 @@ Date: ????
   Compatibility:
     - Added compatibility for Pyanodons Hard Mode
     - Added compatibility for Space Exploration
-      * Incorrectly marks other planet resources as T0 items regardless of considering autoplace...
+      * Haven't added 'recipes' to properly handle off-planet resources.
   Commands:
     - Added a debug command for recursively seeking through invalid items in hopes of finding the cause
       Currently not that helpful due to it searching *every* recipe. It's better to just do it manually :(

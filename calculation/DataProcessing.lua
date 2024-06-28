@@ -57,7 +57,7 @@ function ProcessAutoplace(EntityID, placedEntity)
 			local controls = settings.autoplace_controls[control]
 			if not controls then
 				ignore = settings.default_enable_all_autoplace_controls ~= false
-			elseif controls.size == 0 then
+			elseif controls.size <= 0 or controls.frequency <= 0 then
 				ignore = true
 			end
 
