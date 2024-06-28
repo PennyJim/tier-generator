@@ -105,7 +105,7 @@ end
 ---@param message LocalisedString
 function library.print(player_index, message)
 	if remote.interfaces["better-chat"] then
-		remote.call("better-chat", "send", message, nil, "player", player_index)
+		remote.call("better-chat", "send", message, nil, "player", player_index, false)
 	else
 		local player = game.get_player(player_index)
 		if not player then return end
@@ -118,7 +118,7 @@ end
 ---@param message LocalisedString
 function library.force_print(force_index, message)
 	if remote.interfaces["better-chat"] then
-		remote.call("better-chat", "send", message, nil, "player", force_index)
+		remote.call("better-chat", "send", message, nil, "player", force_index, false)
 	else
 		local force = game.forces[force_index]
 		if not force then return end
@@ -128,7 +128,7 @@ end
 
 function library.global_print(message)
 	if remote.interfaces["better-chat"] then
-		remote.call("better-chat", "send", message, nil, "global")
+		remote.call("better-chat", "send", message, nil, "global", nil, false)
 	else
 		game.print(message)
 	end
