@@ -643,5 +643,54 @@ return {
 		uncalculate()
 ---@diagnostic disable-next-line: cast-local-type
 		lookup = nil
+	end,
+	--Debugging
+
+	---Look up the string corresponding an invalid reason
+	---@param invalid_id integer
+	---@return string
+	invalid_lookup = function (invalid_id)
+		return invalidReason[invalid_id]
+	end,
+
+	---Gets the array of ingredients for the given item
+	---@param item data.ItemID
+	---@param type "item"|"fluid"
+	---@return table<data.ItemID|data.FluidID,"item"|"fluid">
+	get_ingredients = function (item, type)
+		local recipes
+		if type == "item" then
+			recipes = lookup.ItemRecipe[item]
+		else
+			recipes = lookup.FluidRecipe[item]
+		end
+
+		if not recipes then
+			error("Should not have been hit!")
+		end
+
+		---@type table<data.ItemID|data.FluidID,"item"|"fluid">
+		local ingredients = {}
+		for _, recipe in pairs(recipes) do
+			local _, realstart = recipe:find("^tiergen[-]")
+			if not realstart then
+
+				-- Process regular recipe
+				local nextIngredients = lib.getRecipe(recipe).ingredients
+				for _, ingredient in pairs(nextIngredients) do
+					-- Add each ingredient to the list
+					local old_type = ingredients[ingredient.name]
+					if old_type and old_type ~= ingredient.type then
+						lib.log("Item and Fluid Ingredient have the same name:", ingredient.name)
+					elseif not old_type then
+						ingredients[ingredient.name] = ingredient.type
+					end
+				end
+
+			else
+				-- Custom recipe handling
+			end
+		end
+		return ingredients
 	end
 }

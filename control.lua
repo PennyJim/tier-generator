@@ -3,6 +3,8 @@ config = require("__tier-generator__.interface.tierConfig")
 local calculator = require("__tier-generator__.calculation.calculator")
 local tierMenu = require("__tier-generator__.interface.tierMenu")
 
+require("__tier-generator__.calculation.ErrorFinder")
+
 ---@class PlayerGlobal.elems.recipe
 ---@field has_changed boolean whether or not the elems have changed since last confirmed
 ---@field recipe {[int]:string} the table of recipe values

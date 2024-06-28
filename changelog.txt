@@ -3,6 +3,9 @@ Version: 0.3.7
 Date: ????
   Compatibility:
     - Added compatibility for Pyanodons Hard Mode
+  Commands:
+    - Added a debug command for recursively seeking through invalid items in hopes of finding the cause
+      Currently not that helpful due to it searching *every* recipe. It's better to just do it manually :(
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.6
 Date: 2024-06-26
