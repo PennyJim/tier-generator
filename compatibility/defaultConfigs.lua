@@ -30,6 +30,27 @@ local vanillaDefaults = {
 ---@class defaultSettingsMap
 ---@field [string] defaultConfigs
 local singleMods = {}
+
+---Generates the core fragment recipes
+---@param fragments string[]
+---@return table<data.ItemID,CompleteFakeRecipe>
+local function se_core_fragements(fragments)
+	---@type table<data.ItemID,CompleteFakeRecipe>
+	local recipes = {}
+	for _, fragment in pairs(fragments) do
+		recipes["se-core-fragment-"..fragment] = {
+			id = "injected-se-core-fragment-"..fragment,
+			category = "crafting",
+			ingredients = {
+				{name="se-core-miner", type="item", amount = 1}
+			},
+			enabled = true,
+			object_name = "LuaRecipePrototype"
+		}
+	end
+	return recipes
+end
+
 singleMods["space-exploration"] = {
 	ultimate_science = lib.item("se-deep-space-science-pack-4"),
 	all_sciences = {
@@ -70,6 +91,21 @@ singleMods["space-exploration"] = {
 	},
 	base_items = {},
 	ignored_recipes = {},
+	injected_recipes = se_core_fragements{
+		"omni",
+		"coal",
+		"crude-oil",
+		"stone",
+		"iron-ore",
+		"copper-ore",
+		"uranium-ore",
+		"se-vulcanite",
+		"se-cryonite",
+		"se-beryllium-ore",
+		"se-holmium-ore",
+		"se-iridium-ore",
+		"se-vitamelange",
+	}
 }
 singleMods["Ultracube"] = {
 	ultimate_science = lib.item("cube-complete-annihilation-card"),
