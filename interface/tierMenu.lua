@@ -455,12 +455,13 @@ end
 local function set_visibility(player, is_toggled)
 	if not global.menu then return menu.init() end
 	---@type LuaGuiElement
-	local menu = player.gui.screen["tiergen-menu"]
-	if not menu then
-		menu = create_frame(player)
+	local player_menu = global.player[player.index].menu
+	if not player_menu or not player_menu.valid then
+		menu.add_player(player)
+		player_menu = global.player[player.index].menu
 	end
 
-	menu.visible = is_toggled
+	player_menu.visible = is_toggled
 end
 
 ---Initializes the menu for new players
@@ -803,8 +804,9 @@ script.on_event(defines.events.on_gui_selected_tab_changed, function (EventData)
 	if not player_table.menu or not player_table.menu.valid then
 		local player = game.get_player(EventData.player_index)
 		if not player then return end
+		lib.log("Generating new menu for "..player.name.." as their reference was invalid")
 		menu.add_player(player)
-		return lib.log("Generating new menu for "..player.name.." as their reference was invalid")
+		return
 	end
 
 	local new_tab = EventData.element.selected_tab_index
