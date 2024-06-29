@@ -3,6 +3,7 @@ Version: 0.3.8
 Date: ????
   Bugfixes:
     - Fixed the possibility for the menu to be created twice
+    - Fixed the chance for functions to accidentally be called twice when using the internal 'tick_later' function (tick 0)
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.7
 Date: 2024-06-28

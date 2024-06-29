@@ -356,6 +356,8 @@ end
 ---The handler for the next tick
 ---@param data NthTickEventData
 local function tick(data)
+	-- No one intends to 'tick later' onto tick 0
+	if data.tick == 0 then return end
 	-- reset tick data so handlers can re-register without fear
 	local this_tick = global.tick_later
 	global.tick_later = {}
