@@ -381,10 +381,7 @@ local function tick(data)
 	script.on_nth_tick(data.nth_tick, nil)
 
 	for _, funcName in ipairs(this_tick) do
-		local success, error = pcall(nth_tick_handlers[funcName], data)
-		if not success then
-			lib.log(error)
-		end
+		nth_tick_handlers[funcName](data)
 	end
 end
 ---Calls the given function next tick
@@ -404,10 +401,7 @@ local function seconds_later_tick(data)
 		error("Should only ever be called once for an nth_tick")
 	end
 	local func_name = global.seconds[data.tick]
-	local success, error = pcall(nth_tick_handlers[func_name], data)
-	if not success then
-		lib.log(error)
-	end
+	nth_tick_handlers[func_name](data)
 	global.seconds[data.tick] = nil
 	script.on_nth_tick(data.nth_tick, nil)
 end
