@@ -3,15 +3,80 @@ local menu = require("__tier-generator__.interface.tierMenu")
 ---@class configFuncs
 local configTable = {}
 
+---@class defaultConfig
+---@field name LocalisedString?
+---@field ultimate_science simpleItem
+---@field all_sciences simpleItem[]
+---@field base_items (simpleItem|tierResult)[]
+---@field ignored_recipes table<data.RecipeID,true> --An array of lua patterns
+---@field ignored_patterns string[]?
+---@field consider_technology boolean?
+---@field consider_autoplace_setting boolean?
+---@field injected_recipes table<data.ItemID,CompleteFakeRecipe>?
+
+---@class config : defaultConfig
+---@field mod string?
+---@field ignored_patterns nil
+
+---@type defaultConfig?
+local interface_configs
+---@type string?
+local interface_mod
+---@type table<string,fun():defaultConfig>
+local builtin_configs = {}
+-- Overhauls
+builtin_configs["Ultracube"]								= require("__tier-generator__.compatibility/Ultracube")
+builtin_configs["pyhardmode"]								= require("__tier-generator__.compatibility/py").hard
+builtin_configs["pyalternativeenergy"]			= require("__tier-generator__.compatibility/py").ae
+builtin_configs["pypostprocessing"]					= require("__tier-generator__.compatibility/py").base
+builtin_configs["nullius"]									= require("__tier-generator__.compatibility/nullius")
+builtin_configs["SimpleSeablock"]						= require("__tier-generator__.compatibility/simple-seablock")
+
+-- Small(er) mods
+builtin_configs["space-exploration"]				= require("__tier-generator__.compatibility/space-exploration")
+builtin_configs["MoreSciencePacks-for1_1"]	= require("__tier-generator__.compatibility/msp")
+builtin_configs["SciencePackGalore"] 				= require("__tier-generator__.compatibility/spg")
+builtin_configs["SciencePackGaloreForked"]	= builtin_configs["SciencePackGalore"]
+
+---@type fun():defaultConfig
+local vanilla_config = require("__tier-generator__.compatibility.base")
+
+-- Process the patterns into ignored_recipes
+---@param ignored_patterns string[] the list of patterns
+---@param ignored_recipes table<string,true> the list of ignored recipes
+local function expand_patterns(ignored_patterns, ignored_recipes)
+	for _, pattern in pairs(ignored_patterns) do
+		for key in pairs(game.recipe_prototypes) do
+			if ignored_recipes[key] then
+			elseif key:match(pattern) then
+				ignored_recipes[key] = true
+			end
+		end
+	end
+end
+
+---Picks a config table
+---@return defaultConfig config
+---@return string? mod
+local function choose_config()
+	if interface_configs then
+		return interface_configs, interface_mod or "external"
+	end
+
+	for mod, default in pairs(builtin_configs) do
+		if game.active_mods[mod] then
+			return default(), mod
+		end
+	end
+
+	return vanilla_config()
+end
+
 local function actually_init()
-	---@class config : defaultConfigs
-	---@field all_sciences simpleItem[]
-	---@field ultimate_science simpleItem
-	---@field base_items simpleItem[]
-	---@field ignored_recipes table<data.RecipeID,true>
-	---@field mod string?
-	local config, mod = autoConfigure()
+	local config, mod = choose_config()
+	expand_patterns(config.ignored_patterns, config.ignored_recipes)
 	---@cast config config
+	config.ignored_patterns = nil
 	config.mod = mod
 	global.config = config
 
@@ -29,7 +94,7 @@ local function actually_init()
 
 	local message
 	if mod then
-		message = {"tiergen.mod-config", global.config.name or mod}
+		message = {"tiergen.mod-config", config.name or mod}
 	else
 		message = {"tiergen.vanilla-config"}
 	end
