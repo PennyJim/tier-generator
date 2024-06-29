@@ -4,9 +4,9 @@ return function ()
 	return {
 		ultimate_science = vanilla.ultimate_science,
 		all_sciences = vanilla.all_sciences,
-		base_items = {
-			lib.item("seablock-electrolyzer"),
-			lib.item("offshore-pump"),
+		base_items = lib.items{
+			"seablock-electrolyzer",
+			"offshore-pump"
 		},
 		ignored_recipes = {
 			-- ["tiergen-hand-mining"] = true -- Crashes the UI

@@ -3,6 +3,7 @@ Version: 0.3.8
 Date: ????
   Changes:
     - Completely refactored how default configs are stored/created
+    - Added a helper function to process each element of an array, instead of calling the individual processing function tens of times
   Bugfixes:
     - Fixed the possibility for the menu to be created twice
     - Fixed the chance for functions to accidentally be called twice when using the internal 'tick_later' function (tick 0)

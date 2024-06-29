@@ -323,6 +323,22 @@ function library.item(name, type)
 		type = type or "item"
 	}, itemMetatable)
 end
+---Creates an array of item objects from an array
+---@param items {name:string,type:"item"|"fluid"}[]|string[]
+---@return simpleItem[]
+function library.items(items)
+	for i, item in pairs(items) do
+		if type(item) == "string" then
+			items[i] = setmetatable({
+				name = item,
+				type = "item"
+			}, itemMetatable)
+		else
+			setmetatable(item, itemMetatable)
+		end
+	end
+	return items
+end
 --#endregion
 --#region GUI functions
 

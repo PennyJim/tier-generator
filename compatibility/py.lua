@@ -7,20 +7,20 @@ function config_set.hard()
 	return {
 		name = {"tiergen-config.pyhardmode"},
 		ultimate_science = vanilla.ultimate_science,
-		all_sciences = {
-			lib.item("automation-science-pack"),
-			lib.item("py-science-pack-1"),
-			lib.item("logistic-science-pack"),
-			lib.item("military-science-pack"),
-			lib.item("py-science-pack-2"),
-			lib.item("chemical-science-pack"),
-			lib.item("py-science-pack-3"),
-			lib.item("production-science-pack"),
-			lib.item("py-science-pack-4"),
-			lib.item("utility-science-pack"),
-			lib.item("space-science-pack"),
+		all_sciences = lib.items{
+			"automation-science-pack",
+			"py-science-pack-1",
+			"logistic-science-pack",
+			"military-science-pack",
+			"py-science-pack-2",
+			"chemical-science-pack",
+			"py-science-pack-3",
+			"production-science-pack",
+			"py-science-pack-4",
+			"utility-science-pack",
+			"space-science-pack",
 		},
-		base_items = {lib.item("burner-mining-drill"), lib.item("offshore-pump")},
+		base_items = lib.items{"burner-mining-drill", "offshore-pump"},
 		ignored_recipes = {
 			["bioport-hidden-recipe"] = true, -- Ignore this one, just use the injected recipe
 		},

@@ -1,16 +1,16 @@
 return function ()
 	return {
 		ultimate_science = lib.item("space-science-pack"),
-		all_sciences = {
-			lib.item("automation-science-pack"),
-			lib.item("logistic-science-pack"),
-			lib.item("military-science-pack"),
-			lib.item("chemical-science-pack"),
-			lib.item("production-science-pack"),
-			lib.item("utility-science-pack"),
-			lib.item("space-science-pack"),
+		all_sciences = lib.items{
+			"automation-science-pack",
+			"logistic-science-pack",
+			"military-science-pack",
+			"chemical-science-pack",
+			"production-science-pack",
+			"utility-science-pack",
+			"space-science-pack",
 		},
-		base_items = {lib.item("space-science-pack")},
+		base_items = lib.items{"space-science-pack"},
 		ignored_recipes = {},
 	}
 end
