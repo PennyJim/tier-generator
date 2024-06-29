@@ -10,7 +10,7 @@ return function ()
 			"utility-science-pack",
 			"space-science-pack",
 		},
-		base_items = lib.items{"space-science-pack"},
+		base_items = {},
 		ignored_recipes = {},
 	}
 end

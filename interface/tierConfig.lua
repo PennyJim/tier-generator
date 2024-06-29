@@ -1,4 +1,3 @@
-local autoConfigure = require("__tier-generator__.compatibility.defaultConfigs")
 local menu = require("__tier-generator__.interface.tierMenu")
 ---@class configFuncs
 local configTable = {}
@@ -25,17 +24,17 @@ local interface_mod
 ---@type table<string,fun():defaultConfig>
 local builtin_configs = {}
 -- Overhauls
-builtin_configs["Ultracube"]								= require("__tier-generator__.compatibility/Ultracube")
-builtin_configs["pyhardmode"]								= require("__tier-generator__.compatibility/py").hard
-builtin_configs["pyalternativeenergy"]			= require("__tier-generator__.compatibility/py").ae
-builtin_configs["pypostprocessing"]					= require("__tier-generator__.compatibility/py").base
-builtin_configs["nullius"]									= require("__tier-generator__.compatibility/nullius")
-builtin_configs["SimpleSeablock"]						= require("__tier-generator__.compatibility/simple-seablock")
+builtin_configs["Ultracube"]								= require("__tier-generator__.compatibility.Ultracube")
+builtin_configs["pyhardmode"]								= require("__tier-generator__.compatibility.py").hard
+builtin_configs["pyalternativeenergy"]			= require("__tier-generator__.compatibility.py").ae
+builtin_configs["pypostprocessing"]					= require("__tier-generator__.compatibility.py").base
+builtin_configs["nullius"]									= require("__tier-generator__.compatibility.nullius")
+builtin_configs["SimpleSeablock"]						= require("__tier-generator__.compatibility.simple-seablock")
 
 -- Small(er) mods
-builtin_configs["space-exploration"]				= require("__tier-generator__.compatibility/space-exploration")
-builtin_configs["MoreSciencePacks-for1_1"]	= require("__tier-generator__.compatibility/msp")
-builtin_configs["SciencePackGalore"] 				= require("__tier-generator__.compatibility/spg")
+builtin_configs["space-exploration"]				= require("__tier-generator__.compatibility.space-exploration")
+builtin_configs["MoreSciencePacks-for1_1"]	= require("__tier-generator__.compatibility.msp")
+builtin_configs["SciencePackGalore"] 				= require("__tier-generator__.compatibility.spg")
 builtin_configs["SciencePackGaloreForked"]	= builtin_configs["SciencePackGalore"]
 
 ---@type fun():defaultConfig
@@ -74,7 +73,7 @@ end
 
 local function actually_init()
 	local config, mod = choose_config()
-	expand_patterns(config.ignored_patterns, config.ignored_recipes)
+	expand_patterns(config.ignored_patterns or {}, config.ignored_recipes)
 	---@cast config config
 	config.ignored_patterns = nil
 	config.mod = mod
