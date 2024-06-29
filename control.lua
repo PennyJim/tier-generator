@@ -112,8 +112,11 @@ script.on_event(defines.events.on_player_created, function (EventData)
 		return log("No player pressed created??")
 	end
 
+	if not global.config then
+		player.set_shortcut_available("tiergen-menu", false)
+	end
 	setupPlayerGlobal(EventData.player_index)
-	tierMenu.add_player(player)
+	-- tierMenu.add_player(player)
 end)
 script.on_event(defines.events.on_player_removed, function (EventData)
 	global.player[EventData.player_index] = nil
