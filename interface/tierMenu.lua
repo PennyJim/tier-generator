@@ -493,7 +493,7 @@ function menu.regenerate_menus()
 	if not global.config then return end
 	for index, player in pairs(game.players) do
 		local player_table = global.player[index]
-		if not player_table.menu and not player_table.menu.valid then
+		if not player_table.menu or not player_table.menu.valid then
 			menu.add_player(player)
 			goto continue
 		end
