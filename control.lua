@@ -93,10 +93,6 @@ end
 
 ---Recalculates the tiers
 local function recalcTiers()
-	if global.updateBase then
-		calculator.updateBase()
-		global.updateBase = nil
-	end
 	calculator.uncalculate()
 	tierMenu.regenerate_menus()
 end
@@ -104,8 +100,6 @@ lib.register_func("recalc", recalcTiers)
 lib.register_func("tierMenu", tierMenu.init)
 
 script.on_init(function ()
-	global.updateBase = true
-	---@type string[]
 	setupGlobal()
 	config.init()
 	lib.tick_later("recalc")
@@ -134,7 +128,6 @@ script.on_configuration_changed(function (ChangedData)
 	if ChangedData.mod_startup_settings_changed
 	or next(ChangedData.mod_changes)
 	or ChangedData.migration_applied then
-		global.updateBase = true
 		lib.tick_later("recalc")
 	end
 end)

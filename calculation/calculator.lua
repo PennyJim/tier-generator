@@ -3,8 +3,10 @@ local eachDependency = require("__tier-generator__.calculation.iterableDependenc
 ---@class Calculator
 local calculator = {}
 
+local has_setup_core = false
+
 ---Tells the core calculator to drop its cache and consider sets its base items
-function calculator.updateBase()
+local function updateBase()
 	core.unset()
 	lib.log("Setting base item overrides")
 	local baseItems = global.config.base_items
@@ -12,12 +14,16 @@ function calculator.updateBase()
 		lib.log("\tSetting "..tostring(item).." to tier 0")
 		core.set(item)
 	end
+	has_setup_core = true
 end
 
 ---Calculates the tiers and returns items that were successful
 ---@param items simpleItem[]
 ---@return simpleItem[]
 local function get(items)
+	if not has_setup_core then
+		updateBase()
+	end
 	local successfulItems, processed = {},{}
 	lib.initTierMapTables(processed)
 	for _, item in ipairs(items) do
@@ -59,11 +65,10 @@ end
 
 function calculator.unprocess()
 	core.unprocess()
-	calculator.updateBase()
 end
 function calculator.uncalculate()
-	core.uncalculate()
-	calculator.updateBase()
+	core.unset()
+	has_setup_core = false
 end
 
 -- TODO: refactor some more of tierCalculation into here

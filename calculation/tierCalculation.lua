@@ -637,7 +637,6 @@ return {
 	set = setTier,
 	unset = uncalculate,
 	calculate = calculateTier,
-	uncalculate = uncalculate,
 	unprocess = function ()
 		processor.unprocess()
 		uncalculate()
