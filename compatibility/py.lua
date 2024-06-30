@@ -1,9 +1,10 @@
 local config_set = {}
 
 local vanilla = require("__tier-generator__.compatibility.base")()
-local ignored_patterns = "%-turd$" --Ignore all T.U.R.D. recipes
+local ignored_patterns = {"%-turd$"} --Ignore all T.U.R.D. recipes
 
 function config_set.hard()
+	---@type defaultConfig
 	return {
 		name = {"tiergen-config.pyhardmode"},
 		ultimate_science = vanilla.ultimate_science,
@@ -48,6 +49,7 @@ function config_set.ae()
 end
 
 function config_set.base()
+	---@type defaultConfig
 	return {
 		name = {"tiergen-config.py"},
 		ultimate_science = vanilla.ultimate_science,
