@@ -39,7 +39,7 @@ end
 ---@return fun(p1:DependencyIteratorState):tierResult?
 ---@return DependencyIteratorState
 function calculator.get(items)
-	return eachDependency(get(items))
+	return eachDependency.iterator(get(items))
 end
 ---Turns a tier result iterator into tierArrayItem[]
 ---@param items simpleItem[]
@@ -47,7 +47,7 @@ end
 local function toArray(items)
 	---@type tierArray
 	local array = {}
-	for item in eachDependency(items) do
+	for item in eachDependency.iterator(items) do
 		---@type simpleItem
 		lib.appendToArrayInTable(array, item.tier+1, {
 			name = item.name,
@@ -61,6 +61,13 @@ end
 ---@return {[integer]:simpleItem[]}
 function calculator.getArray(items)
 	return toArray(get(items))
+end
+
+---Returns an iterator for the items and their dependencies
+---@param items simpleItem[]
+---@param callback fun(tier:tierResult)
+function calculator.getRecurse(items, callback)
+	eachDependency.recursion(get(items), callback)
 end
 
 function calculator.unprocess()

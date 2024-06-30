@@ -534,12 +534,24 @@ local function traverseArray(player_table, inputItem, callback)
 	if table.valid and not table.visible then
 		return -- No tiers error message
 	end
-	for item in calculator.get{inputItem} do
-		---@type LuaGuiElement
-		local item_table = table.children[(item.tier+1)*2]["tierlist-items"]
-		local button = item_table[item.type.."/"..item.name]
-		callback(button, item)
+	lib.log("ITTERATOR")
+	for i = 1, 50, 1 do
+		for item in calculator.get{inputItem} do
+			---@type LuaGuiElement
+			local item_table = table.children[(item.tier+1)*2]["tierlist-items"]
+			local button = item_table[item.type.."/"..item.name]
+			callback(button, item)
+		end
 	end
+	lib.log("RECURSION")
+	for i = 1, 50, 1 do
+		calculator.getRecurse({inputItem}, function (item)
+			local item_table = table.children[(item.tier+1)*2]["tierlist-items"]
+			local button = item_table[item.type.."/"..item.name]
+			callback(button, item)
+		end)
+	end
+	lib.log("DONE")
 end
 
 ---Highlights the items in the player's global highlight array
