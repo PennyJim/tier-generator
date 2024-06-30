@@ -113,39 +113,4 @@ local function eachDependency(givenItems)
 	}
 end
 
--- return eachDependency
-
----Calls the given function for each dependency of givenItems
----@param given_dependency dependencyEntry
----@param completed_items table<tierSwitchTypes,{[string]:true}>
----@param callback fun(tier:tierResult)
-local function recursive_loop(given_dependency, completed_items, callback)
-	---@type dependencyEntry[]
-	local next_dependencies = getNextDependencies(given_dependency, nil, completed_items)
-	for _, dependency in pairs(next_dependencies) do
-		if dependency.type == "LuaItemPrototype"
-		or dependency.type == "LuaFluidPrototype" then
-			callback{
-				tier = dependency.tier,
-				name = dependency.id,
-				type = dependency.type == "LuaItemPrototype" and "item" or "fluid"
-			}
-		end
-		recursive_loop(dependency, completed_items, callback)
-	end
-end
-
----Calls the given function for each dependency of givenItems
----@param givenItems simpleItem[]
----@param callback fun(tier:tierResult)
-local function start_loop(givenItems, callback)
-	if #givenItems == 0 then return	end
-
----@diagnostic disable-next-line: missing-fields
-	recursive_loop(getGivenAsDependency(givenItems)[1], lib.initTierMapTables{}, callback)
-end
-
-return {
-	iterator=eachDependency,
-	recursion=start_loop,
-}
+return eachDependency
