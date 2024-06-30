@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.8
-Date: ????
+Date: 2024-06-30
   Changes:
     - Completely refactored how default configs are stored/created
     - Added a helper function to process each element of an array, instead of calling the individual processing function tens of times
