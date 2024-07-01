@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------------------------------
-Version: 0.3.10
+Version: 0.4.0
 Date: ????
   Changes:
     - Refactored dependencyEntry and tierEntry to be the same

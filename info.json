@@ -2,12 +2,13 @@
 	"name": "tier-generator",
 	"title": "Tier Generator",
 	"description": "Generates a tier list describing how to obtain an item",
-	"version": "0.3.10",
+	"version": "0.4.0",
 	"author": "PennyJim",
 	"factorio_version": "1.1",
 	"dependencies": [
 		"base >= 1.1",
-		"? better-chat >= 0.3"
+		"? better-chat >= 0.3",
+		"gui-modules = 0.0.1"
 	],
 	"package": {
 		"gallery": [
