@@ -6,47 +6,6 @@ local table_size = {
 }
 
 local menu = {}
----Creates the pane for item selection
----@param base_flow LuaGuiElement
-local function create_ignored_selection(base_flow)
-	local area = make_selection_area(
-		base_flow, "tiergen-ignored", {"tiergen.ignored-selection"}, "define-ignored",
-		function (vert_flow)
-			local table = make_elem_selector_table(vert_flow, "recipe", table_size.width, table_size.fluid_height)
-
-			local elems = global.player[table.player_index].ignored_elems
-			local count = #global.config.ignored_recipes
-			elems.count.recipe = count
-			elems.last.recipe = count
-			local index = 0
-			for recipeID in pairs(global.config.ignored_recipes) do
-				index = index + 1
-				if index >= #table.children - table.column_count then
-					add_elem_selector_row(table, "recipe")
-				end
-
-				elems.recipe[index] = recipeID
-				table.children[index].elem_value = recipeID
-			end
-		end
-	)
-	area.style.bottom_padding = 4
-	-- Not implemented yet
-	area.enabled = false
-	local area_children = area.children[1].children
-	local label = area_children[1]
-	label.enabled = false
-	label.tooltip = {"tiergen.not-implemented"}
-	label.caption = {"", label.caption, " [img=info]"}
-
-	-- area_children[2].ignored_by_interaction = true
-	for _,table_elem in pairs(area_children[2].children[1].children[1].children[1].children) do
-		table_elem.enabled = false
-		table_elem.ignored_by_interaction = true
-	end
-	area_children[3].ignored_by_interaction = true
-	area_children[3].children[2].enabled = false
-end
 ---Updates the tier list for the player
 ---@param player_table PlayerGlobal
 local function update_list(player_table)

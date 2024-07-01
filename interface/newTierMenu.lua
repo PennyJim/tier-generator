@@ -113,9 +113,15 @@ gui.new({
 						caption = {"tiergen.ignored-selection"},
 						confirm_name = "define-ignored", confirm_locale = {"tiergen.define-ignored"},
 ---@diagnostic disable-next-line: missing-fields
-						style_mods = {bottom_margin = 8},
+						style_mods = {bottom_margin = 4},
 						children = {
-							-- TODO: stuff
+							{
+								type = "module", module_type = "elem_selector_table",
+								frame_style = "tiergen_elem_selector_table_frame",
+								name = "ignored_recipe_selection",
+								height = table_size.fluid_height, width = table_size.width,
+								elem_type = "recipe"
+							} --[[@as ElemSelectorTableParams]],
 						}
 					}
 				}
