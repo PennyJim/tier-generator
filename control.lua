@@ -1,10 +1,10 @@
 local handler = require("event_handler")
 lib = require("__tier-generator__.library")
-config = require("__tier-generator__.interface.tierConfig")
 local calculator = require("__tier-generator__.calculation.calculator")
 local tierMenu = require("__tier-generator__.interface.tierMenu")
 
 handler.add_lib(require("__tier-generator__.global"))
+handler.add_lib(require("__tier-generator__.interface.tierConfig"))
 
 -- require("__tier-generator__.calculation.ErrorFinder")
 
@@ -20,7 +20,6 @@ lib.register_func("recalc", recalcTiers)
 lib.register_func("tierMenu", tierMenu.init)
 
 main_handler.on_init = function ()
-	config.init()
 	lib.tick_later("recalc")
 	lib.tick_later("tierMenu")
 end
@@ -38,10 +37,6 @@ main_handler.events[defines.events.on_player_created] = function (EventData)
 end
 
 main_handler.on_configuration_changed = function (ChangedData)
-	if not global.config then
-		config.init()
-	end
-
 	if ChangedData.mod_startup_settings_changed
 	or next(ChangedData.mod_changes)
 	or ChangedData.migration_applied then

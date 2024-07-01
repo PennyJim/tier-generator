@@ -1,6 +1,6 @@
 local menu = require("__tier-generator__.interface.tierMenu")
----@class configFuncs
-local configTable = {}
+---@type event_handler
+local config_handlers = {}
 
 ---@class defaultConfig
 ---@field name LocalisedString?
@@ -107,8 +107,14 @@ local function actually_init()
 end
 lib.register_func("config-setup", actually_init)
 
-function configTable.init()
+function config_handlers.on_init()
 	lib.seconds_later(1, "config-setup")
 end
 
-return configTable
+function config_handlers.on_configuration_changed(ChangedData)
+	if not global.config then
+		config_handlers.on_init()
+	end
+end
+
+return config_handlers
