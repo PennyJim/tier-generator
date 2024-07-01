@@ -6,8 +6,8 @@ lookup = nil ---@type LookupTables
 ---@field object_name fakeRecipes|"LuaRecipeCategoryPrototype"
 ---@field real_object_name LuaObject.object_name
 ---@alias handledPrototypes LuaRecipeCategoryPrototype|LuaTechnologyPrototype|LuaRecipePrototype|LuaFluidPrototype|LuaItemPrototype
----@alias tierSwitchValues handledPrototypes|fakePrototype
----@alias tierSwitchTypes LuaObject.object_name|fakeRecipes
+---@alias tierSwitchValues fakePrototype|handledPrototypes
+---@alias tierSwitchTypes fakeRecipes|LuaObject.object_name
 
 ---@enum invalidReason
 invalidReason = {
@@ -84,7 +84,7 @@ local function unmarkIncalculable(type, prototypeID)
 		return -- Already marked calculable
 	end
 	if incalculableItem.reason <= invalidReason.not_player_mineable then
-		return lib.log("\tWill not unmark an item marked invalid for a static reason. type: "..type.." id: "..prototypeID)
+		return lib.debug("\tWill not unmark an item marked invalid for a static reason. type: "..type.." id: "..prototypeID)
 	end
 	incalculable[type][prototypeID] = nil
 	for _, nextItem in ipairs(incalculableItem.blocked) do
@@ -185,7 +185,7 @@ local function CallTierSwitch(prototypeID, value)
 			incalculableItem = incalculable[reason.type][reason.id]
 			if not incalculableItem then
 				if reason.reason ~= invalidReason.busy_calculating then
-					lib.log("\tMarking "..reason.id.." as incalculable because "..reason.reason)
+					lib.debug("\tMarking "..reason.id.." as incalculable because "..reason.reason)
 				end
 				incalculableItem = {
 					reason = reason.reason,
@@ -523,7 +523,7 @@ end
 tierSwitch["LuaRecipeCategoryPrototype"] = function (CategoryID)
 	local machines = lookup.CategoryItem[CategoryID]
 	if not machines then
-		lib.log("\tCategory "..CategoryID.." has no machines")
+		lib.debug("\tCategory "..CategoryID.." has no machines")
 		return invalidReason.no_machine, {}
 	end
 	---@type blockedReason[]
@@ -562,7 +562,7 @@ tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 	local blockedBy = {}
 
 	if global.config.ignored_recipes[recipeID] then
-		lib.ignore(recipeID, "is currently ignored")
+		lib.ignore(recipeID, "is currently ignored", true)
 		return invalidReason.ignored_recipe, blockedBy
 	end
 
@@ -751,7 +751,7 @@ return {
 					-- Add each ingredient to the list
 					local old_type = ingredients[ingredient.name]
 					if old_type and old_type ~= ingredient.type then
-						lib.log("Item and Fluid Ingredient have the same name:", ingredient.name)
+						lib.debug("Item and Fluid Ingredient have the same name:", ingredient.name)
 					elseif not old_type then
 						ingredients[ingredient.name] = ingredient.type
 					end

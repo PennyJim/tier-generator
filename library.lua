@@ -88,8 +88,14 @@ end
 ---as well as adds "Ignoring..." to the end. Just for fewer repetition
 ---@param id string
 ---@param reason string
-function library.ignore(id, reason)
-	library.log("\t\t"..id.." "..reason.." Ignoring...")
+---@param is_debug boolean?
+function library.ignore(id, reason, is_debug)
+	local message = "\t\t"..id.." "..reason.." Ignoring..."
+	if is_debug then
+		library.log(message)
+	else
+		library.log(message)
+	end
 end
 ---Essentially `TiergenLibrary.ignore` but with
 ---"has no items placing it?" as the passed reason
