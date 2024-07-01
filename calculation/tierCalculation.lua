@@ -206,6 +206,54 @@ local function CallTierSwitch(prototypeID, value)
 	return result
 end
 
+---@type table<string,dependency>
+local dependencyCache = setmetatable({}, {__mode = "v"})
+---@param id string
+---@param type LuaObject.object_name
+---@return dependency
+local function getDependency(id, type)
+	local lookup_string = type..id
+	local dependency = dependencyCache[lookup_string]
+
+	if dependency then
+		return dependency
+	end
+
+	---@type dependency
+	dependency = {
+		type = type,
+		id = id
+	}
+	dependencyCache[lookup_string] = dependency
+	return dependency
+end
+---@type table<string,blockedReason>
+local blockedCache = setmetatable({}, {__mode = "v"})
+---@param id string
+---@param type LuaObject.object_name
+---@param reason invalidReason
+---@return blockedReason
+local function getBlocked(id, type, reason)
+	local lookup_string = type..id
+	local blocked = blockedCache[lookup_string]
+
+	if blocked then
+		if blocked.reason > reason then
+			blocked.reason = reason
+		end
+		return blocked
+	end
+
+	---@type blockedReason
+	blocked = {
+		type = type,
+		id = id,
+		reason = reason,
+	}
+	dependencyCache[lookup_string] = blocked
+	return blocked
+end
+
 ---Like calling tierSwitch but without having to handle the dependency
 ---@param id string
 ---@param value tierSwitchValues
@@ -213,16 +261,10 @@ end
 ---@param dependencyArray dependency[]
 local function resolveTierWithDependency(id, value, dependencyArray, blockedArray)
 	local tier = CallTierSwitch(id, value)
-	local dependency = {
-		type = type(value) == "table" and value.object_name or value,
-		id = id
-	}
 	if tier < 0 then
-		---@cast dependency blockedReason
-		dependency.reason = tier
-		blockedArray[#blockedArray+1] = dependency
+		blockedArray[#blockedArray+1] = getBlocked(id, value.object_name, tier)
 	else
-		dependencyArray[#dependencyArray+1] = dependency
+		dependencyArray[#dependencyArray+1] = getDependency(id, value.object_name)
 	end
 	return tier
 end
