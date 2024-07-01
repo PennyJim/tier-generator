@@ -36,6 +36,12 @@ styles.tiergen_tabbed_pane = {
 	}
 }
 
+styles.tiergen_elem_selector_table_frame = {
+	type = "frame_style",
+	parent = "deep_frame_in_shallow_frame",
+	left_margin = 12
+}
+
 --#region Isn't scalable
 -- Only works on 125% scale
 -- styles.tiergen_wide_horizontal_flow = {
