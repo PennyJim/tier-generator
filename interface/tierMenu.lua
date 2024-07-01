@@ -468,9 +468,10 @@ end
 ---Initializes the menu for new players
 ---@param player LuaPlayer
 function menu.add_player(player)
-	if not global.menu then return menu.init() end
-	if not global.config then return end
-	global.player[player.index].menu = create_frame(player)
+	return nil
+	-- if not global.menu then return menu.init() end
+	-- if not global.config then return end
+	-- global.player[player.index].menu = create_frame(player)
 end
 ---Initializes the menu for all players
 function menu.init()

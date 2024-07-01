@@ -1,8 +1,10 @@
 local handler = require("event_handler")
 lib = require("__tier-generator__.library")
 local calculator = require("__tier-generator__.calculation.calculator")
-local tierMenu = require("__tier-generator__.interface.tierMenu")
+-- local tierMenu = require("__tier-generator__.interface.tierMenu")
 
+require("__tier-generator__.interface.newTierMenu")
+handler.add_lib(require("__gui-modules__.gui"))
 handler.add_lib(require("__tier-generator__.global"))
 handler.add_lib(require("__tier-generator__.interface.tierConfig"))
 
@@ -14,10 +16,10 @@ local main_handler = {events={}}
 ---Recalculates the tiers
 local function recalcTiers()
 	calculator.uncalculate()
-	tierMenu.regenerate_menus()
+	-- tierMenu.regenerate_menus()
 end
 lib.register_func("recalc", recalcTiers)
-lib.register_func("tierMenu", tierMenu.init)
+-- lib.register_func("tierMenu", tierMenu.init)
 
 main_handler.on_init = function ()
 	lib.tick_later("recalc")
@@ -41,17 +43,6 @@ main_handler.on_configuration_changed = function (ChangedData)
 	or next(ChangedData.mod_changes)
 	or ChangedData.migration_applied then
 		lib.tick_later("recalc")
-	end
-end
-
-main_handler.events[defines.events.on_lua_shortcut] = function (EventData)
-	if EventData.prototype_name == "tiergen-menu" then
-		local player = game.get_player(EventData.player_index)
-		if not player then
-			return log("No player pressed that shortcut??")
-		end
-
-		tierMenu.open_close(player)
 	end
 end
 
