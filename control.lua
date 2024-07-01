@@ -1,9 +1,15 @@
+local handler = require("event_handler")
 lib = require("__tier-generator__.library")
 config = require("__tier-generator__.interface.tierConfig")
 local calculator = require("__tier-generator__.calculation.calculator")
 local tierMenu = require("__tier-generator__.interface.tierMenu")
-local globals = require("__tier-generator__.global")
 
+handler.add_lib(require("__tier-generator__.global"))
+
+-- require("__tier-generator__.calculation.ErrorFinder")
+
+---@type event_handler
+local main_handler = {events={}}
 
 ---Recalculates the tiers
 local function recalcTiers()
@@ -13,14 +19,13 @@ end
 lib.register_func("recalc", recalcTiers)
 lib.register_func("tierMenu", tierMenu.init)
 
-script.on_init(function ()
-	globals.on_init()
+main_handler.on_init = function ()
 	config.init()
 	lib.tick_later("recalc")
 	lib.tick_later("tierMenu")
-end)
+end
 
-script.on_event(defines.events.on_player_created, function (EventData)
+main_handler.events[defines.events.on_player_created] = function (EventData)
 	local player = game.get_player(EventData.player_index)
 	if not player then
 		return log("No player pressed created??")
@@ -29,15 +34,10 @@ script.on_event(defines.events.on_player_created, function (EventData)
 	if not global.config then
 		player.set_shortcut_available("tiergen-menu", false)
 	end
-	globals.events[defines.events.on_player_created](EventData)
 	-- tierMenu.add_player(player)
-end)
-script.on_event(defines.events.on_player_removed, function (EventData)
-	globals.events[defines.events.on_player_removed](EventData)
-end)
+end
 
-script.on_configuration_changed(function (ChangedData)
-	globals.on_configuration_changed(ChangedData)
+main_handler.on_configuration_changed = function (ChangedData)
 	if not global.config then
 		config.init()
 	end
@@ -47,9 +47,9 @@ script.on_configuration_changed(function (ChangedData)
 	or ChangedData.migration_applied then
 		lib.tick_later("recalc")
 	end
-end)
+end
 
-script.on_event(defines.events.on_lua_shortcut, function (EventData)
+main_handler.events[defines.events.on_lua_shortcut] = function (EventData)
 	if EventData.prototype_name == "tiergen-menu" then
 		local player = game.get_player(EventData.player_index)
 		if not player then
@@ -58,9 +58,9 @@ script.on_event(defines.events.on_lua_shortcut, function (EventData)
 
 		tierMenu.open_close(player)
 	end
-end)
+end
 
-script.on_event(defines.events.on_runtime_mod_setting_changed, function (EventData)
+main_handler.events[defines.events.on_runtime_mod_setting_changed] = function (EventData)
 	local setting = EventData.setting
 	if EventData.setting_type == "runtime-global" then
 		lib.clearSettingCache(setting)
@@ -77,8 +77,8 @@ script.on_event(defines.events.on_runtime_mod_setting_changed, function (EventDa
 		-- Do it a tick later so we don't recalculate multiple times a tick
 		lib.tick_later("recalc")
 	end
-end)
+end
 
-script.on_load(function ()
+main_handler.on_load = function ()
 	lib.register_load()
-end)
+end
