@@ -2,6 +2,7 @@ local default_items = "space-science-pack"
 local default_bases = "raw-fish"
 local default_ignored = ""
 
+--Settings
 data:extend{
 	{
 		type = "bool-setting",
@@ -38,4 +39,14 @@ data:extend{
 		default_value = false,
 		order = "global-z",
 	}
+}
+
+
+local function local_module_add(name)
+	return module_add(name, "__tier-generator__.modules."..name)
+end
+
+--Modules
+data:extend{
+	local_module_add("elem_selector_table")
 }
