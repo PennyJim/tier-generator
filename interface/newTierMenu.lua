@@ -1,4 +1,52 @@
 local gui = require("__gui-modules__.gui")
+local table_size = {
+	width = 5,
+	item_height = 2,
+	fluid_height = 1
+}
+---Crates the tab for item selection
+---@param number integer
+---@return GuiElemModuleDef
+local function make_item_selection_pane(number)
+	return {
+		tab = {
+			type = "tab",
+			caption = {"tiergen.tab", number},
+---@diagnostic disable-next-line: missing-fields
+			style_mods = {minimal_width = 40},
+		} --[[@as GuiElemModuleDef]],
+		content = {
+			type = "flow", direction = "vertical",
+---@diagnostic disable-next-line: missing-fields
+			style_mods = {minimal_width = table_size.width*40 +24},
+			children = {
+				{
+					type = "label",
+					caption = {"tiergen.items"}
+				},
+				{
+					type = "module", module_type = "elem_selector_table",
+					frame_style = "tiergen_elem_selector_table_frame",
+					name = number.."_item_selection",
+					height = table_size.item_height, width = table_size.width,
+					elem_type = "item"
+				} --[[@as ElemSelectorTableParams]],
+				{
+					type = "label",
+					caption = {"tiergen.fluids"}
+				},
+				{
+					type = "module", module_type = "elem_selector_table",
+					frame_style = "tiergen_elem_selector_table_frame",
+					name = number.."_fluid_selection",
+					height = table_size.fluid_height, width = table_size.width,
+					elem_type = "fluid"
+				} --[[@as ElemSelectorTableParams]],
+			}
+		} --[[@as GuiElemModuleDef]],
+	}
+end
+
 gui.new({
 	namespace = "tiergen-menu",
 	root = "screen",
@@ -20,9 +68,16 @@ gui.new({
 						confirm_name = "calculate", confirm_locale = {"tiergen.calculate"},
 ---@diagnostic disable-next-line: missing-fields
 						style_mods = {top_margin = 8},
-						children = {
-							-- TODO: stuff
-						}
+						children = {{
+							type = "tabbed-pane", style = "tiergen_tabbed_pane",
+---@diagnostic disable-next-line: missing-fields
+							elem_mods = {selected_tab_index = 1},
+							children = {
+								make_item_selection_pane(1),
+								make_item_selection_pane(2),
+								make_item_selection_pane(3),
+							}
+						}}
 					} --[[@as SelectionAreaParams]],
 					{ -- Base items
 						type = "module", module_type = "tiergen_selection_area",
@@ -53,12 +108,3 @@ gui.new({
 } --[[@as GuiWindowDef]],
 {}
 )
-
-
--- {
--- 	type = "module", module_type = "elem_selector_table",
--- 	frame_style = "tiergen_elem_selector_table_frame",
--- 	name = "test",
--- 	height = 2, width = 5,
--- 	elem_type = "item"
--- }
