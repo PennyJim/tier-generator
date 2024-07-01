@@ -8,36 +8,6 @@ local table_size = {
 local menu = {}
 ---Creates the pane for item selection
 ---@param base_flow LuaGuiElement
-local function create_base_selection(base_flow)
-	local area = make_selection_area(
-		base_flow, "tiergen-base", {"tiergen.base-selection"}, "define-base",
-		function (vert_flow)
-			local base_items = global.config.base_items
-			local elems = global.player[vert_flow.player_index].base_elems
-			create_item_selection_block(vert_flow, base_items, elems)
-		end
-	)
-	-- Not implemented yet
-	area.enabled = false
-	local area_children = area.children[1].children
-	local label = area_children[1]
-	label.enabled = false
-	label.tooltip = {"tiergen.not-implemented"}
-	label.caption = {"", label.caption, " [img=info]"}
-	for index = 2, 6, 1 do
-		area_children[index].enabled = false
-		area_children[index].ignored_by_interaction = true
-	end
-	for _,table_elem in pairs(area_children[3].children[1].children[1].children[1].children) do
-		table_elem.enabled = false
-	end
-	for _,table_elem in pairs(area_children[5].children[1].children[1].children[1].children) do
-		table_elem.enabled = false
-	end
-	area_children[6].children[2].enabled = false
-end
----Creates the pane for item selection
----@param base_flow LuaGuiElement
 local function create_ignored_selection(base_flow)
 	local area = make_selection_area(
 		base_flow, "tiergen-ignored", {"tiergen.ignored-selection"}, "define-ignored",

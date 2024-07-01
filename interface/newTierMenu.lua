@@ -84,7 +84,28 @@ gui.new({
 						caption = {"tiergen.base-selection"},
 						confirm_name = "define-base", confirm_locale = {"tiergen.define-base"},
 						children = {
-							-- TODO: stuff
+							{
+								type = "label",
+								caption = {"tiergen.items"}
+							},
+							{
+								type = "module", module_type = "elem_selector_table",
+								frame_style = "tiergen_elem_selector_table_frame",
+								name = "base_item_selection",
+								height = table_size.item_height, width = table_size.width,
+								elem_type = "item"
+							} --[[@as ElemSelectorTableParams]],
+							{
+								type = "label",
+								caption = {"tiergen.fluids"}
+							},
+							{
+								type = "module", module_type = "elem_selector_table",
+								frame_style = "tiergen_elem_selector_table_frame",
+								name = "base_fluid_selection",
+								height = table_size.fluid_height, width = table_size.width,
+								elem_type = "fluid"
+							} --[[@as ElemSelectorTableParams]],
 						}
 					},
 					{ -- Ignored recipes
