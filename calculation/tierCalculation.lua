@@ -92,6 +92,34 @@ local function unmarkIncalculable(type, prototypeID)
 	end
 end
 
+---Takes the given dependency graph and resolves down to just items
+---@param dependencies dependency[]
+---@return dependency[]
+local function resolve_to_items(dependencies)
+	local new_dependencies, dependency_lookup = {}, {}
+	for _, dependency in pairs(dependencies) do
+		if not dependency then goto continue end
+
+		if dependency.type ~= "LuaItemPrototype"
+		and dependency.type ~= "LuaFluidPrototype" then
+			for _, new_dependency in pairs(TierMaps[dependency.type][dependency.id].dependencies) do
+				-- Add if not already added
+				if new_dependency and not dependency_lookup[new_dependency.type..new_dependency.id] then
+					new_dependencies[#new_dependencies+1] = new_dependency
+					dependency_lookup[new_dependency.type..new_dependency.id] = true
+				end
+			end
+		-- Add if not already added
+		elseif not dependency_lookup[dependency.type..dependency.id] then
+			new_dependencies[#new_dependencies+1] = dependency
+			dependency_lookup[dependency.type..dependency.id] = true
+		end
+		::continue::
+	end
+	return new_dependencies
+end
+
+
 --#region Tier calculation
 ---@class TierSwitch
 ---@field [tierSwitchTypes] fun(prototypeID:string, value:tierSwitchValues):tier,blockedReason[]
@@ -124,7 +152,7 @@ local function CallTierSwitch(prototypeID, value)
 	if result >= 0 then -- Discard negative values
 		tier = {
 			tier = result,
-			dependencies = dependencies,
+			dependencies = resolve_to_items(dependencies),
 			type = type,
 			id = prototypeID
 		} --[[@as tierEntry]]

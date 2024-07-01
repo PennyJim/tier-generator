@@ -3,6 +3,7 @@ Version: 0.3.10
 Date: ????
   Changes:
     - Refactored dependencyEntry and tierEntry to be the same
+    - Changed the dependency graph to only follow the items and fluids
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.9
 Date: 2024-06-30
