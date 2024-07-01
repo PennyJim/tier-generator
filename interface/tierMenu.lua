@@ -175,21 +175,6 @@ local function create_ignored_selection(base_flow)
 	area_children[3].ignored_by_interaction = true
 	area_children[3].children[2].enabled = false
 end
----Creates the options interface
----@param base_flow LuaGuiElement
-local function create_options(base_flow)
-	local vert_flow = base_flow.add{
-		type = "frame",
-		style = "inside_shallow_frame"
-	}.add{
-		type = "flow",
-		direction = "vertical"
-	}
-	vert_flow.style.vertically_stretchable = true
-	create_item_selection(vert_flow)
-	create_base_selection(vert_flow)
-	create_ignored_selection(vert_flow)
-end
 ---Updates the tier list for the player
 ---@param player_table PlayerGlobal
 local function update_list(player_table)

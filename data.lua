@@ -41,6 +41,12 @@ styles.tiergen_elem_selector_table_frame = {
 	parent = "deep_frame_in_shallow_frame",
 	left_margin = 12
 }
+styles.tiergen_selection_area_frame = {
+	type = "frame_style",
+	parent = "bordered_frame_with_extra_side_margins",
+	top_margin = 4,
+	bottom_padding = 4,
+}
 styles.tiergen_confirm_button = {
 	type = "button_style",
 	parent = "confirm_button_without_tooltip",

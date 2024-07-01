@@ -10,6 +10,7 @@ local module = {module_type = "tiergen_selection_area", handlers = {} --[[@as Gu
 ---@field caption LocalisedString
 ---@field confirm_name string
 ---@field confirm_locale LocalisedString
+---@field style_mods LuaStyle
 
 ---@type ModuleParameterDict
 module.parameters = {
@@ -17,7 +18,8 @@ module.parameters = {
 	children = {is_optional = false, type = {"table"}},
 	caption = {is_optional = false, type = {"table", "string"}},
 	confirm_name = {is_optional = false, type = {"string"}},
-	confirm_locale = {is_optional = false, type = {"table", "string"}}
+	confirm_locale = {is_optional = false, type = {"table", "string"}},
+	style_mods = {is_optional = true, type = {"table"}},
 }
 
 ---Creates the frame for a window with an exit button
@@ -45,7 +47,8 @@ function module.build_func(params)
 		}
 	})
 	return {
-		type = "frame", style = "bordered_frame_with_extra_side_margins",
+		type = "frame", style = "tiergen_selection_area_frame",
+		style_mods = params.style_mods,
 		direction = "vertical",
 		children = children
 	}
