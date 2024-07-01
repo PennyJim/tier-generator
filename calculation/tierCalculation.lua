@@ -58,6 +58,8 @@ setmetatable(invalidReason, {
 ---@field id string
 ---@class tierEntry
 ---@field tier uint
+---@field type tierSwitchTypes
+---@field id string
 ---@field dependencies dependency[]
 ---@class tierMap
 ---@field [string] tierEntry
@@ -112,24 +114,21 @@ local function CallTierSwitch(prototypeID, value)
 
 	-- Attempt to calculate
 	calculating[type][prototypeID] = true
-	lib.debug("Starting to calculate "..type..":"..prototypeID)
-	local success, result, dependencies = false, -math.huge, {}
+	-- lib.debug("Starting to calculate "..type..":"..prototypeID)
+	local result, dependencies = -math.huge, {}
 	result, dependencies = tierSwitch[type](prototypeID, value)
-	-- if not success then
-	-- 	-- _log({"error-calculating", prototypeID, type, serpent.dump(value)})
-	-- 	lib.log("Error calculating the "..type.." of "..prototypeID..":\n"..result)
-	-- 	result = invalidReason.error
-	-- 	dependencies = {}
-	-- end
-	lib.debug("Done calculating "..type..":"..prototypeID.." with a tier of "..result.." or error "..invalidReason[result])
-	tier = {
-		tier = result,
-		dependencies = dependencies
-	}
+	-- lib.debug("Done calculating "..type..":"..prototypeID.." with a tier of "..result.." or error "..invalidReason[result])
 
 	-- Finish calculating
 	calculating[type][prototypeID] = nil
 	if result >= 0 then -- Discard negative values
+		tier = {
+			tier = result,
+			dependencies = dependencies,
+			type = type,
+			id = prototypeID
+		} --[[@as tierEntry]]
+		dependencies = nil -- Memory management?
 		TierMaps[type][prototypeID] = tier
 		-- if type == "LuaFluidPrototype" or type == "LuaItemPrototype" then
 		-- 	local itemType = (type == "LuaItemPrototype") and "item" or "fluid"
@@ -148,11 +147,11 @@ local function CallTierSwitch(prototypeID, value)
 		local alreadyIncalculable = incalculable[type][prototypeID]
 		if not alreadyIncalculable then
 			incalculable[type][prototypeID] = {
-				reason = tier.tier,
+				reason = result,
 				blocked = {}
 			}
 		else
-			alreadyIncalculable.reason = math.min(tier.tier, alreadyIncalculable.reason)
+			alreadyIncalculable.reason = math.min(result, alreadyIncalculable.reason)
 		end
 		for _, reason in ipairs(dependencies) do
 			incalculableItem = incalculable[reason.type][reason.id]
@@ -176,7 +175,7 @@ local function CallTierSwitch(prototypeID, value)
 			}
 		end
 	end
-	return tier.tier
+	return result
 end
 
 ---Like calling tierSwitch but without having to handle the dependency
@@ -624,6 +623,8 @@ local function setTier(item)
 	end
 	TierMaps[prototype.object_name][item.name] = {
 		tier = item.tier or 0,
+		id = item.name,
+		type = item.type == "item" and "LuaItemPrototype" or "LuaFluidPrototype",
 		dependencies = {}
 	}
 end
