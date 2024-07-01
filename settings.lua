@@ -48,5 +48,6 @@ end
 
 --Modules
 data:extend{
-	local_module_add("elem_selector_table")
+	local_module_add("elem_selector_table"),
+	local_module_add("tiergen_selection_area")
 }

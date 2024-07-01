@@ -41,6 +41,13 @@ styles.tiergen_elem_selector_table_frame = {
 	parent = "deep_frame_in_shallow_frame",
 	left_margin = 12
 }
+styles.tiergen_confirm_button = {
+	type = "button_style",
+	parent = "confirm_button_without_tooltip",
+	minimal_width = 0,
+	right_margin = 4,
+	top_margin = 4,
+}
 
 --#region Isn't scalable
 -- Only works on 125% scale
