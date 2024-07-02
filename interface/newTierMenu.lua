@@ -1,9 +1,15 @@
 local gui = require("__gui-modules__.gui")
+local calculator = require("__tier-generator__.calculation.calculator")
 local table_size = {
 	width = 5,
 	item_height = 2,
 	fluid_height = 1
 }
+
+---@class WindowState.TierMenu : WindowState
+---@field highlight simpleItem?
+---@field highlighted LuaGuiElement[]?
+
 ---Crates the tab for item selection
 ---@param number integer
 ---@return GuiElemModuleDef
@@ -46,7 +52,11 @@ local function make_item_selection_pane(number)
 		} --[[@as GuiElemModuleDef]],
 	}
 end
-
+---Creates the row of a single tier
+---@param table LuaGuiElement
+---@param tier integer
+---@param items simpleItem[]
+---@param namespace namespace
 local function make_new_tier_row(table, tier, items, namespace)
 	gui.add(namespace, table, {
 		type = "label",
@@ -81,6 +91,31 @@ local function make_new_tier_row(table, tier, items, namespace)
 			children = item_elements
 		}}
 	}, true)
+end
+---Generates the tier table for the given array
+---@param self WindowState.TierMenu
+---@param tierArray table<integer, simpleItem[]>
+local function update_tier_table(self, tierArray)
+	local elems = self.elems
+	local error = elems["error-message"]
+	local table = elems["tier-table"]
+	if not error.valid or not table.valid then
+		return lib.log("Table or Error are invalid references")
+	end
+
+	if #tierArray == 0 then
+		error.visible = true
+		table.visible = false
+		return
+	else
+		error.visible = false
+		table.visible = true
+	end
+
+	local namespace = self.namespace
+	for tier, items in pairs(tierArray) do
+		make_new_tier_row(table, tier, items, namespace)
+	end
 end
 
 gui.new({
@@ -200,23 +235,6 @@ gui.new({
 } --[[@as GuiWindowDef]],
 {}
 )
-local calculator = require("__tier-generator__.calculation.calculator")
-local function test()
-	local elems = global["tiergen-menu"]--[[@as WindowState[] ]][1].elems
-	local error = elems["error-message"]
-	local table = elems["tier-table"]
-	local items_by_tier = calculator.getArray{lib.item("space-science-pack")}
-	for tier, items in pairs(items_by_tier) do
-		make_new_tier_row(table, tier, items, "tiergen-menu")
-	end
-	error.visible = false
-	table.visible = true
-end
-lib.register_func("testing", test)
-
----@class WindowState.TierMenu : WindowState
----@field highlight simpleItem?
----@field highlighted LuaGuiElement[]?
 
 ---Highlights the items in the player's global highlight array
 ---@param self WindowState.TierMenu
@@ -298,6 +316,13 @@ local function on_gui_click(EventData)
 		unhighlightItems(self)
 	end
 end
+
+local function test()
+	local self = global["tiergen-menu"][1] --[[@as WindowState.TierMenu]]
+	local tierArray = calculator.getArray{lib.item("space-science-pack")}
+	update_tier_table(self, tierArray)
+end
+lib.register_func("testing", test)
 
 ---@type event_handler
 return {
