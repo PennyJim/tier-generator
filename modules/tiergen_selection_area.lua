@@ -10,7 +10,7 @@ local module = {module_type = "tiergen_selection_area", handlers = {} --[[@as Gu
 ---@field caption LocalisedString
 ---@field confirm_name string
 ---@field confirm_locale LocalisedString
----@field style_mods LuaStyle
+---@field style_mods LuaStyle?
 
 ---@type ModuleParameterDict
 module.parameters = {

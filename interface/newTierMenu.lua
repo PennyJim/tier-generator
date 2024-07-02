@@ -143,7 +143,7 @@ gui.new({
 								elem_type = "fluid"
 							} --[[@as ElemSelectorTableParams]],
 						}
-					},
+					} --[[@as SelectionAreaParams]],
 					{ -- Ignored recipes
 						type = "module", module_type = "tiergen_selection_area",
 						caption = {"tiergen.ignored-selection"},
@@ -159,7 +159,7 @@ gui.new({
 								elem_type = "recipe"
 							} --[[@as ElemSelectorTableParams]],
 						}
-					}
+					} --[[@as SelectionAreaParams]],
 				}
 			},
 			{ -- Tier pane
