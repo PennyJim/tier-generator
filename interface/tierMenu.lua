@@ -124,79 +124,7 @@ function menu.regenerate_menus()
 	end
 end
 
----Calls the callback on each item's element in the given array
----@param player_table PlayerGlobal
----@param inputItem simpleItem
----@param callback fun(elem:LuaGuiElement,item:tierResult)
-local function traverseArray(player_table, inputItem, callback)
-	---@type LuaGuiElement
-	local table = player_table.table
-	if table.valid and not table.visible then
-		return -- No tiers error message
-	end
-	for item in calculator.get{inputItem} do
-		---@type LuaGuiElement
-		local item_table = table.children[(item.tier+1)*2]["tierlist-items"]
-		local button = item_table[item.type.."/"..item.name]
-		callback(button, item)
-	end
-end
 
----Highlights the items in the player's global highlight array
----@param player_table PlayerGlobal
-local function highlightItems(player_table)
-	local highlightedList = player_table.highlighted or {}
-	player_table.highlighted = highlightedList
-	local highlightItem = player_table.highlight
-	if not highlightItem then return end
-	traverseArray(
-		player_table,
-		highlightItem,
-	function (elem, item)
-		elem.toggled = true
-		highlightedList[#highlightedList+1] = elem
-	end)
-end
----Highlights the items in the player's global highlight array
----@param player_table PlayerGlobal
-local function unhighlightItems(player_table)
-	local highlightedList = player_table.highlighted
-	if not highlightedList then return end
-	for _, highlightedElem in ipairs(highlightedList) do
-		---@cast highlightedElem LuaGuiElement
-		if highlightedElem.valid then
-			highlightedElem.toggled = false
-		end
-	end
-	player_table.highlight = nil
-	player_table.highlighted = nil
-end
-
-
-
-local function handle_click_highlight(player_table, element)
-	if element.parent.name == "tierlist-items" then
-		local type_item = element.name
-		local type = type_item:match("^[^/]+")
-		local item = type_item:match("/.+"):sub(2)
-		---@type simpleItem
-		local highlightItem = {name=item,type=type}
-		local oldHighlight = player_table.highlight
-		if oldHighlight then
-			if oldHighlight.name ~= item
-			or oldHighlight.type ~= type then
-				unhighlightItems(player_table)
-				player_table.highlight = highlightItem
-				highlightItems(player_table)
-			end
-		else
-			player_table.highlight = highlightItem
-			highlightItems(player_table)
-		end
-	else
-		unhighlightItems(player_table)
-	end
-end
 
 ---Handles whether or not the calculate button actually updates the menu
 ---@param player_table PlayerGlobal
@@ -273,13 +201,7 @@ script.on_event(defines.events.on_gui_click, function (EventData)
 
 	local rootElement = lib.getRootElement(EventData.element)
 	if rootElement.name ~= "tiergen-menu" then return	end
-
-	if EventData.element.name == "close_button" then
-		player.set_shortcut_toggled("tiergen-menu", false)
-		set_visibility(player, false)
-	end
-
-	handle_click_highlight(player_table, EventData.element)
+	
 	handle_click_confirm(player_table, EventData.element)
 	handle_click_define_base(player_table, EventData.element)
 	handle_click_define_ignored(player_table, EventData.element)

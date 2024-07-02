@@ -214,10 +214,97 @@ local function test()
 end
 lib.register_func("testing", test)
 
+---@class WindowState.TierMenu : WindowState
+---@field highlight simpleItem?
+---@field highlighted LuaGuiElement[]?
+
+---Highlights the items in the player's global highlight array
+---@param self WindowState.TierMenu
+local function highlightItems(self)
+	local highlightedList = self.highlighted or {}
+	self.highlighted = highlightedList
+	local highlightItem = self.highlight
+	if not highlightItem then return end
+
+	local table = self.elems["tier-table"]
+	if table and table.valid and not table.visible then
+		return -- No tiers error message
+	end
+
+	for item in calculator.get{highlightItem} do
+		local button_name = item.type.."/"..item.name
+		local button = self.elems[button_name]
+
+		-- ---@type LuaGuiElement
+		-- local item_table = table.children[(item.tier+1)*2]["tierlist-items"]
+		-- local button = item_table[item.type.."/"..item.name] --[[@as LuaGuiElement]]
+
+		if not button or not button.valid then
+			-- Can't highlight an invalid element,
+			-- so remove the invalid reference.
+			-- If it didn't exist, this does nothing
+			self.elems[button_name] = nil
+		else
+			button.toggled = true
+			highlightedList[#highlightedList+1] = button
+		end
+	end
+end
+---Highlights the items in the player's global highlight array
+---@param self WindowState.TierMenu
+local function unhighlightItems(self)
+	local highlightedList = self.highlighted
+	if not highlightedList then return end
+	for _, highlightedElem in ipairs(highlightedList) do
+		---@cast highlightedElem LuaGuiElement
+		if highlightedElem.valid then
+			highlightedElem.toggled = false
+		end
+	end
+	self.highlight = nil
+	self.highlighted = nil
+end
+
+---@param EventData EventData.on_gui_click
+local function on_gui_click(EventData)
+	local element = EventData.element
+	local WindowStates = global["tiergen-menu"] --[[@as WindowState[] ]]
+	if not WindowStates then return end -- Don't do anything if the namespace isn't setup
+	local self = WindowStates[EventData.player_index] --[[@as WindowState.TierMenu]]
+	if not self then return end -- Don't do anything if the player isn't setup
+
+	local parent = element.parent
+	if not parent or not parent.name then return end
+
+	if parent.name:match("^tierlist%-items") then
+		local type_item = element.name
+		local type = type_item:match("^[^/]+")
+		local item = type_item:match("/.+"):sub(2)
+		---@type simpleItem
+		local highlightItem = {name=item,type=type}
+		local oldHighlight = self.highlight
+		if oldHighlight then
+			if oldHighlight.name ~= item
+			or oldHighlight.type ~= type then
+				unhighlightItems(self)
+				self.highlight = highlightItem
+				highlightItems(self)
+			end
+		else
+			self.highlight = highlightItem
+			highlightItems(self)
+		end
+	else
+		unhighlightItems(self)
+	end
+end
 
 ---@type event_handler
 return {
 	on_init = function ()
 		lib.seconds_later(2, "testing")
-	end
+	end,
+	events = {
+		[defines.events.on_gui_click] = on_gui_click
+	}
 }

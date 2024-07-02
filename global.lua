@@ -19,15 +19,10 @@ local handlers = {events={}}
 ---@field calculated simpleItem[]? the list of items last calculated, given has_changed is false
 
 ---@class PlayerGlobal
----@field menu LuaGuiElement the menu element everything is attatched to
----@field highlight simpleItem? the item to be highlighted/currently highlighted
----@field highlighted LuaGuiElement[]? the elements that have been highlighted
 ---@field calculate LuaGuiElement the confirm button for calculation
 ---@field calculated_tab integer the tab that was last calculated
 ---@field selected_tab integer the tab that is currently selected
 ---@field calculated simpleItem[] the list of items last calculated
----@field error LuaGuiElement the element displayed in case of an error
----@field table LuaGuiElement the displayed table of calculated tiers
 ---@field [1] PlayerGlobal.tab
 ---@field [2] PlayerGlobal.tab
 ---@field [3] PlayerGlobal.tab

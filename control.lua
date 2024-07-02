@@ -3,15 +3,17 @@ lib = require("__tier-generator__.library")
 local calculator = require("__tier-generator__.calculation.calculator")
 -- local tierMenu = require("__tier-generator__.interface.tierMenu")
 
+---@type event_handler
+local main_handler = {events={}}
+
 handler.add_lib(require("__tier-generator__.global"))
+handler.add_lib(main_handler)
 handler.add_lib(require("__tier-generator__.interface.newTierMenu"))
 handler.add_lib(require("__gui-modules__.gui"))
 handler.add_lib(require("__tier-generator__.interface.tierConfig"))
 
 -- require("__tier-generator__.calculation.ErrorFinder")
 
----@type event_handler
-local main_handler = {events={}}
 
 ---Recalculates the tiers
 local function recalcTiers()
@@ -23,7 +25,7 @@ lib.register_func("recalc", recalcTiers)
 
 main_handler.on_init = function ()
 	lib.tick_later("recalc")
-	lib.tick_later("tierMenu")
+	-- lib.tick_later("tierMenu")
 end
 
 main_handler.events[defines.events.on_player_created] = function (EventData)
