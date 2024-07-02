@@ -7,11 +7,11 @@ local module = {module_type = "elem_selector_table", handlers = {} --[[@as GuiMo
 
 ---@class WindowState.ElemSelectorTable : WindowState
 -- Where custom fields would go
----@field ElemSelectorTable table<string,ElemList>
+---@field selector_table table<string,ElemList>
 
 ---@param self WindowState.ElemSelectorTable
-module.self_init = function (self)
-	self.ElemSelectorTable = self.ElemSelectorTable or {}
+module.setup_self = function (self)
+	self.selector_table = self.selector_table or {}
 end
 
 local handler_names = {
@@ -131,8 +131,8 @@ end
 ---@param OriginalEvent EventData.on_gui_elem_changed
 module.handlers[handler_names.elem_changed] = function (self, elem, OriginalEvent)
 	local table = elem.parent --[[@as LuaGuiElement]]
-	local elem_list = self.ElemSelectorTable[table.name] or {count=0,last=0} --[[@as ElemList]]
-	self.ElemSelectorTable[table.name] = elem_list
+	local elem_list = self.selector_table[table.name] or {count=0,last=0} --[[@as ElemList]]
+	self.selector_table[table.name] = elem_list
 	local elem = OriginalEvent.element
 	local index = elem.get_index_in_parent()
 	local type = elem.elem_type

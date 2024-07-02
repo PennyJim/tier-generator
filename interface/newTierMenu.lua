@@ -6,9 +6,20 @@ local table_size = {
 	fluid_height = 1
 }
 
----@class WindowState.TierMenu : WindowState
----@field highlight simpleItem?
----@field highlighted LuaGuiElement[]?
+
+---@class WindowState.TierMenu.tab
+---@field has_changed boolean Wether the chosen elements have changed
+---@field result {[integer]:tierResult[]}? the results of this tab's last calculation
+---@field calculated simpleItem[]? the list of items last calculated, given has_changed is false
+
+---@class WindowState.TierMenu : WindowState.ElemSelectorTable
+---@field highlight simpleItem? The item clicked to highlight everything
+---@field highlighted LuaGuiElement[]? List of elements currently highlighted
+---@field selected_tab integer the tab that is currently selected
+---@field calculated_tab integer the tab that was last calculated
+---@field [1] WindowState.TierMenu.tab
+---@field [2] WindowState.TierMenu.tab
+---@field [3] WindowState.TierMenu.tab
 
 ---Crates the tab for item selection
 ---@param number integer
@@ -118,143 +129,168 @@ local function update_tier_table(self, tierArray)
 	end
 end
 
-gui.new({
-	namespace = "tiergen-menu",
-	root = "screen",
-	version = 1,
-	custominput = "tiergen-menu",
-	shortcut = "tiergen-menu",
-	definition = {
-		type = "module", module_type = "window_frame",
-		name = "tiergen-menu", title = {"tiergen.menu"},
-		has_close_button = true, has_pin_button = true,
-		children = {
-			{ -- Options
-				type = "frame", style = "inside_shallow_frame",
-				direction = "vertical",
-				children = {
-					{ -- Requested items
-						type = "module", module_type = "tiergen_selection_area",
-						caption = {"tiergen.item-selection"},
-						confirm_name = "calculate", confirm_locale = {"tiergen.calculate"},
-						confirm_handler = "calculate",
----@diagnostic disable-next-line: missing-fields
-						style_mods = {top_margin = 8},
-						children = {{
-							type = "tabbed-pane", style = "tiergen_tabbed_pane",
----@diagnostic disable-next-line: missing-fields
-							elem_mods = {selected_tab_index = 1},
-							handler = {
-								[defines.events.on_gui_selected_tab_changed] = "tab-changed"
-							},
+gui.new{
+	window_def = {
+		namespace = "tiergen-menu",
+		root = "screen",
+		version = 1,
+		custominput = "tiergen-menu",
+		shortcut = "tiergen-menu",
+		definition = {
+			type = "module", module_type = "window_frame",
+			name = "tiergen-menu", title = {"tiergen.menu"},
+			has_close_button = true, has_pin_button = true,
+			children = {
+				{ -- Options
+					type = "frame", style = "inside_shallow_frame",
+					direction = "vertical",
+					children = {
+						{ -- Requested items
+							type = "module", module_type = "tiergen_selection_area",
+							caption = {"tiergen.item-selection"},
+							confirm_name = "calculate", confirm_locale = {"tiergen.calculate"},
+							confirm_handler = "calculate",
+	---@diagnostic disable-next-line: missing-fields
+							style_mods = {top_margin = 8},
+							children = {{
+								type = "tabbed-pane", style = "tiergen_tabbed_pane",
+	---@diagnostic disable-next-line: missing-fields
+								elem_mods = {selected_tab_index = 1},
+								handler = {
+									[defines.events.on_gui_selected_tab_changed] = "tab-changed"
+								},
+								children = {
+									make_item_selection_pane(1),
+									make_item_selection_pane(2),
+									make_item_selection_pane(3),
+								}
+							}}
+						} --[[@as SelectionAreaParams]],
+						{ -- Base items
+							type = "module", module_type = "tiergen_selection_area",
+							caption = {"tiergen.base-selection"},
+							confirm_name = "define-base", confirm_locale = {"tiergen.define-base"},
+							confirm_handler = "define-base",
 							children = {
-								make_item_selection_pane(1),
-								make_item_selection_pane(2),
-								make_item_selection_pane(3),
+								{
+									type = "label",
+									caption = {"tiergen.items"}
+								},
+								{
+									type = "module", module_type = "elem_selector_table",
+									frame_style = "tiergen_elem_selector_table_frame",
+									name = "base_item_selection",
+									height = table_size.item_height, width = table_size.width,
+									elem_type = "item"
+								} --[[@as ElemSelectorTableParams]],
+								{
+									type = "label",
+									caption = {"tiergen.fluids"}
+								},
+								{
+									type = "module", module_type = "elem_selector_table",
+									frame_style = "tiergen_elem_selector_table_frame",
+									name = "base_fluid_selection",
+									height = table_size.fluid_height, width = table_size.width,
+									elem_type = "fluid"
+								} --[[@as ElemSelectorTableParams]],
 							}
-						}}
-					} --[[@as SelectionAreaParams]],
-					{ -- Base items
-						type = "module", module_type = "tiergen_selection_area",
-						caption = {"tiergen.base-selection"},
-						confirm_name = "define-base", confirm_locale = {"tiergen.define-base"},
-						confirm_handler = "define-base",
-						children = {
-							{
-								type = "label",
-								caption = {"tiergen.items"}
-							},
-							{
-								type = "module", module_type = "elem_selector_table",
-								frame_style = "tiergen_elem_selector_table_frame",
-								name = "base_item_selection",
-								height = table_size.item_height, width = table_size.width,
-								elem_type = "item"
-							} --[[@as ElemSelectorTableParams]],
-							{
-								type = "label",
-								caption = {"tiergen.fluids"}
-							},
-							{
-								type = "module", module_type = "elem_selector_table",
-								frame_style = "tiergen_elem_selector_table_frame",
-								name = "base_fluid_selection",
-								height = table_size.fluid_height, width = table_size.width,
-								elem_type = "fluid"
-							} --[[@as ElemSelectorTableParams]],
-						}
-					} --[[@as SelectionAreaParams]],
-					{ -- Ignored recipes
-						type = "module", module_type = "tiergen_selection_area",
-						caption = {"tiergen.ignored-selection"},
-						confirm_name = "define-ignored", confirm_locale = {"tiergen.define-ignored"},
-						confirm_handler = "define-ignored",
----@diagnostic disable-next-line: missing-fields
-						style_mods = {bottom_margin = 4},
-						children = {
-							{
-								type = "module", module_type = "elem_selector_table",
-								frame_style = "tiergen_elem_selector_table_frame",
-								name = "ignored_recipe_selection",
-								height = table_size.fluid_height, width = table_size.width,
-								elem_type = "recipe"
-							} --[[@as ElemSelectorTableParams]],
-						}
-					} --[[@as SelectionAreaParams]],
-				}
-			},
-			{ -- Tier pane
-				type = "frame", style = "inside_shallow_frame",
-				children = {
-					{ -- Error message
-						type = "flow", name = "error-message",
-						direction = "vertical",
-						children = {
-							{type = "empty-widget", style = "flib_vertical_pusher"},
-							{
-								type = "label",
-								caption = {"tiergen.no-tiers"},
----@diagnostic disable-next-line: missing-fields
-								style_mods = {padding = 40},
-							},
-							{type = "empty-widget", style = "flib_vertical_pusher"},
-						}
-					},
-					{ -- Tier graph
-						type = "scroll-pane", style = "naked_scroll_pane",
-						-- style_mods = {left_padding = 8},
-						children = {{
-							type = "table", direction = "vertical",
-							name = "tier-table", column_count = 2,
-							draw_horizontal_lines = true,
----@diagnostic disable-next-line: missing-fields
-							style_mods = {left_padding = 8},
----@diagnostic disable-next-line: missing-fields
-							elem_mods = {visible = false}
-						}}
+						} --[[@as SelectionAreaParams]],
+						{ -- Ignored recipes
+							type = "module", module_type = "tiergen_selection_area",
+							caption = {"tiergen.ignored-selection"},
+							confirm_name = "define-ignored", confirm_locale = {"tiergen.define-ignored"},
+							confirm_handler = "define-ignored",
+	---@diagnostic disable-next-line: missing-fields
+							style_mods = {bottom_margin = 4},
+							children = {
+								{
+									type = "module", module_type = "elem_selector_table",
+									frame_style = "tiergen_elem_selector_table_frame",
+									name = "ignored_recipe_selection",
+									height = table_size.fluid_height, width = table_size.width,
+									elem_type = "recipe"
+								} --[[@as ElemSelectorTableParams]],
+							}
+						} --[[@as SelectionAreaParams]],
 					}
+				},
+				{ -- Tier pane
+					type = "frame", style = "inside_shallow_frame",
+					children = {
+						{ -- Error message
+							type = "flow", name = "error-message",
+							direction = "vertical",
+							children = {
+								{type = "empty-widget", style = "flib_vertical_pusher"},
+								{
+									type = "label",
+									caption = {"tiergen.no-tiers"},
+	---@diagnostic disable-next-line: missing-fields
+									style_mods = {padding = 40},
+								},
+								{type = "empty-widget", style = "flib_vertical_pusher"},
+							}
+						},
+						{ -- Tier graph
+							type = "scroll-pane", style = "naked_scroll_pane",
+							-- style_mods = {left_padding = 8},
+							children = {{
+								type = "table", direction = "vertical",
+								name = "tier-table", column_count = 2,
+								draw_horizontal_lines = true,
+	---@diagnostic disable-next-line: missing-fields
+								style_mods = {left_padding = 8},
+	---@diagnostic disable-next-line: missing-fields
+								elem_mods = {visible = false}
+							}}
+						}
+					}
+					-- TODO: menu
 				}
-				-- TODO: menu
 			}
-		}
-	} --[[@as WindowFrameButtonsDef]]
-} --[[@as GuiWindowDef]],
-{
-	["tab-changed"] = function (self, elem, event)
-		lib.log("TABBED")
-	end,
+		} --[[@as WindowFrameButtonsDef]]
+	} --[[@as GuiWindowDef]],
+	handlers = {
+		---@param event EventData.on_gui_selected_tab_changed
+		["tab-changed"] = function (self, elem, event)
+			local selected_tab = elem.selected_tab_index --[[@as integer]]
+			self.selected_tab = selected_tab
+			local calculate = self.elems["calculate"]
 
-	["calculate"] = function (self, elem, event)
-		lib.log("CALCULATED")
-	end,
-	["define-base"] = function (self, elem, event)
-		lib.log("BASED")
-	end,
-	["define-ignored"] = function (self, elem, event)
-		lib.log("IGNORED")
+			if self.selected_tab ~= self.calculated_tab then
+				calculate.enabled = true
+			else
+				calculate.enabled = self[selected_tab].has_changed
+			end
+			lib.log("TABBED")
+		end,
+		["elems-changed"] = function (self, elem, event)
+			local selected_tab = self.selected_tab or 1
+			self.selected_tab = selected_tab
+			lib.log("ELEMED: "..elem.name)
+		end,
+
+		["calculate"] = function (self, elem, event)
+			lib.log("CALCULATED")
+		end,
+		["define-base"] = function (self, elem, event)
+			lib.log("BASED")
+		end,
+		["define-ignored"] = function (self, elem, event)
+			lib.log("IGNORED")
+		end
+	} --[[@as table<any, fun(self:WindowState.TierMenu,elem:LuaGuiElement,event:GuiEventData)>]],
+	state_setup = function (state)
+		---@cast state WindowState.TierMenu
+		state.selected_tab = state.selected_tab or 1
+		state.calculated_tab = state.calculated_tab or 0
+
+		state[1] = state[1] or {has_changed = true, calculated = {}}
+		state[2] = state[2] or {has_changed = true, calculated = {}}
+		state[3] = state[3] or {has_changed = true, calculated = {}}
 	end
-}
-)
+} --[[@as newWindowParams]]
 
 ---Highlights the items in the player's global highlight array
 ---@param self WindowState.TierMenu
