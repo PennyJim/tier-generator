@@ -10,6 +10,7 @@ local module = {module_type = "tiergen_selection_area", handlers = {} --[[@as Gu
 ---@field caption LocalisedString
 ---@field confirm_name string
 ---@field confirm_locale LocalisedString
+---@field confirm_handler string?
 ---@field style_mods LuaStyle?
 
 ---@type ModuleParameterDict
@@ -19,6 +20,7 @@ module.parameters = {
 	caption = {is_optional = false, type = {"table", "string"}},
 	confirm_name = {is_optional = false, type = {"string"}},
 	confirm_locale = {is_optional = false, type = {"table", "string"}},
+	confirm_handler = {is_optional = true, type = {"string"}},
 	style_mods = {is_optional = true, type = {"table"}},
 }
 
@@ -43,6 +45,9 @@ function module.build_func(params)
 				type = "button", style = "tiergen_confirm_button",
 				name = params.confirm_name,
 				caption = params.confirm_locale,
+				handler = params.confirm_handler and {
+					[defines.events.on_gui_click] = params.confirm_handler
+				} or nil
 			}
 		}
 	})

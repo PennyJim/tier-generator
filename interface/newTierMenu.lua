@@ -137,12 +137,16 @@ gui.new({
 						type = "module", module_type = "tiergen_selection_area",
 						caption = {"tiergen.item-selection"},
 						confirm_name = "calculate", confirm_locale = {"tiergen.calculate"},
+						confirm_handler = "calculate",
 ---@diagnostic disable-next-line: missing-fields
 						style_mods = {top_margin = 8},
 						children = {{
 							type = "tabbed-pane", style = "tiergen_tabbed_pane",
 ---@diagnostic disable-next-line: missing-fields
 							elem_mods = {selected_tab_index = 1},
+							handler = {
+								[defines.events.on_gui_selected_tab_changed] = "tab-changed"
+							},
 							children = {
 								make_item_selection_pane(1),
 								make_item_selection_pane(2),
@@ -154,6 +158,7 @@ gui.new({
 						type = "module", module_type = "tiergen_selection_area",
 						caption = {"tiergen.base-selection"},
 						confirm_name = "define-base", confirm_locale = {"tiergen.define-base"},
+						confirm_handler = "define-base",
 						children = {
 							{
 								type = "label",
@@ -183,6 +188,7 @@ gui.new({
 						type = "module", module_type = "tiergen_selection_area",
 						caption = {"tiergen.ignored-selection"},
 						confirm_name = "define-ignored", confirm_locale = {"tiergen.define-ignored"},
+						confirm_handler = "define-ignored",
 ---@diagnostic disable-next-line: missing-fields
 						style_mods = {bottom_margin = 4},
 						children = {
@@ -233,7 +239,21 @@ gui.new({
 		}
 	} --[[@as WindowFrameButtonsDef]]
 } --[[@as GuiWindowDef]],
-{}
+{
+	["tab-changed"] = function (self, elem, event)
+		lib.log("TABBED")
+	end,
+
+	["calculate"] = function (self, elem, event)
+		lib.log("CALCULATED")
+	end,
+	["define-base"] = function (self, elem, event)
+		lib.log("BASED")
+	end,
+	["define-ignored"] = function (self, elem, event)
+		lib.log("IGNORED")
+	end
+}
 )
 
 ---Highlights the items in the player's global highlight array
