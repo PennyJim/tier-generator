@@ -3,9 +3,9 @@ lib = require("__tier-generator__.library")
 local calculator = require("__tier-generator__.calculation.calculator")
 -- local tierMenu = require("__tier-generator__.interface.tierMenu")
 
-require("__tier-generator__.interface.newTierMenu")
-handler.add_lib(require("__gui-modules__.gui"))
 handler.add_lib(require("__tier-generator__.global"))
+handler.add_lib(require("__tier-generator__.interface.newTierMenu"))
+handler.add_lib(require("__gui-modules__.gui"))
 handler.add_lib(require("__tier-generator__.interface.tierConfig"))
 
 -- require("__tier-generator__.calculation.ErrorFinder")

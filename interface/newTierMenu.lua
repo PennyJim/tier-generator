@@ -47,6 +47,42 @@ local function make_item_selection_pane(number)
 	}
 end
 
+local function make_new_tier_row(table, tier, items, namespace)
+	gui.add(namespace, table, {
+		type = "label",
+		caption = {"tiergen.tier-label", tier-1},
+---@diagnostic disable-next-line: missing-fields
+		style_mods = {right_padding = 4},
+	}, true)
+
+	---@type GuiElemModuleDef[]
+	local item_elements = {}
+	for i, item in ipairs(items) do
+		local itemPrototype = lib.getItemOrFluid(item.name, item.type)
+		local sprite = item.type.."/"..item.name
+		item_elements[i] = {
+			type = "sprite-button", style = "slot_button",
+			name = sprite, sprite = sprite,
+			tooltip = itemPrototype.localised_name
+		}
+	end
+
+	gui.add(namespace, table, {
+		type = "frame",
+		name = "tier-"..tier.."-items",
+		style = "slot_button_deep_frame",
+---@diagnostic disable-next-line: missing-fields
+		style_mods = {horizontally_stretchable = true},
+		children ={{
+			type = "table", style = "filter_slot_table",
+			name = "tierlist-items-"..tier, column_count = 12,
+---@diagnostic disable-next-line: missing-fields
+			style_mods = {minimal_width = 40*12},
+			children = item_elements
+		}}
+	}, true)
+end
+
 gui.new({
 	namespace = "tiergen-menu",
 	root = "screen",
@@ -150,7 +186,8 @@ gui.new({
 							type = "table", direction = "vertical",
 							name = "tier-table", column_count = 2,
 							draw_horizontal_lines = true,
-							-- style_mods = {left_padding = 8},
+---@diagnostic disable-next-line: missing-fields
+							style_mods = {left_padding = 8},
 ---@diagnostic disable-next-line: missing-fields
 							elem_mods = {visible = false}
 						}}
@@ -163,3 +200,24 @@ gui.new({
 } --[[@as GuiWindowDef]],
 {}
 )
+local calculator = require("__tier-generator__.calculation.calculator")
+local function test()
+	local elems = global["tiergen-menu"]--[[@as WindowState[] ]][1].elems
+	local error = elems["error-message"]
+	local table = elems["tier-table"]
+	local items_by_tier = calculator.getArray{lib.item("space-science-pack")}
+	for tier, items in pairs(items_by_tier) do
+		make_new_tier_row(table, tier, items, "tiergen-menu")
+	end
+	error.visible = false
+	table.visible = true
+end
+lib.register_func("testing", test)
+
+
+---@type event_handler
+return {
+	on_init = function ()
+		lib.seconds_later(2, "testing")
+	end
+}
