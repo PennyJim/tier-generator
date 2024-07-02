@@ -63,85 +63,6 @@ local function update_list(player_table)
 		end
 	end
 end
----Creates the structure for the list
----@param base_flow LuaGuiElement
-local function create_list(base_flow)
-	local horz_flow = base_flow.add{
-		type = "frame",
-		name = "scroll_frame",
-		style = "inside_shallow_frame"
-	}.add{
-		type = "flow",
-		name = "error_flow",
-		direction = "horizontal"
-	}
-	local error_flow = horz_flow.add{
-		type = "flow",
-		direction = "vertical"
-	}
-	error_flow.visible = false
-	error_flow.add{
-		type = "empty-widget"
-	}.style.vertically_stretchable = true
-	error_flow.add{
-		type = "label",
-		caption = {"tiergen.no-tiers"}
-	}.style.padding = 40
-	error_flow.add{
-		type = "empty-widget"
-	}.style.vertically_stretchable = true
-	local scroll = horz_flow.add{
-		type = "scroll-pane",
-		name = "scroll",
-		style = "naked_scroll_pane"
-	}
-	base_flow.style.height = 16*44
-	scroll.style.left_padding = 8
-	local table = scroll.add{
-		type = "table",
-		name = "table",
-		column_count = 2,
-		draw_horizontal_lines = true,
-		direction="vertical",
-	}
-	table.style.left_padding = 8
-	local player_table = global.player[error_flow.player_index]
-	player_table.error = error_flow
-	player_table.table = table
-end
----Creates the menu for the player
----@param player LuaPlayer
----@return LuaGuiElement
-local function create_frame(player)
-	local screen = player.gui.screen
-	local base = screen.add{
-		type = "frame",
-		name = "tiergen-menu",
-		visible = false
-	}
-	base.auto_center = true
-	local base_flow = create_titlebar(base, {"tiergen.menu"})
-	create_options(base_flow)
-	create_list(base_flow)
-	local player_table = global.player[player.index]
-	update_list(player_table)
-	return base
-end
----Changes the state of the tiergen menu for the player
----@param player LuaPlayer
----@param is_toggled boolean
-local function set_visibility(player, is_toggled)
-	if not global.menu then return menu.init() end
-	if not global.config then return end
-	---@type LuaGuiElement
-	local player_menu = global.player[player.index].menu
-	if not player_menu or not player_menu.valid then
-		menu.add_player(player)
-		player_menu = global.player[player.index].menu
-	end
-
-	player_menu.visible = is_toggled
-end
 
 ---Initializes the menu for new players
 ---@param player LuaPlayer
@@ -251,33 +172,6 @@ local function unhighlightItems(player_table)
 	player_table.highlighted = nil
 end
 
-
-local function open(player)
-	player.set_shortcut_toggled("tiergen-menu", true)
-	set_visibility(player, true)
-	player.opened = player.gui.screen["tiergen-menu"]
-end
-local function close(player)
-	player.set_shortcut_toggled("tiergen-menu", false)
-	set_visibility(player, false)
-	if player.opened and player.opened.name == "tiergen-menu" then
-		player.opened = nil
-	end
-end
----Toggles the menu open or close depending on the state of the shortcut
----@param player LuaPlayer
-function menu.open_close(player)
-	if not global.menu then return menu.init() end
-	if not global.config then return end
-	local isOpened = not player.is_shortcut_toggled("tiergen-menu")
-	if isOpened then
-		open(player)
-	else
-		-- Set the shortcut to off just in case the menu was invalidated
-		player.set_shortcut_toggled("tiergen-menu", false)
-		player.opened = nil
-	end
-end
 
 
 local function handle_click_highlight(player_table, element)

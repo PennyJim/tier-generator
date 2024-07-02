@@ -126,8 +126,36 @@ gui.new({
 					}
 				}
 			},
-			{ -- Tier Graph
+			{ -- Tier pane
 				type = "frame", style = "inside_shallow_frame",
+				children = {
+					{ -- Error message
+						type = "flow", name = "error-message",
+						direction = "vertical",
+						children = {
+							{type = "empty-widget", style = "flib_vertical_pusher"},
+							{
+								type = "label",
+								caption = {"tiergen.no-tiers"},
+---@diagnostic disable-next-line: missing-fields
+								style_mods = {padding = 40},
+							},
+							{type = "empty-widget", style = "flib_vertical_pusher"},
+						}
+					},
+					{ -- Tier graph
+						type = "scroll-pane", style = "naked_scroll_pane",
+						-- style_mods = {left_padding = 8},
+						children = {{
+							type = "table", direction = "vertical",
+							name = "tier-table", column_count = 2,
+							draw_horizontal_lines = true,
+							-- style_mods = {left_padding = 8},
+---@diagnostic disable-next-line: missing-fields
+							elem_mods = {visible = false}
+						}}
+					}
+				}
 				-- TODO: menu
 			}
 		}
