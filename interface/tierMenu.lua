@@ -163,6 +163,8 @@ gui.new{
 				{ -- Options
 					type = "frame", style = "inside_shallow_frame",
 					direction = "vertical",
+---@diagnostic disable-next-line: missing-fields
+					style_mods = {height = 16*44 },
 					children = {
 						{ -- Requested items
 							type = "module", module_type = "tiergen_selection_area",
@@ -183,6 +185,9 @@ gui.new{
 									make_item_selection_pane(2),
 									make_item_selection_pane(3),
 								}
+							},{
+---@diagnostic disable-next-line: missing-fields
+								type = "empty-widget", style_mods = {height = 0, width = 5}
 							}}
 						} --[[@as SelectionAreaParams]],
 						{ -- Base items
@@ -213,6 +218,10 @@ gui.new{
 									height = table_size.fluid_height, width = table_size.width,
 									on_elem_changed = "elems-changed",
 								} --[[@as ElemSelectorTableParams]],
+								{
+---@diagnostic disable-next-line: missing-fields
+									type = "empty-widget", style_mods = {height = 0, width = 5}
+								}
 							}
 						} --[[@as SelectionAreaParams]],
 						{ -- Ignored recipes
@@ -236,6 +245,8 @@ gui.new{
 				},
 				{ -- Tier pane
 					type = "frame", style = "inside_shallow_frame",
+---@diagnostic disable-next-line: missing-fields
+					style_mods = {height = 16*44 },
 					children = {
 						{ -- Error message
 							type = "flow", name = "error-message",
