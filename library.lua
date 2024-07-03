@@ -1,7 +1,7 @@
 local lookup = require("__tier-generator__.calculation.lookupTables")
 
 --- A table full of functions to simplify complex things
----@class TiergenLibrary
+---@class TiergenLibrary : event_handler
 local library = {}
 
 
@@ -440,8 +440,19 @@ function library.seconds_later(seconds, func_name)
 	end
 end
 
----To reregister the tick for tick_later.
-function library.register_load()
+--#endregion
+--#region handlers
+
+library.events = {
+	--- Invalidate the cache for changed settings
+	[defines.events.on_runtime_mod_setting_changed] = function (EventData)
+		if EventData.setting_type == "runtime-global" then
+			library.clearSettingCache(EventData.setting)
+		end
+	end
+}
+---Correct state on load
+function library.on_load()
 	if global.next_tick then
 		script.on_nth_tick(1, tick)
 	end
