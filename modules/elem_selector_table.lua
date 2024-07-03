@@ -1,5 +1,11 @@
 local module = {module_type = "elem_selector_table", handlers = {} --[[@as GuiModuleEventHandlers]]}
 
+local handler_names = {
+	-- A generic place to make sure handler names match
+	-- in both handler definitons and in the build_func
+	elem_changed = "elem_selector_table.elem_changed" -- Standardly prepended with module name to avoid naming collisions
+}
+
 ---@class ElemList
 ---@field last integer The last index of a chosen element
 ---@field count integer How many elements have been chosen
@@ -8,17 +14,48 @@ local module = {module_type = "elem_selector_table", handlers = {} --[[@as GuiMo
 ---@class WindowState.ElemSelectorTable : WindowState
 -- Where custom fields would go
 ---@field selector_table table<string,ElemList>
+---@field selector_update_rows update_row_obj
+
+---@class update_row_obj
+---@field valid boolean
+---@field call fun(table:LuaGuiElement,last_index:integer,elem_type:ElemType,self:WindowState.ElemSelectorTable)?
+local update_row_meta = {__index = {
+	valid = false,
+
+	---@param table LuaGuiElement
+	---@param last_index integer
+	---@param elem_type ElemType
+	---@param self WindowState.ElemSelectorTable
+	call = function (_, table, last_index, elem_type, self)
+		local columns = table.column_count
+		local desired_rows = math.ceil(last_index/columns)+1
+		local children = table.children
+		local children_count = #children
+		local current_rows = children_count/columns
+		if current_rows > desired_rows then
+			-- Remove elements
+			for remove_index = children_count, desired_rows*columns+1, -1 do
+				children[remove_index].destroy()
+			end
+		else
+			-- Add elements
+			for _ = children_count, desired_rows*columns-1, 1 do
+				self.gui.add(self.namespace, table, {
+					type = "choose-elem-button",
+					elem_type = elem_type,
+					handler = {[defines.events.on_gui_elem_changed] = handler_names.elem_changed}
+				}, true)
+			end
+		end
+	end
+}}
+script.register_metatable("update_row_meta", update_row_meta)
 
 ---@param self WindowState.ElemSelectorTable
 module.setup_state = function (self)
 	self.selector_table = self.selector_table or {}
+	self.selector_update_rows = self.selector_update_rows or setmetatable({valid = false}, update_row_meta)
 end
-
-local handler_names = {
-	-- A generic place to make sure handler names match
-	-- in both handler definitons and in the build_func
-	elem_changed = "elem_selector_table.elem_changed" -- Standardly prepended with module name to avoid naming collisions
-}
 
 ---@class ElemSelectorTableParams : ModuleDef
 ---@field module_type "elem_selector_table"
@@ -99,33 +136,6 @@ function module.build_func(params)
 	} --[[@as GuiElemDef]]
 end
 
----@param table LuaGuiElement
----@param last_index integer
----@param elem_type ElemType
----@param self WindowState.ElemSelectorTable
-local function update_row_count(table, last_index, elem_type, self)
-	local columns = table.column_count
-	local desired_rows = math.ceil(last_index/columns)+1
-	local children = table.children
-	local children_count = #children
-	local current_rows = children_count/columns
-	if current_rows > desired_rows then
-		-- Remove elements
-		for remove_index = children_count, desired_rows*columns+1, -1 do
-			children[remove_index].destroy()
-		end
-	else
-		-- Add elements
-		for new_index = children_count, desired_rows*columns-1, 1 do
-			self.gui.add(self.namespace, table, {
-				type = "choose-elem-button",
-				elem_type = elem_type,
-				handler = {[defines.events.on_gui_elem_changed] = handler_names.elem_changed}
-			}, true)
-		end
-	end
-end
-
 -- How to define handlers
 ---@param self WindowState.ElemSelectorTable
 ---@param OriginalEvent EventData.on_gui_elem_changed
@@ -157,7 +167,7 @@ module.handlers[handler_names.elem_changed] = function (self, elem, OriginalEven
 	if index > elem_list.last then
 		-- Set new last index and update rows
 		elem_list.last = index
-		update_row_count(table, index, type, self)
+		self.selector_update_rows.call(table, index, type, self)
 	elseif index == elem_list.last then
 		-- Decrement the last_index to the last item with a value
 		for new_last = index, 0, -1 do
@@ -168,7 +178,7 @@ module.handlers[handler_names.elem_changed] = function (self, elem, OriginalEven
 		end
 		-- Update the rows
 		local last_index = elem_list.last
-		update_row_count(table, last_index, type, self)
+		self.selector_update_rows.call(table, last_index, type, self)
 	end
 
 	return table

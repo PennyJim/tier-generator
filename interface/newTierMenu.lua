@@ -467,6 +467,11 @@ function tierMenu.set_items(player_index, tabs)
 	local elems = state.elems
 	local values = state.selector_table
 
+	local update_rows = state.selector_update_rows.call
+	if not update_rows then
+		error("elem_selector_table's function didn't get restored on save/load")
+	end
+
 	for i = 1, 3, 1 do
 		-- Don't change it to the default if they've altered it
 		if state[i].has_changed_from_default then goto continue end
@@ -489,7 +494,8 @@ function tierMenu.set_items(player_index, tabs)
 				elem_values = fluid_values
 			end
 
-			elem_table.children[index].elem_value = item.name -- FIXME: currently can't add more rows
+			elem_table.children[index].elem_value = item.name
+			update_rows(elem_table, elem_values.count, item.type, state)
 			elem_values[index] = item.name
 			elem_values.count = elem_values.count + 1
 		end
@@ -508,6 +514,11 @@ function tierMenu.set_base(player_index, base)
 	local fluid_table = state.elems["base_fluid_selection"]
 	local fluid_values = state.selector_table["base_fluid_selection"]
 
+	local update_rows = state.selector_update_rows.call
+	if not update_rows then
+		error("elem_selector_table's function didn't get restored on save/load")
+	end
+
 	for index, item in pairs(base) do
 		local elem_table, elem_values
 		if item.type == "item" then
@@ -518,7 +529,8 @@ function tierMenu.set_base(player_index, base)
 			elem_values = fluid_values
 		end
 
-		elem_table.children[index].elem_value = item.name -- FIXME: currently can't add more rows
+		elem_table.children[index].elem_value = item.name
+		update_rows(elem_table, elem_values.count, item.type, state)
 		elem_values[index] = item.name
 		elem_values.count = elem_values.count + 1
 	end
@@ -533,10 +545,16 @@ function tierMenu.set_ignored(player_index, ignored)
 	local recipe_table = state.elems["ignored_recipe_selection"]
 	local recipe_values = state.selector_table["ignored_recipe_selection"]
 
+	local update_rows = state.selector_update_rows.call
+	if not update_rows then
+		error("elem_selector_table's function didn't get restored on save/load")
+	end
+
 	local index = 0
 	for recipe in pairs(ignored) do
 		index = index + 1
-		recipe_table.children[index].elem_value = recipe -- FIXME: currently can't add more rows
+		recipe_table.children[index].elem_value = recipe
+		update_rows(recipe_table, recipe_values.count, "recipe", state)
 		recipe_values[index] = recipe
 	end
 
