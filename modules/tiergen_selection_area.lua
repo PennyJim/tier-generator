@@ -11,6 +11,7 @@ local module = {module_type = "tiergen_selection_area", handlers = {} --[[@as Gu
 ---@field confirm_name string
 ---@field confirm_locale LocalisedString
 ---@field confirm_handler string?
+---@field confirm_enabled_default boolean?
 ---@field style_mods LuaStyle?
 
 ---@type ModuleParameterDict
@@ -21,6 +22,7 @@ module.parameters = {
 	confirm_name = {is_optional = false, type = {"string"}},
 	confirm_locale = {is_optional = false, type = {"table", "string"}},
 	confirm_handler = {is_optional = true, type = {"string"}},
+	confirm_enabled_default = {is_optional = true, type = {"boolean"}, default = true},
 	style_mods = {is_optional = true, type = {"table"}},
 }
 
@@ -47,10 +49,14 @@ function module.build_func(params)
 				caption = params.confirm_locale,
 				handler = params.confirm_handler and {
 					[defines.events.on_gui_click] = params.confirm_handler
-				} or nil
+				} or nil,
+---@diagnostic disable-next-line: missing-fields
+				elem_mods = params.confirm_enabled_default == false and {
+					enabled = false
+				} --[[@as LuaGuiElement]] or nil
 			}
 		}
-	})
+	}--[[@as GuiElemModuleDef]])
 	return {
 		type = "frame", style = "tiergen_selection_area_frame",
 		style_mods = params.style_mods,

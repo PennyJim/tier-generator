@@ -10,7 +10,7 @@ local module = {module_type = "elem_selector_table", handlers = {} --[[@as GuiMo
 ---@field selector_table table<string,ElemList>
 
 ---@param self WindowState.ElemSelectorTable
-module.setup_self = function (self)
+module.setup_state = function (self)
 	self.selector_table = self.selector_table or {}
 end
 
