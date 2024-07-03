@@ -7,7 +7,7 @@ local table_size = {
 }
 
 ---@class tierMenu : event_handler
-local tierMenu = {events={}}
+local tierMenu = {events={}--[[@as event_handler.events]]}
 
 ---@class WindowState.TierMenu.tab
 ---@field has_changed boolean Whether the chosen elements have changed since last calculated
@@ -493,6 +493,18 @@ tierMenu.events[defines.events.on_gui_click] = function(EventData)
 		end
 	else
 		unhighlightItems(self)
+	end
+end
+tierMenu.events[defines.events.on_runtime_mod_setting_changed] = function (EventData)
+	local setting = EventData.setting
+
+	if setting == "tiergen-consider-autoplace-setting" then
+		calculator.unprocess()
+	end
+
+	if lib.isOurSetting(setting)
+	and setting ~= "tiergen-debug-log" then
+		lib.tick_later("invalidate_tiers")
 	end
 end
 
