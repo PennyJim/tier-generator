@@ -319,6 +319,18 @@ gui.new{
 		state.base_state = {}
 		state.ignored_changed = false
 		state.ignored_state = {}
+
+		local config = global.config
+		if config then
+			local player_index = state.player.index
+			tierMenu.set_items(player_index, {
+				config.all_sciences,
+				config.ultimate_science,
+				{}
+			})
+			tierMenu.set_base(player_index, config.base_items)
+			tierMenu.set_ignored(player_index, config.ignored_recipes)
+		end
 	end
 } --[[@as newWindowParams]]
 
@@ -439,6 +451,86 @@ end
 --#endregion
 --#region Public Functions
 
+---Sets the items in the 
+---@param player_index integer
+---@param tabs {[1]:simpleItem[],[2]:simpleItem[],[3]:simpleItem[]}
+function tierMenu.set_items(player_index, tabs)
+	local state = global["tiergen-menu"][player_index] --[[@as WindowState.TierMenu]]
+	local elems = state.elems
+	local values = state.selector_table
+	for i = 1, 3, 1 do
+
+		local items = i.."_item_selection"
+		local item_table = elems[items]
+		local item_values = values[items]
+
+		local fluids = i.."_fluid_selection"
+		local fluid_table = elems[fluids]
+		local fluid_values = values[fluids]
+
+		for index, item in pairs(tabs[i]) do
+			local elem_table, elem_values
+			if item.type == "item" then
+				elem_table = item_table
+				elem_values = item_values
+			else
+				elem_table = fluid_table
+				elem_values = fluid_values
+			end
+
+			elem_table.children[index].elem_value = item.name -- FIXME: currently can't add more rows
+			elem_values[index] = item.name
+			elem_values.count = elem_values.count + 1
+		end
+
+		item_values.last = item_values.count
+		fluid_values.last = item_values.count
+	end
+end
+---@param player_index integer
+---@param base simpleItem[]
+function tierMenu.set_base(player_index, base)
+	local state = global["tiergen-menu"][player_index] --[[@as WindowState.TierMenu]]
+	local item_table = state.elems["base_item_selection"]
+	local item_values = state.selector_table["base_item_selection"]
+	local fluid_table = state.elems["base_fluid_selection"]
+	local fluid_values = state.selector_table["base_fluid_selection"]
+
+	for index, item in pairs(base) do
+		local elem_table, elem_values
+		if item.type == "item" then
+			elem_table = item_table
+			elem_values = item_values
+		else
+			elem_table = fluid_table
+			elem_values = fluid_values
+		end
+
+		elem_table.children[index].elem_value = item.name -- FIXME: currently can't add more rows
+		elem_values[index] = item.name
+		elem_values.count = elem_values.count + 1
+	end
+
+	item_values.last = item_values.count
+	fluid_values.last = item_values.count
+end
+---@param player_index integer
+---@param ignored table<data.RecipeID,true>
+function tierMenu.set_ignored(player_index, ignored)
+	local state = global["tiergen-menu"][player_index] --[[@as WindowState.TierMenu]]
+	local recipe_table = state.elems["ignored_recipe_selection"]
+	local recipe_values = state.selector_table["ignored_recipe_selection"]
+
+	local index = 0
+	for recipe in pairs(ignored) do
+		index = index + 1
+		recipe_table.children[index].elem_value = recipe -- FIXME: currently can't add more rows
+		recipe_values[index] = recipe
+	end
+
+	recipe_values.last = index
+	recipe_values.count = index
+end
 --#endregion
 
 local function test()
