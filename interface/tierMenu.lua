@@ -510,7 +510,6 @@ end
 
 function tierMenu.on_init()
 	lib.tick_later("invalidate_tiers") -- Is this actually necessary?
-	lib.seconds_later(2, "testing")
 end
 
 function tierMenu.on_configuration_changed()
@@ -629,13 +628,6 @@ function tierMenu.set_ignored(player_index, ignored)
 	recipe_values.count = index
 end
 --#endregion
-
-local function test()
-	local self = global["tiergen-menu"][1] --[[@as WindowState.TierMenu]]
-	local tierArray = calculator.getArray{lib.item("space-science-pack")}
-	update_tier_table(self, tierArray)
-end
-lib.register_func("testing", test)
 
 ---@type event_handler
 return tierMenu
