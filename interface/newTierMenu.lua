@@ -305,13 +305,13 @@ gui.new{
 		end,
 
 		["calculate"] = function (self, elem, event)
-			lib.log("CALCULATED")
+			lib.log("CALCULATED") -- TODO: implement calculation
 		end,
 		["define-base"] = function (self, elem, event)
-			lib.log("BASED")
+			lib.log("BASED") -- TODO: implement base setting
 		end,
 		["define-ignored"] = function (self, elem, event)
-			lib.log("IGNORED")
+			lib.log("IGNORED") -- TODO: implement ignored setting
 		end
 	} --[[@as table<any, fun(self:WindowState.TierMenu,elem:LuaGuiElement,event:GuiEventData)>]],
 	state_setup = function (state)

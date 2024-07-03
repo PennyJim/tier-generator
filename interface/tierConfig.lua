@@ -99,7 +99,7 @@ local function actually_init()
 	end
 
 	for _, player in pairs(game.players) do
-		menu.add_player(player)
+		-- menu.add_player(player) -- TODO: change to newTierMenu's setter functions
 		player.set_shortcut_available("tiergen-menu", true)
 	end
 
@@ -110,7 +110,6 @@ lib.register_func("config-setup", actually_init)
 function config_handlers.on_init()
 	lib.seconds_later(1, "config-setup")
 end
-
 function config_handlers.on_configuration_changed(ChangedData)
 	if not global.config then
 		config_handlers.on_init()
