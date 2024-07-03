@@ -381,7 +381,7 @@ gui.new{
 			local player_index = state.player.index
 			tierMenu.set_items(player_index, {
 				config.all_sciences,
-				config.ultimate_science,
+				{config.ultimate_science},
 				{}
 			})
 			tierMenu.set_base(player_index, config.base_items)
@@ -538,11 +538,13 @@ function tierMenu.set_items(player_index, tabs)
 
 		local items = i.."_item_selection"
 		local item_table = elems[items]
-		local item_values = values[items]
+		local item_values = values[items] or {count=0}
+		values[items] = item_values
 
 		local fluids = i.."_fluid_selection"
 		local fluid_table = elems[fluids]
-		local fluid_values = values[fluids]
+		local fluid_values = values[fluids] or {count=0}
+		values[fluids] = fluid_values
 
 		for index, item in pairs(tabs[i]) do
 			local elem_table, elem_values
@@ -569,10 +571,14 @@ end
 ---@param base simpleItem[]
 function tierMenu.set_base(player_index, base)
 	local state = global["tiergen-menu"][player_index] --[[@as WindowState.TierMenu]]
+
 	local item_table = state.elems["base_item_selection"]
-	local item_values = state.selector_table["base_item_selection"]
+	local item_values = state.selector_table["base_item_selection"] or {count=0}
+	state.selector_table["base_item_selection"] = item_values
+
 	local fluid_table = state.elems["base_fluid_selection"]
-	local fluid_values = state.selector_table["base_fluid_selection"]
+	local fluid_values = state.selector_table["base_fluid_selection"] or {count=0}
+	state.selector_table["base_fluid_selection"] = fluid_values
 
 	local update_rows = state.selector_update_rows.call
 	if not update_rows then
@@ -603,7 +609,8 @@ end
 function tierMenu.set_ignored(player_index, ignored)
 	local state = global["tiergen-menu"][player_index] --[[@as WindowState.TierMenu]]
 	local recipe_table = state.elems["ignored_recipe_selection"]
-	local recipe_values = state.selector_table["ignored_recipe_selection"]
+	local recipe_values = state.selector_table["ignored_recipe_selection"] or {count=0}
+	state.selector_table["ignored_recipe_selection"] = recipe_values
 
 	local update_rows = state.selector_update_rows.call
 	if not update_rows then
@@ -614,7 +621,7 @@ function tierMenu.set_ignored(player_index, ignored)
 	for recipe in pairs(ignored) do
 		index = index + 1
 		recipe_table.children[index].elem_value = recipe
-		update_rows(recipe_table, recipe_values.count, "recipe", state)
+		update_rows(recipe_table, index, "recipe", state)
 		recipe_values[index] = recipe
 	end
 

@@ -98,8 +98,15 @@ local function actually_init()
 		message = {"tiergen.vanilla-config"}
 	end
 
-	for _, player in pairs(game.players) do
-		-- menu.add_player(player) -- TODO: change to newTierMenu's setter functions
+	for player_index, player in pairs(game.players) do
+		---@cast player_index integer
+		menu.set_items(player_index, {
+			config.all_sciences,
+			{config.ultimate_science},
+			{}
+		})
+		menu.set_base(player_index, config.base_items)
+		menu.set_ignored(player_index, config.ignored_recipes)
 		player.set_shortcut_available("tiergen-menu", true)
 	end
 
