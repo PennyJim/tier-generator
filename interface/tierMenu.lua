@@ -6,63 +6,6 @@ local table_size = {
 }
 
 local menu = {}
----Updates the tier list for the player
----@param player_table PlayerGlobal
-local function update_list(player_table)
-	local error = player_table.error
-	local table = player_table.table
-	if table then
-		table.clear()
-	end
-
-	local calculated_tab = player_table[player_table.calculated_tab]
-	local tiers = calculated_tab and calculated_tab.result or {}
-
-	if #tiers == 0 then
-		error.visible = true
-		table.visible = false
-		return
-	else
-		error.visible = false
-		table.visible = true
-	end
-
-	for tier, items in ipairs(tiers) do
-		local tier_label = table.add{
-			type = "label",
-			name = "tier-"..tier.."-label",
-			caption = {"tiergen.tier-label", tier-1}
-		}
-		tier_label.style.right_padding = 4
-		local tier_list_frame = table.add{
-			type = "frame",
-			name = "tier-"..tier.."-items",
-			style = "slot_button_deep_frame"
-		}
-		tier_list_frame.style.horizontally_stretchable = true
-		local tier_list = tier_list_frame.add{
-			type = "table",
-			name = "tierlist-items",
-			column_count = 12,
-			style = "filter_slot_table"
-		}
-		-- Do minimal because if something messes up,
-		-- I'd rather it grow than hide something
-		tier_list.style.minimal_width = 40*12
-
-		for _, item in ipairs(items) do
-			local itemPrototype = lib.getItemOrFluid(item.name, item.type)
-			local sprite = item.type.."/"..item.name
-			tier_list.add{
-				type = "sprite-button",
-				name = sprite,
-				sprite = sprite,
-				style = "slot_button",
-				tooltip = itemPrototype.localised_name
-			}
-		end
-	end
-end
 
 ---Initializes the menu for new players
 ---@param player LuaPlayer
@@ -71,21 +14,6 @@ function menu.add_player(player)
 	-- if not global.menu then return menu.init() end
 	-- if not global.config then return end
 	-- global.player[player.index].menu = create_frame(player)
-end
----Initializes the menu for all players
-function menu.init()
-	global.menu = true
-	local init_player = not not global.config
-	for _, player in pairs(game.players) do
-		local oldMenu = player.gui.screen["tiergen-menu"]
-		if oldMenu then
-			--- Destroy remnants of last mod installation
-			oldMenu.destroy()
-		end
-		if init_player then
-			menu.add_player(player)
-		end
-	end
 end
 ---Goes through each player and calls `reset_frame`
 function menu.regenerate_menus()
@@ -185,51 +113,5 @@ end
 local function handle_click_define_ignored(player_table, element)
 	
 end
-
-
-script.on_event(defines.events.on_gui_click, function (EventData)
-	local player = game.get_player(EventData.player_index)
-	local player_table = global.player[EventData.player_index]
-	if not player then
-		return log("wtf")
-	end
-
-	if not player_table.menu or not player_table.menu.valid then
-		menu.add_player(player)
-		return lib.log("Generating new menu for "..player.name.." as their reference was invalid")
-	end
-
-	local rootElement = lib.getRootElement(EventData.element)
-	if rootElement.name ~= "tiergen-menu" then return	end
-	
-	handle_click_confirm(player_table, EventData.element)
-	handle_click_define_base(player_table, EventData.element)
-	handle_click_define_ignored(player_table, EventData.element)
-end)
-script.on_event(defines.events.on_gui_selected_tab_changed, function (EventData)
-	if EventData.element.name ~= "tiergen-item-selection" then
-		return
-	end
-
-	local player_table = global.player[EventData.player_index]
-	if not player_table.menu or not player_table.menu.valid then
-		local player = game.get_player(EventData.player_index)
-		if not player then return end
-		lib.log("Generating new menu for "..player.name.." as their reference was invalid")
-		menu.add_player(player)
-		return
-	end
-
-	local new_tab = EventData.element.selected_tab_index
-	---@cast new_tab integer
-	player_table.selected_tab = new_tab
-	if player_table.calculated_tab ~= new_tab then
-		player_table.calculate.enabled = true
-		return
-	end
-
-	local player_tab = player_table[new_tab]
-	player_table.calculate.enabled = player_tab.elems.has_changed
-end)
 
 return menu
