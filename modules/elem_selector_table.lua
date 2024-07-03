@@ -26,7 +26,7 @@ local update_row_meta = {__index = {
 	---@param last_index integer
 	---@param elem_type ElemType
 	---@param self WindowState.ElemSelectorTable
-	call = function (_, table, last_index, elem_type, self)
+	call = function (table, last_index, elem_type, self)
 		local columns = table.column_count
 		local desired_rows = math.ceil(last_index/columns)+1
 		local children = table.children
@@ -49,7 +49,9 @@ local update_row_meta = {__index = {
 		end
 	end
 }}
-script.register_metatable("update_row_meta", update_row_meta)
+if not data then -- Is required during data to check its structure.
+	script.register_metatable("update_row_meta", update_row_meta)
+end
 
 ---@param self WindowState.ElemSelectorTable
 module.setup_state = function (self)
