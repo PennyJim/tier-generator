@@ -10,7 +10,8 @@ local table_size = {
 local tierMenu = {events={}}
 
 ---@class WindowState.TierMenu.tab
----@field has_changed boolean Wether the chosen elements have changed
+---@field has_changed boolean Whether the chosen elements have changed since last calculated
+---@field has_changed_from_default boolean Whether the chosen elements have been changed from the default
 ---@field result {[integer]:tierResult[]}? the results of this tab's last calculation
 ---@field calculated simpleItem[] the list of items last calculated
 
@@ -137,8 +138,14 @@ local function update_tier_table(self, tierArray)
 	end
 end
 
+---Shorthand for making the base tab struct
+---@return WindowState.TierMenu.tab
 local function base_tab()
-	return {has_changed = true, calculated = {}}
+	return {
+		has_changed = true,
+		calculated = {},
+		has_changed_from_default = false
+	}	--[[@as WindowState.TierMenu.tab]]
 end
 
 gui.new{
@@ -292,6 +299,7 @@ gui.new{
 				-- Tab
 				local tab = self[self.selected_tab]
 				tab.has_changed = true
+				tab.has_changed_from_default = true
 				self.elems["calculate"].enabled = true
 			end
 		end,
@@ -458,7 +466,10 @@ function tierMenu.set_items(player_index, tabs)
 	local state = global["tiergen-menu"][player_index] --[[@as WindowState.TierMenu]]
 	local elems = state.elems
 	local values = state.selector_table
+
 	for i = 1, 3, 1 do
+		-- Don't change it to the default if they've altered it
+		if state[i].has_changed_from_default then goto continue end
 
 		local items = i.."_item_selection"
 		local item_table = elems[items]
@@ -485,6 +496,7 @@ function tierMenu.set_items(player_index, tabs)
 
 		item_values.last = item_values.count
 		fluid_values.last = item_values.count
+    ::continue::
 	end
 end
 ---@param player_index integer
