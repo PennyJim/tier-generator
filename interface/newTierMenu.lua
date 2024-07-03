@@ -6,6 +6,8 @@ local table_size = {
 	fluid_height = 1
 }
 
+---@class tierMenu : event_handler
+local tierMenu = {events={}}
 
 ---@class WindowState.TierMenu.tab
 ---@field has_changed boolean Wether the chosen elements have changed
@@ -320,6 +322,8 @@ gui.new{
 	end
 } --[[@as newWindowParams]]
 
+--#region Local Functions
+
 ---Highlights the items in the player's global highlight array
 ---@param self WindowState.TierMenu
 local function highlightItems(self)
@@ -367,8 +371,31 @@ local function unhighlightItems(self)
 	self.highlighted = nil
 end
 
----@param EventData EventData.on_gui_click
-local function on_gui_click(EventData)
+--- Invalidates the tiers
+local function invalidateTiers()
+	calculator.uncalculate()
+
+	---@type WindowState.TierMenu[]
+	local namespace = global["tiergen-menu"]
+	for _, state in pairs(namespace) do
+		if _ == 0 then goto continue end
+		state.calculated_tab = 0
+		state[1] = base_tab()
+		state[2] = base_tab()
+		state[3] = base_tab()
+
+		state.highlight = nil
+		state.highlighted = nil
+
+		update_tier_table(state, {})
+    ::continue::
+	end
+end
+lib.register_func("invalidate_tiers", invalidateTiers)
+--#endregion
+--#region Direct Handlers
+
+tierMenu.events[defines.events.on_gui_click] = function(EventData)
 	local element = EventData.element
 	local WindowStates = global["tiergen-menu"] --[[@as WindowState[] ]]
 	if not WindowStates then return end -- Don't do anything if the namespace isn't setup
@@ -401,27 +428,18 @@ local function on_gui_click(EventData)
 	end
 end
 
---- Invalidates the tiers
-local function invalidateTiers()
-	calculator.uncalculate()
-
-	---@type WindowState.TierMenu[]
-	local namespace = global["tiergen-menu"]
-	for _, state in pairs(namespace) do
-		if _ == 0 then goto continue end
-		state.calculated_tab = 0
-		state[1] = base_tab()
-		state[2] = base_tab()
-		state[3] = base_tab()
-
-		state.highlight = nil
-		state.highlighted = nil
-
-		update_tier_table(state, {})
-    ::continue::
-	end
+function tierMenu.on_init()
+	lib.tick_later("invalidate_tiers") -- Is this actually necessary?
+	lib.seconds_later(2, "testing")
 end
-lib.register_func("invalidate_tiers", invalidateTiers)
+
+function tierMenu.on_configuration_changed()
+	lib.tick_later("invalidate_tiers")
+end
+--#endregion
+--#region Public Functions
+
+--#endregion
 
 local function test()
 	local self = global["tiergen-menu"][1] --[[@as WindowState.TierMenu]]
@@ -431,15 +449,4 @@ end
 lib.register_func("testing", test)
 
 ---@type event_handler
-return {
-	on_init = function ()
-		lib.tick_later("invalidate_tiers") -- Is this actually necessary?
-		lib.seconds_later(2, "testing")
-	end,
-	on_configuration_changed = function ()
-		lib.tick_later("invalidate_tiers")
-	end,
-	events = {
-		[defines.events.on_gui_click] = on_gui_click
-	}
-}
+return tierMenu
