@@ -408,6 +408,7 @@ local function invalidateTiers()
 	---@type WindowState.TierMenu[]
 	local namespace = global["tiergen-menu"]
 	for _, state in pairs(namespace) do
+		if _ == 0 then goto continue end
 		state.calculated_tab = 0
 		state[1] = base_tab()
 		state[2] = base_tab()
@@ -417,6 +418,7 @@ local function invalidateTiers()
 		state.highlighted = nil
 
 		update_tier_table(state, {})
+    ::continue::
 	end
 end
 lib.register_func("invalidate_tiers", invalidateTiers)
