@@ -15,8 +15,8 @@ local table_size = {
 ---@class WindowState.TierMenu : WindowState.ElemSelectorTable
 ---@field highlight simpleItem? The item clicked to highlight everything
 ---@field highlighted LuaGuiElement[]? List of elements currently highlighted
----@field selected_tab integer the tab that is currently selected
----@field calculated_tab integer the tab that was last calculated
+---@field selected_tab 1|2|3 the tab that is currently selected
+---@field calculated_tab 0|1|2|3 the tab that was last calculated
 ---@field [1] WindowState.TierMenu.tab
 ---@field [2] WindowState.TierMenu.tab
 ---@field [3] WindowState.TierMenu.tab
@@ -118,6 +118,8 @@ local function update_tier_table(self, tierArray)
 		return lib.log("Table or Error are invalid references")
 	end
 
+	table.clear()
+
 	if #tierArray == 0 then
 		error.visible = true
 		table.visible = false
@@ -131,6 +133,10 @@ local function update_tier_table(self, tierArray)
 	for tier, items in pairs(tierArray) do
 		make_new_tier_row(table, tier, items, namespace)
 	end
+end
+
+local function base_tab()
+	return {has_changed = true, calculated = {}}
 end
 
 gui.new{
@@ -303,9 +309,9 @@ gui.new{
 		state.selected_tab = state.selected_tab or 1
 		state.calculated_tab = state.calculated_tab or 0
 
-		state[1] = state[1] or {has_changed = true, calculated = {}}
-		state[2] = state[2] or {has_changed = true, calculated = {}}
-		state[3] = state[3] or {has_changed = true, calculated = {}}
+		state[1] = state[1] or base_tab()
+		state[2] = state[2] or base_tab()
+		state[3] = state[3] or base_tab()
 
 		state.base_changed = false
 		state.base_state = {}
@@ -395,6 +401,26 @@ local function on_gui_click(EventData)
 	end
 end
 
+--- Invalidates the tiers
+local function invalidateTiers()
+	calculator.uncalculate()
+
+	---@type WindowState.TierMenu[]
+	local namespace = global["tiergen-menu"]
+	for _, state in pairs(namespace) do
+		state.calculated_tab = 0
+		state[1] = base_tab()
+		state[2] = base_tab()
+		state[3] = base_tab()
+
+		state.highlight = nil
+		state.highlighted = nil
+
+		update_tier_table(state, {})
+	end
+end
+lib.register_func("invalidate_tiers", invalidateTiers)
+
 local function test()
 	local self = global["tiergen-menu"][1] --[[@as WindowState.TierMenu]]
 	local tierArray = calculator.getArray{lib.item("space-science-pack")}
@@ -405,7 +431,11 @@ lib.register_func("testing", test)
 ---@type event_handler
 return {
 	on_init = function ()
+		lib.tick_later("invalidate_tiers") -- Is this actually necessary?
 		lib.seconds_later(2, "testing")
+	end,
+	on_configuration_changed = function ()
+		lib.tick_later("invalidate_tiers")
 	end,
 	events = {
 		[defines.events.on_gui_click] = on_gui_click

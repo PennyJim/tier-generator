@@ -15,39 +15,6 @@ handler.add_lib(require("__tier-generator__.interface.tierConfig"))
 -- require("__tier-generator__.calculation.ErrorFinder")
 
 
----Recalculates the tiers
-local function recalcTiers()
-	calculator.uncalculate()
-	-- tierMenu.regenerate_menus()
-end
-lib.register_func("recalc", recalcTiers)
--- lib.register_func("tierMenu", tierMenu.init)
-
-main_handler.on_init = function ()
-	lib.tick_later("recalc")
-	-- lib.tick_later("tierMenu")
-end
-
-main_handler.events[defines.events.on_player_created] = function (EventData)
-	local player = game.get_player(EventData.player_index)
-	if not player then
-		return log("No player pressed created??")
-	end
-
-	if not global.config then
-		player.set_shortcut_available("tiergen-menu", false)
-	end
-	-- tierMenu.add_player(player)
-end
-
-main_handler.on_configuration_changed = function (ChangedData)
-	if ChangedData.mod_startup_settings_changed
-	or next(ChangedData.mod_changes)
-	or ChangedData.migration_applied then
-		lib.tick_later("recalc")
-	end
-end
-
 main_handler.events[defines.events.on_runtime_mod_setting_changed] = function (EventData)
 	local setting = EventData.setting
 	if EventData.setting_type == "runtime-global" then
