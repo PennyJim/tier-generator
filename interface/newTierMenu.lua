@@ -18,8 +18,8 @@ local tierMenu = {events={}}
 ---@class WindowState.TierMenu : WindowState.ElemSelectorTable
 ---@field highlight simpleItem? The item clicked to highlight everything
 ---@field highlighted LuaGuiElement[]? List of elements currently highlighted
----@field selected_tab 1|2|3 the tab that is currently selected
----@field calculated_tab 0|1|2|3 the tab that was last calculated
+---@field selected_tab integer the tab that is currently selected
+---@field calculated_tab integer the tab that was last calculated
 ---@field [1] WindowState.TierMenu.tab
 ---@field [2] WindowState.TierMenu.tab
 ---@field [3] WindowState.TierMenu.tab
@@ -265,7 +265,6 @@ gui.new{
 							}}
 						}
 					}
-					-- TODO: menu
 				}
 			}
 		} --[[@as WindowFrameButtonsDef]]
@@ -305,7 +304,56 @@ gui.new{
 		end,
 
 		["calculate"] = function (self, elem, event)
-			lib.log("CALCULATED") -- TODO: implement calculation
+			elem.enabled = false
+			local selected_index = self.selected_tab
+			local calculated_index = self.calculated_tab
+			self.calculated_tab = selected_index
+			local tab = self[selected_index]
+
+			if not tab.has_changed then
+				update_tier_table(self, tab.result)
+				return
+			end
+
+			---@type simpleItem[]
+			local new_calculated = {}
+			for _, type in pairs{"item","fluid"} do
+				local table = self.selector_table[selected_index.."_"..type.."_selection"] or {}
+				for _, value in ipairs(table) do
+					---@cast value string
+					new_calculated[#new_calculated+1] = lib.item(value, type)
+				end
+			end
+			tab.has_changed = false
+
+			local calculated_tab = self[calculated_index]
+			if calculated_tab then
+				local old_calculated = calculated_tab.calculated
+				if #old_calculated == #new_calculated then
+					local isDifferent = false
+					local index = 1
+					while not isDifferent and index <= #new_calculated do
+						isDifferent = new_calculated[index] ~= old_calculated[index]
+						index = index + 1
+					end
+					if not isDifferent then
+						tab.calculated = new_calculated
+						tab.result = calculated_tab.result
+						return -- Tier table is already set
+					end
+				end
+			end
+			tab.calculated = new_calculated
+
+			if #new_calculated == 0 then
+				tab.result = {}
+				update_tier_table(self, {})
+				return
+			end
+
+			local results = calculator.getArray(new_calculated)
+			tab.result = results
+			update_tier_table(self, results)
 		end,
 		["define-base"] = function (self, elem, event)
 			lib.log("BASED") -- TODO: implement base setting
