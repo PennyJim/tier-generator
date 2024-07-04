@@ -18,15 +18,15 @@ local handler_names = {
 
 ---@class update_row_obj
 ---@field valid boolean
----@field call fun(table:LuaGuiElement,last_index:integer,elem_type:ElemType,self:WindowState.ElemSelectorTable)?
+---@field call fun(table:LuaGuiElement,last_index:integer,elem_type:ElemType,state:WindowState.ElemSelectorTable)?
 local update_row_meta = {__index = {
 	valid = false,
 
 	---@param table LuaGuiElement
 	---@param last_index integer
 	---@param elem_type ElemType
-	---@param self WindowState.ElemSelectorTable
-	call = function (table, last_index, elem_type, self)
+	---@param state WindowState.ElemSelectorTable
+	call = function (table, last_index, elem_type, state) -- TODO: Add a setter instead of calling this constantly
 		local columns = table.column_count
 		local desired_rows = math.ceil(last_index/columns)+1
 		local children = table.children
@@ -40,7 +40,7 @@ local update_row_meta = {__index = {
 		else
 			-- Add elements
 			for _ = children_count, desired_rows*columns-1, 1 do
-				self.gui.add(self.namespace, table, {
+				state.gui.add(state.namespace, table, {
 					type = "choose-elem-button",
 					elem_type = elem_type,
 					handler = {[defines.events.on_gui_elem_changed] = handler_names.elem_changed}
@@ -53,10 +53,10 @@ if not data then -- Is required during data to check its structure.
 	script.register_metatable("update_row_meta", update_row_meta)
 end
 
----@param self WindowState.ElemSelectorTable
-module.setup_state = function (self)
-	self.selector_table = self.selector_table or {}
-	self.selector_update_rows = self.selector_update_rows or setmetatable({valid = false}, update_row_meta)
+---@param state WindowState.ElemSelectorTable
+module.setup_state = function (state)
+	state.selector_table = state.selector_table or {}
+	state.selector_update_rows = state.selector_update_rows or setmetatable({valid = false}, update_row_meta)
 end
 
 ---@class ElemSelectorTableParams : ModuleDef
@@ -139,12 +139,12 @@ function module.build_func(params)
 end
 
 -- How to define handlers
----@param self WindowState.ElemSelectorTable
+---@param state WindowState.ElemSelectorTable
 ---@param OriginalEvent EventData.on_gui_elem_changed
-module.handlers[handler_names.elem_changed] = function (self, elem, OriginalEvent)
+module.handlers[handler_names.elem_changed] = function (state, elem, OriginalEvent)
 	local table = elem.parent --[[@as LuaGuiElement]]
-	local elem_list = self.selector_table[table.name] or {count=0,last=0} --[[@as ElemList]]
-	self.selector_table[table.name] = elem_list
+	local elem_list = state.selector_table[table.name] or {count=0,last=0} --[[@as ElemList]]
+	state.selector_table[table.name] = elem_list
 	local elem = OriginalEvent.element
 	local index = elem.get_index_in_parent()
 	local type = elem.elem_type
@@ -169,7 +169,7 @@ module.handlers[handler_names.elem_changed] = function (self, elem, OriginalEven
 	if index > elem_list.last then
 		-- Set new last index and update rows
 		elem_list.last = index
-		self.selector_update_rows.call(table, index, type, self)
+		state.selector_update_rows.call(table, index, type, state)
 	elseif index == elem_list.last then
 		-- Decrement the last_index to the last item with a value
 		for new_last = index, 0, -1 do
@@ -180,7 +180,7 @@ module.handlers[handler_names.elem_changed] = function (self, elem, OriginalEven
 		end
 		-- Update the rows
 		local last_index = elem_list.last
-		self.selector_update_rows.call(table, last_index, type, self)
+		state.selector_update_rows.call(table, last_index, type, state)
 	end
 
 	return table
