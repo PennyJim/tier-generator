@@ -223,6 +223,8 @@ local function invalidateTiers()
 		state.highlight = nil
 		state.highlighted = nil
 
+		state.elems["calculate"].enabled = true
+
 		update_tier_table(state, {})
     ::continue::
 	end
