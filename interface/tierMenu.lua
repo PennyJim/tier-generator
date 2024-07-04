@@ -717,7 +717,7 @@ function tierMenu.update_ignored(ignored)
 	for player_index in pairs(game.players) do
 		local state = global["tiergen-menu"][player_index] --[[@as WindowState.TierMenu]]
 		local recipe_table = state.elems["ignored_recipe_selection"]
-		local recipe_values = state.selector_table["ignored_recipe_selection"] or {count=0,last=0}
+		local recipe_values = {count=0,last=0}
 		state.selector_table["ignored_recipe_selection"] = recipe_values
 
 		local update_rows = state.selector_update_rows.call
