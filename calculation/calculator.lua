@@ -7,7 +7,6 @@ local has_setup_core = false
 
 ---Tells the core calculator to drop its cache and consider sets its base items
 local function updateBase()
-	core.unset()
 	lib.log("Setting base item overrides")
 	local baseItems = global.config.base_items
 	for _, item in pairs(baseItems) do
@@ -65,6 +64,7 @@ end
 
 function calculator.unprocess()
 	core.unprocess()
+	has_setup_core = false
 end
 function calculator.uncalculate()
 	core.unset()

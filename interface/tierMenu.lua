@@ -203,7 +203,12 @@ end
 
 --- Invalidates the tiers
 local function invalidateTiers()
-	calculator.uncalculate()
+	if global.reprocess then
+		global.reprocess = nil
+		calculator.unprocess()
+	else
+		calculator.uncalculate()
+	end
 
 	---@type WindowState.TierMenu[]
 	local namespace = global["tiergen-menu"]
@@ -517,7 +522,7 @@ tierMenu.events[defines.events.on_runtime_mod_setting_changed] = function (Event
 	local setting = EventData.setting
 
 	if setting == "tiergen-consider-autoplace-setting" then
-		calculator.unprocess()
+		global.reprocess = true
 	end
 
 	if lib.isOurSetting(setting)
