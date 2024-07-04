@@ -414,9 +414,11 @@ gui.new{
 			local new_calculated = {}
 			for _, type in pairs{"item","fluid"} do
 				local table = state.selector_table[selected_index.."_"..type.."_selection"] or {}
-				for _, value in ipairs(table) do
+				for index, value in pairs(table) do
+					if lib.type(index) ~= "number" then goto continue end
 					---@cast value string
 					new_calculated[#new_calculated+1] = lib.item(value, type)
+			    ::continue::
 				end
 			end
 			tab.has_changed = false
@@ -457,7 +459,8 @@ gui.new{
 			local index, is_different = 0, false
 			for _, type in pairs{"item","fluid"} do
 				local table = state.selector_table["base_"..type.."_selection"] or {}
-				for _, value in ipairs(table) do
+				for item_index, value in pairs(table) do
+					if lib.type(item_index) ~= "number" then goto continue end
 					---@cast value string
 					index = index + 1
 					local new_item = lib.item(value, type)
@@ -465,6 +468,7 @@ gui.new{
 					if not is_different and new_item ~= old_base[index] then
 						is_different = true
 					end
+			    ::continue::
 				end
 			end
 
@@ -489,12 +493,14 @@ gui.new{
 			local new_count,old_count = 0,0
 			local is_different = false
 			local table = state.selector_table["ignored_recipe_selection"] or {}
-			for _, recipe in ipairs(table) do
+			for index, recipe in pairs(table) do
+				if lib.type(index) ~= "number" then goto continue end
 				new_count = new_count + 1
 				new_ignored[recipe] = true
 				if not is_different and not old_ignored[recipe] then
 					is_different = true
 				end
+			  ::continue::
 			end
 
 			--Count the old table because you can't do # on table<string,true>
