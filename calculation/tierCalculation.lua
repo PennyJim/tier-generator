@@ -49,6 +49,7 @@ setmetatable(invalidReason, {
 ---@class simpleItem
 ---@field name string
 ---@field type "item"|"fluid"
+---@field count integer?
 -- ---@field isDirect boolean
 ---@class tierArray
 ---@field [uint] simpleItem[]

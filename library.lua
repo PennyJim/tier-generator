@@ -315,22 +315,26 @@ local itemMetatable = {
 		return self.type..":"..self.name
 	end,
 	__eq = function (self, other)
-		return self.type == other.type and self.name == other.name
+		return self.type == other.type
+		and self.name == other.name
+		and self.count == other.count
 	end
 }
 script.register_metatable("simple-item", itemMetatable)
 ---Creates an item object
 ---@param name data.ItemID|data.FluidID
 ---@param type "item"|"fluid"?
+---@param count integer?
 ---@return simpleItem
-function library.item(name, type)
+function library.item(name, type, count)
 	return setmetatable({
 		name = name,
-		type = type or "item"
+		type = type or "item",
+		count = count
 	}, itemMetatable)
 end
 ---Creates an array of item objects from an array
----@param items {name:string,type:"item"|"fluid"}[]|string[]
+---@param items (simpleItem|string)[]
 ---@return simpleItem[]
 function library.items(items)
 	for i, item in pairs(items) do

@@ -463,7 +463,7 @@ gui.new{
 					if lib.type(item_index) ~= "number" then goto continue end
 					---@cast value string
 					index = index + 1
-					local new_item = lib.item(value, type)
+					local new_item = lib.item(value, type, item_index)
 					new_base[index] = new_item
 					if not is_different and new_item ~= old_base[index] then
 						is_different = true
@@ -662,11 +662,11 @@ function tierMenu.update_base(base)
 		local state = global["tiergen-menu"][player_index] --[[@as WindowState.TierMenu]]
 
 		local item_table = state.elems["base_item_selection"]
-		local item_values = state.selector_table["base_item_selection"] or {count=0}
+		local item_values = {count=0,last=0}
 		state.selector_table["base_item_selection"] = item_values
 
 		local fluid_table = state.elems["base_fluid_selection"]
-		local fluid_values = state.selector_table["base_fluid_selection"] or {count=0}
+		local fluid_values = {count=0,last=0}
 		state.selector_table["base_fluid_selection"] = fluid_values
 
 		local update_rows = state.selector_update_rows.call
@@ -674,7 +674,7 @@ function tierMenu.update_base(base)
 			error("elem_selector_table's function didn't get restored on save/load")
 		end
 
-		for index, item in pairs(base) do -- FIXME: Doesn't clear nil values
+		for _, item in pairs(base) do -- FIXME: Doesn't clear nil values
 			local elem_table, elem_values
 			if item.type == "item" then
 				elem_table = item_table
@@ -684,14 +684,14 @@ function tierMenu.update_base(base)
 				elem_values = fluid_values
 			end
 
+			local index = item.count or elem_values.last + 1
+
 			elem_table.children[index].elem_value = item.name
-			update_rows(elem_table, elem_values.count, item.type, state)
 			elem_values[index] = item.name
 			elem_values.count = elem_values.count + 1
+			elem_values.last = math.max(elem_values.last, index)
+			update_rows(elem_table, elem_values.last, item.type, state)
 		end
-
-		item_values.last = item_values.count
-		fluid_values.last = item_values.count
 	end
 end
 ---@param ignored table<data.RecipeID,true>
