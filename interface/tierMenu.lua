@@ -478,8 +478,8 @@ gui.new{
 				{config.ultimate_science},
 				{}
 			})
-			tierMenu.set_base(player_index, config.base_items)
-			tierMenu.set_ignored(player_index, config.ignored_recipes)
+			tierMenu.update_base(config.base_items)
+			tierMenu.update_ignored(config.ignored_recipes)
 		end
 	end
 } --[[@as newWindowParams]]
@@ -589,66 +589,68 @@ function tierMenu.set_items(player_index, tabs)
     ::continue::
 	end
 end
----@param player_index integer
 ---@param base simpleItem[]
-function tierMenu.set_base(player_index, base)
-	local state = global["tiergen-menu"][player_index] --[[@as WindowState.TierMenu]]
+function tierMenu.update_base(base)
+	for player_index in pairs(game.players) do
+		local state = global["tiergen-menu"][player_index] --[[@as WindowState.TierMenu]]
 
-	local item_table = state.elems["base_item_selection"]
-	local item_values = state.selector_table["base_item_selection"] or {count=0}
-	state.selector_table["base_item_selection"] = item_values
+		local item_table = state.elems["base_item_selection"]
+		local item_values = state.selector_table["base_item_selection"] or {count=0}
+		state.selector_table["base_item_selection"] = item_values
 
-	local fluid_table = state.elems["base_fluid_selection"]
-	local fluid_values = state.selector_table["base_fluid_selection"] or {count=0}
-	state.selector_table["base_fluid_selection"] = fluid_values
+		local fluid_table = state.elems["base_fluid_selection"]
+		local fluid_values = state.selector_table["base_fluid_selection"] or {count=0}
+		state.selector_table["base_fluid_selection"] = fluid_values
 
-	local update_rows = state.selector_update_rows.call
-	if not update_rows then
-		error("elem_selector_table's function didn't get restored on save/load")
-	end
-
-	for index, item in pairs(base) do
-		local elem_table, elem_values
-		if item.type == "item" then
-			elem_table = item_table
-			elem_values = item_values
-		else
-			elem_table = fluid_table
-			elem_values = fluid_values
+		local update_rows = state.selector_update_rows.call
+		if not update_rows then
+			error("elem_selector_table's function didn't get restored on save/load")
 		end
 
-		elem_table.children[index].elem_value = item.name
-		update_rows(elem_table, elem_values.count, item.type, state)
-		elem_values[index] = item.name
-		elem_values.count = elem_values.count + 1
-	end
+		for index, item in pairs(base) do
+			local elem_table, elem_values
+			if item.type == "item" then
+				elem_table = item_table
+				elem_values = item_values
+			else
+				elem_table = fluid_table
+				elem_values = fluid_values
+			end
 
-	item_values.last = item_values.count
-	fluid_values.last = item_values.count
+			elem_table.children[index].elem_value = item.name
+			update_rows(elem_table, elem_values.count, item.type, state)
+			elem_values[index] = item.name
+			elem_values.count = elem_values.count + 1
+		end
+
+		item_values.last = item_values.count
+		fluid_values.last = item_values.count
+	end
 end
----@param player_index integer
 ---@param ignored table<data.RecipeID,true>
-function tierMenu.set_ignored(player_index, ignored)
-	local state = global["tiergen-menu"][player_index] --[[@as WindowState.TierMenu]]
-	local recipe_table = state.elems["ignored_recipe_selection"]
-	local recipe_values = state.selector_table["ignored_recipe_selection"] or {count=0}
-	state.selector_table["ignored_recipe_selection"] = recipe_values
+function tierMenu.update_ignored(ignored)
+	for player_index in pairs(game.players) do
+		local state = global["tiergen-menu"][player_index] --[[@as WindowState.TierMenu]]
+		local recipe_table = state.elems["ignored_recipe_selection"]
+		local recipe_values = state.selector_table["ignored_recipe_selection"] or {count=0}
+		state.selector_table["ignored_recipe_selection"] = recipe_values
 
-	local update_rows = state.selector_update_rows.call
-	if not update_rows then
-		error("elem_selector_table's function didn't get restored on save/load")
+		local update_rows = state.selector_update_rows.call
+		if not update_rows then
+			error("elem_selector_table's function didn't get restored on save/load")
+		end
+
+		local index = 0
+		for recipe in pairs(ignored) do
+			index = index + 1
+			recipe_table.children[index].elem_value = recipe
+			update_rows(recipe_table, index, "recipe", state)
+			recipe_values[index] = recipe
+		end
+
+		recipe_values.last = index
+		recipe_values.count = index
 	end
-
-	local index = 0
-	for recipe in pairs(ignored) do
-		index = index + 1
-		recipe_table.children[index].elem_value = recipe
-		update_rows(recipe_table, index, "recipe", state)
-		recipe_values[index] = recipe
-	end
-
-	recipe_values.last = index
-	recipe_values.count = index
 end
 --#endregion
 

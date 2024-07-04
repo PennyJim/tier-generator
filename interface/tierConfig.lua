@@ -105,10 +105,10 @@ local function actually_init()
 			{config.ultimate_science},
 			{}
 		})
-		menu.set_base(player_index, config.base_items)
-		menu.set_ignored(player_index, config.ignored_recipes)
 		player.set_shortcut_available("tiergen-menu", true)
 	end
+	menu.update_base(config.base_items)
+	menu.update_ignored(config.ignored_recipes)
 
 	lib.global_print(message)
 end
