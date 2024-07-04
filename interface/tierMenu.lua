@@ -486,24 +486,32 @@ gui.new{
 
 			---@type table<string,true>
 			local new_ignored,old_ignored = {},global.config.ignored_recipes
+			local new_count,old_count = 0,0
 			local is_different = false
-			local table = self.selector_table["base_recipe_selection"] or {}
+			local table = self.selector_table["ignored_recipe_selection"] or {}
 			for _, recipe in ipairs(table) do
+				new_count = new_count + 1
 				new_ignored[recipe] = true
 				if not is_different and not old_ignored[recipe] then
 					is_different = true
 				end
 			end
 
+			--Count the old table because you can't do # on table<string,true>
+			for _ in pairs(old_ignored) do
+				old_count = old_count + 1
+			end
+
 			--Mark as different if the old one had a different amount
 			if not is_different then
-				is_different = #old_ignored ~= #new_ignored
+				is_different = old_count ~= new_count
 			end
 
 			if not is_different then
 				return -- Don't do anything if it wasn't changed
 			end
 
+			global.reprocess = true
 			invalidateTiers()
 			tierMenu.update_ignored(new_ignored)
 			global.config.ignored_recipes = new_ignored
