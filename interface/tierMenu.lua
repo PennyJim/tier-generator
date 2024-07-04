@@ -248,7 +248,6 @@ gui.new{
 					type = "frame", style = "inside_shallow_frame",
 					direction = "vertical",
 ---@diagnostic disable-next-line: missing-fields
-					style_mods = {height = 16*44 },
 					children = {
 						{ -- Requested items
 							type = "module", module_type = "tiergen_selection_area",
@@ -367,8 +366,7 @@ gui.new{
 		} --[[@as WindowFrameButtonsDef]]
 	} --[[@as GuiWindowDef]],
 	handlers = {
-		---@param event EventData.on_gui_selected_tab_changed
-		["tab-changed"] = function (self, elem, event)
+		["tab-changed"] = function (self, elem)
 			local selected_tab = elem.selected_tab_index --[[@as integer]]
 			self.selected_tab = selected_tab
 			local calculate = self.elems["calculate"]
@@ -379,7 +377,7 @@ gui.new{
 				calculate.enabled = self[selected_tab].has_changed
 			end
 		end,
-		["elems-changed"] = function (self, elem, event)
+		["elems-changed"] = function (self, elem)
 			local name = elem.name
 			if name:match("base") then
 				-- Base items
@@ -400,7 +398,7 @@ gui.new{
 			end
 		end,
 
-		["calculate"] = function (self, elem, event)
+		["calculate"] = function (self, elem)
 			elem.enabled = false
 			local selected_index = self.selected_tab
 			local calculated_index = self.calculated_tab
@@ -452,7 +450,7 @@ gui.new{
 			tab.result = results
 			update_tier_table(self, results)
 		end,
-		["define-base"] = function (self, elem, event)
+		["define-base"] = function (self, elem)
 			elem.enabled = false
 
 			local new_base,old_base = {},global.config.base_items
@@ -483,7 +481,7 @@ gui.new{
 			tierMenu.update_base(new_base)
 			global.config.base_items = new_base
 		end,
-		["define-ignored"] = function (self, elem, event)
+		["define-ignored"] = function (self, elem)
 			elem.enabled = false
 
 			---@type table<string,true>
