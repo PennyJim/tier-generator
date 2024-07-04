@@ -7,8 +7,8 @@ local config_handlers = {}
 ---@field ultimate_science simpleItem
 ---@field all_sciences simpleItem[]
 ---@field base_items (simpleItem|tierResult)[]
----@field ignored_recipes table<data.RecipeID,true> --An array of lua patterns
----@field ignored_patterns string[]?
+---@field ignored_recipes table<data.RecipeID,integer|true> -- The integer is for which index in the table it is. Defaults to the next elem
+---@field ignored_patterns string[]? --An array of lua patterns
 ---@field consider_technology boolean?
 ---@field consider_autoplace_setting boolean?
 ---@field injected_recipes table<data.ItemID,CompleteFakeRecipe>?
@@ -42,7 +42,7 @@ local vanilla_config = require("__tier-generator__.compatibility.base")
 
 -- Process the patterns into ignored_recipes
 ---@param ignored_patterns string[] the list of patterns
----@param ignored_recipes table<string,true> the list of ignored recipes
+---@param ignored_recipes table<string,integer|true> the list of ignored recipes
 local function expand_patterns(ignored_patterns, ignored_recipes)
 	for _, pattern in pairs(ignored_patterns) do
 		for key in pairs(game.recipe_prototypes) do

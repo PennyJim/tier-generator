@@ -488,7 +488,7 @@ gui.new{
 		["define-ignored"] = function (state, elem)
 			elem.enabled = false
 
-			---@type table<string,true>
+			---@type table<string,integer>
 			local new_ignored,old_ignored = {},global.config.ignored_recipes
 			local new_count,old_count = 0,0
 			local is_different = false
@@ -496,7 +496,7 @@ gui.new{
 			for index, recipe in pairs(table) do
 				if lib.type(index) ~= "number" then goto continue end
 				new_count = new_count + 1
-				new_ignored[recipe] = true
+				new_ignored[recipe] = index
 				if not is_different and not old_ignored[recipe] then
 					is_different = true
 				end
@@ -713,12 +713,12 @@ function tierMenu.update_base(base)
 		update_rows(fluid_table, fluid_values.last, "fluid", state)
 	end
 end
----@param ignored table<data.RecipeID,true>
+---@param ignored table<data.RecipeID,integer|true>
 function tierMenu.update_ignored(ignored)
 	for player_index in pairs(game.players) do
 		local state = global["tiergen-menu"][player_index] --[[@as WindowState.TierMenu]]
 		local recipe_table = state.elems["ignored_recipe_selection"]
-		local recipe_values = state.selector_table["ignored_recipe_selection"] or {count=0}
+		local recipe_values = state.selector_table["ignored_recipe_selection"] or {count=0,last=0}
 		state.selector_table["ignored_recipe_selection"] = recipe_values
 
 		local update_rows = state.selector_update_rows.call
@@ -726,16 +726,19 @@ function tierMenu.update_ignored(ignored)
 			error("elem_selector_table's function didn't get restored on save/load")
 		end
 
-		local index = 0
-		for recipe in pairs(ignored) do -- FIXME: Doesn't clear nil values
-			index = index + 1
-			recipe_table.children[index].elem_value = recipe
-			update_rows(recipe_table, index, "recipe", state)
-			recipe_values[index] = recipe
-		end
+		for recipe, index in pairs(ignored) do -- FIXME: Doesn't clear nil values
+			if type(index) == "boolean" then
+				index = recipe_values.last + 1
+				recipe_values.last = index
+			elseif index > recipe_values.last then
+				recipe_values.last = index
+			end
+			update_rows(recipe_table, recipe_values.last, "recipe", state)
 
-		recipe_values.last = index
-		recipe_values.count = index
+			recipe_table.children[index].elem_value = recipe
+			recipe_values[index] = recipe
+			recipe_values.count = recipe_values.count + 1
+		end
 	end
 end
 --#endregion
