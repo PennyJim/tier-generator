@@ -608,7 +608,6 @@ end
 --#endregion
 --#region Public Functions
 
----Sets the items in the 
 ---@param player_index integer
 ---@param tabs {[1]:simpleItem[],[2]:simpleItem[],[3]:simpleItem[]}
 function tierMenu.set_items(player_index, tabs)
@@ -726,6 +725,8 @@ function tierMenu.update_ignored(ignored)
 			error("elem_selector_table's function didn't get restored on save/load")
 		end
 
+		---@type table<integer,true>
+		local visited = {}
 		for recipe, index in pairs(ignored) do -- FIXME: Doesn't clear nil values
 			if type(index) == "boolean" then
 				index = recipe_values.last + 1
@@ -733,12 +734,21 @@ function tierMenu.update_ignored(ignored)
 			elseif index > recipe_values.last then
 				recipe_values.last = index
 			end
+			visited[index] = true
 			update_rows(recipe_table, recipe_values.last, "recipe", state)
 
 			recipe_table.children[index].elem_value = recipe
 			recipe_values[index] = recipe
 			recipe_values.count = recipe_values.count + 1
 		end
+
+		--- Clear unvisited elems
+		for index, elem in pairs(recipe_table.children) do
+			if not visited[index] then
+				elem.elem_value = nil
+			end
+		end
+		update_rows(recipe_table, recipe_values.last, "recipe", state)
 	end
 end
 --#endregion
