@@ -112,10 +112,10 @@ local function make_new_tier_row(table, tier, tierdigits, items, namespace)
 	}, true)
 end
 ---Generates the tier table for the given array
----@param self WindowState.TierMenu
+---@param state WindowState.TierMenu
 ---@param tierArray table<integer, simpleItem[]>
-local function update_tier_table(self, tierArray)
-	local elems = self.elems
+local function update_tier_table(state, tierArray)
+	local elems = state.elems
 	local error = elems["error-message"]
 	local table = elems["tier-table"]
 	if not error.valid or not table.valid then
@@ -138,7 +138,7 @@ local function update_tier_table(self, tierArray)
 	local background = table.parent.children[2]
 	background.style = "tiergen_tierlist_"..tier_digits.."_background"
 
-	local namespace = self.namespace
+	local namespace = state.namespace
 	for tier, items in pairs(tierArray) do
 		make_new_tier_row(table, tier, tier_digits, items, namespace)
 	end
@@ -156,21 +156,21 @@ local function base_tab(is_default)
 end
 
 ---Highlights the items in the player's global highlight array
----@param self WindowState.TierMenu
-local function highlightItems(self)
-	local highlightedList = self.highlighted or {}
-	self.highlighted = highlightedList
-	local highlightItem = self.highlight
+---@param state WindowState.TierMenu
+local function highlightItems(state)
+	local highlightedList = state.highlighted or {}
+	state.highlighted = highlightedList
+	local highlightItem = state.highlight
 	if not highlightItem then return end
 
-	local table = self.elems["tier-table"]
+	local table = state.elems["tier-table"]
 	if table and table.valid and not table.parent.visible then
 		return -- No tiers error message
 	end
 
 	for item in calculator.get{highlightItem} do
 		local button_name = item.type.."/"..item.name
-		local button = self.elems[button_name]
+		local button = state.elems[button_name]
 
 		-- ---@type LuaGuiElement
 		-- local item_table = table.children[(item.tier+1)*2]["tierlist-items"]
@@ -180,7 +180,7 @@ local function highlightItems(self)
 			-- Can't highlight an invalid element,
 			-- so remove the invalid reference.
 			-- If it didn't exist, this does nothing
-			self.elems[button_name] = nil
+			state.elems[button_name] = nil
 		else
 			button.toggled = true
 			highlightedList[#highlightedList+1] = button
@@ -188,9 +188,9 @@ local function highlightItems(self)
 	end
 end
 ---Highlights the items in the player's global highlight array
----@param self WindowState.TierMenu
-local function unhighlightItems(self)
-	local highlightedList = self.highlighted
+---@param state WindowState.TierMenu
+local function unhighlightItems(state)
+	local highlightedList = state.highlighted
 	if not highlightedList then return end
 	for _, highlightedElem in ipairs(highlightedList) do
 		---@cast highlightedElem LuaGuiElement
@@ -198,8 +198,8 @@ local function unhighlightItems(self)
 			highlightedElem.toggled = false
 		end
 	end
-	self.highlight = nil
-	self.highlighted = nil
+	state.highlight = nil
+	state.highlighted = nil
 end
 
 --- Invalidates the tiers
@@ -366,54 +366,54 @@ gui.new{
 		} --[[@as WindowFrameButtonsDef]]
 	} --[[@as GuiWindowDef]],
 	handlers = {
-		["tab-changed"] = function (self, elem)
+		["tab-changed"] = function (state, elem)
 			local selected_tab = elem.selected_tab_index --[[@as integer]]
-			self.selected_tab = selected_tab
-			local calculate = self.elems["calculate"]
+			state.selected_tab = selected_tab
+			local calculate = state.elems["calculate"]
 
-			if self.selected_tab ~= self.calculated_tab then
+			if state.selected_tab ~= state.calculated_tab then
 				calculate.enabled = true
 			else
-				calculate.enabled = self[selected_tab].has_changed
+				calculate.enabled = state[selected_tab].has_changed
 			end
 		end,
-		["elems-changed"] = function (self, elem)
+		["elems-changed"] = function (state, elem)
 			local name = elem.name
 			if name:match("base") then
 				-- Base items
-				self.base_changed = true
-				self.elems["define-base"].enabled = true
+				state.base_changed = true
+				state.elems["define-base"].enabled = true
 
 			elseif name:match("ignored") then
 				-- Ignored items
-				self.ignored_changed = true
-				self.elems["define-ignored"].enabled = true
+				state.ignored_changed = true
+				state.elems["define-ignored"].enabled = true
 
 			else
 				-- Tab
-				local tab = self[self.selected_tab]
+				local tab = state[state.selected_tab]
 				tab.has_changed = true
 				tab.has_changed_from_default = true
-				self.elems["calculate"].enabled = true
+				state.elems["calculate"].enabled = true
 			end
 		end,
 
-		["calculate"] = function (self, elem)
+		["calculate"] = function (state, elem)
 			elem.enabled = false
-			local selected_index = self.selected_tab
-			local calculated_index = self.calculated_tab
-			self.calculated_tab = selected_index
-			local tab = self[selected_index]
+			local selected_index = state.selected_tab
+			local calculated_index = state.calculated_tab
+			state.calculated_tab = selected_index
+			local tab = state[selected_index]
 
 			if not tab.has_changed then
-				update_tier_table(self, tab.result)
+				update_tier_table(state, tab.result)
 				return
 			end
 
 			---@type simpleItem[]
 			local new_calculated = {}
 			for _, type in pairs{"item","fluid"} do
-				local table = self.selector_table[selected_index.."_"..type.."_selection"] or {}
+				local table = state.selector_table[selected_index.."_"..type.."_selection"] or {}
 				for _, value in ipairs(table) do
 					---@cast value string
 					new_calculated[#new_calculated+1] = lib.item(value, type)
@@ -421,7 +421,7 @@ gui.new{
 			end
 			tab.has_changed = false
 
-			local calculated_tab = self[calculated_index]
+			local calculated_tab = state[calculated_index]
 			if calculated_tab then
 				local old_calculated = calculated_tab.calculated
 				if #old_calculated == #new_calculated then
@@ -442,21 +442,21 @@ gui.new{
 
 			if #new_calculated == 0 then
 				tab.result = {}
-				update_tier_table(self, {})
+				update_tier_table(state, {})
 				return
 			end
 
 			local results = calculator.getArray(new_calculated)
 			tab.result = results
-			update_tier_table(self, results)
+			update_tier_table(state, results)
 		end,
-		["define-base"] = function (self, elem)
+		["define-base"] = function (state, elem)
 			elem.enabled = false
 
 			local new_base,old_base = {},global.config.base_items
 			local index, is_different = 0, false
 			for _, type in pairs{"item","fluid"} do
-				local table = self.selector_table["base_"..type.."_selection"] or {}
+				local table = state.selector_table["base_"..type.."_selection"] or {}
 				for _, value in ipairs(table) do
 					---@cast value string
 					index = index + 1
@@ -481,14 +481,14 @@ gui.new{
 			tierMenu.update_base(new_base)
 			global.config.base_items = new_base
 		end,
-		["define-ignored"] = function (self, elem)
+		["define-ignored"] = function (state, elem)
 			elem.enabled = false
 
 			---@type table<string,true>
 			local new_ignored,old_ignored = {},global.config.ignored_recipes
 			local new_count,old_count = 0,0
 			local is_different = false
-			local table = self.selector_table["ignored_recipe_selection"] or {}
+			local table = state.selector_table["ignored_recipe_selection"] or {}
 			for _, recipe in ipairs(table) do
 				new_count = new_count + 1
 				new_ignored[recipe] = true
@@ -516,7 +516,7 @@ gui.new{
 			tierMenu.update_ignored(new_ignored)
 			global.config.ignored_recipes = new_ignored
 		end
-	} --[[@as table<any, fun(self:WindowState.TierMenu,elem:LuaGuiElement,event:GuiEventData)>]],
+	} --[[@as table<any, fun(state:WindowState.TierMenu,elem:LuaGuiElement,event:GuiEventData)>]],
 	state_setup = function (state)
 		---@cast state WindowState.TierMenu
 		state.selected_tab = state.selected_tab or 1
@@ -551,8 +551,8 @@ tierMenu.events[defines.events.on_gui_click] = function(EventData)
 	local element = EventData.element
 	local WindowStates = global["tiergen-menu"] --[[@as WindowState[] ]]
 	if not WindowStates then return end -- Don't do anything if the namespace isn't setup
-	local self = WindowStates[EventData.player_index] --[[@as WindowState.TierMenu]]
-	if not self then return end -- Don't do anything if the player isn't setup
+	local state = WindowStates[EventData.player_index] --[[@as WindowState.TierMenu]]
+	if not state then return end -- Don't do anything if the player isn't setup
 
 	local parent = element.parent
 	if not parent or not parent.name then return end
@@ -563,20 +563,20 @@ tierMenu.events[defines.events.on_gui_click] = function(EventData)
 		local item = type_item:match("/.+"):sub(2)
 		---@type simpleItem
 		local highlightItem = {name=item,type=type}
-		local oldHighlight = self.highlight
+		local oldHighlight = state.highlight
 		if oldHighlight then
 			if oldHighlight.name ~= item
 			or oldHighlight.type ~= type then
-				unhighlightItems(self)
-				self.highlight = highlightItem
-				highlightItems(self)
+				unhighlightItems(state)
+				state.highlight = highlightItem
+				highlightItems(state)
 			end
 		else
-			self.highlight = highlightItem
-			highlightItems(self)
+			state.highlight = highlightItem
+			highlightItems(state)
 		end
 	else
-		unhighlightItems(self)
+		unhighlightItems(state)
 	end
 end
 tierMenu.events[defines.events.on_runtime_mod_setting_changed] = function (EventData)
