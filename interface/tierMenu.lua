@@ -145,12 +145,13 @@ local function update_tier_table(self, tierArray)
 end
 
 ---Shorthand for making the base tab struct
+---@param is_default boolean
 ---@return WindowState.TierMenu.tab
-local function base_tab()
+local function base_tab(is_default)
 	return {
 		has_changed = true,
 		calculated = {},
-		has_changed_from_default = false
+		has_changed_from_default = not is_default
 	}	--[[@as WindowState.TierMenu.tab]]
 end
 
@@ -215,9 +216,9 @@ local function invalidateTiers()
 	for _, state in pairs(namespace) do
 		if _ == 0 then goto continue end
 		state.calculated_tab = 0
-		state[1] = base_tab()
-		state[2] = base_tab()
-		state[3] = base_tab()
+		state[1] = base_tab(not state[1].has_changed_from_default)
+		state[2] = base_tab(not state[2].has_changed_from_default)
+		state[3] = base_tab(not state[3].has_changed_from_default)
 
 		state.highlight = nil
 		state.highlighted = nil
@@ -513,9 +514,9 @@ gui.new{
 		state.selected_tab = state.selected_tab or 1
 		state.calculated_tab = state.calculated_tab or 0
 
-		state[1] = state[1] or base_tab()
-		state[2] = state[2] or base_tab()
-		state[3] = state[3] or base_tab()
+		state[1] = state[1] or base_tab(true)
+		state[2] = state[2] or base_tab(true)
+		state[3] = state[3] or base_tab(true)
 
 		state.base_changed = false
 		state.base_state = {}
