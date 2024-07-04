@@ -690,11 +690,12 @@ function tierMenu.update_base(base)
 			local index = item.count or elem_values.last + 1
 			visited[index] = true
 
+			elem_values.last = math.max(elem_values.last, index)
+			update_rows(elem_table, elem_values.last, item.type, state)
+
 			elem_table.children[index].elem_value = item.name
 			elem_values[index] = item.name
 			elem_values.count = elem_values.count + 1
-			elem_values.last = math.max(elem_values.last, index)
-			update_rows(elem_table, elem_values.last, item.type, state)
 		end
 
 		-- Clear unvisited elems
