@@ -55,6 +55,66 @@ styles.tiergen_confirm_button = {
 	top_margin = 4,
 }
 
+local label_padding = 4
+local label_widths = {37,45,53}
+styles.tiergen_tierlabel = {
+	type = "label_style",
+	right_padding = label_padding
+}
+local background_graphical_set = styles.slot_button_deep_frame.background_graphical_set
+local tierlist_background = table.deepcopy(background_graphical_set)
+tierlist_background.overall_tiling_vertical_spacing = 12
+tierlist_background.overall_tiling_vertical_padding = 6
+tierlist_background.custom_horizontal_tiling_sizes = {
+	5, -- Visually obviously wrong
+	32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32
+}
+local tierlist_backgrounds = {
+	tierlist_background,
+	table.deepcopy(tierlist_background),
+	table.deepcopy(tierlist_background),
+}
+tierlist_backgrounds[1].custom_horizontal_tiling_sizes[1] = label_padding + label_widths[1]
+styles.tiergen_tierlist_background = {
+	type = "frame_style",
+	parent = "slot_button_deep_frame",
+	vertically_stretchable = "on",
+	horizontally_stretchable = "on",
+}
+styles.tiergen_tierlabel_1 = {
+	type = "label_style",
+	parent = "tiergen_tierlabel",
+	width = label_widths[1]
+}
+tierlist_backgrounds[1].custom_horizontal_tiling_sizes[1] = label_padding + label_widths[1]
+styles.tiergen_tierlist_1_background = {
+	type = "frame_style",
+	parent = "tiergen_tierlist_background",
+	background_graphical_set = tierlist_backgrounds[1]
+}
+styles.tiergen_tierlabel_2 = {
+	type = "label_style",
+	parent = "tiergen_tierlabel",
+	width = label_widths[2]
+}
+tierlist_backgrounds[2].custom_horizontal_tiling_sizes[1] = label_padding + label_widths[2]
+styles.tiergen_tierlist_2_background = {
+	type = "frame_style",
+	parent = "tiergen_tierlist_background",
+	background_graphical_set = tierlist_backgrounds[2]
+}
+styles.tiergen_tierlabel_3 = {
+	type = "label_style",
+	parent = "tiergen_tierlabel",
+	width = label_widths[3]
+}
+tierlist_backgrounds[3].custom_horizontal_tiling_sizes[1] = label_padding + label_widths[3]
+styles.tiergen_tierlist_3_background = {
+	type = "frame_style",
+	parent = "tiergen_tierlist_background",
+	background_graphical_set = tierlist_backgrounds[3]
+}
+
 --#region Isn't scalable
 -- Only works on 125% scale
 -- styles.tiergen_wide_horizontal_flow = {

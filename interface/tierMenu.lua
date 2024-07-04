@@ -75,12 +75,10 @@ end
 ---@param tier integer
 ---@param items simpleItem[]
 ---@param namespace namespace
-local function make_new_tier_row(table, tier, items, namespace)
+local function make_new_tier_row(table, tier, tierdigits, items, namespace)
 	gui.add(namespace, table, {
-		type = "label",
+		type = "label", style = "tiergen_tierlabel_"..tierdigits,
 		caption = {"tiergen.tier-label", tier-1},
----@diagnostic disable-next-line: missing-fields
-		style_mods = {right_padding = 4},
 	}, true)
 
 	---@type GuiElemModuleDef[]
@@ -123,18 +121,23 @@ local function update_tier_table(self, tierArray)
 
 	table.clear()
 
-	if #tierArray == 0 then
+	local tier_digits = #tierArray
+	if tier_digits == 0 then
 		error.visible = true
-		table.visible = false
+		table.parent.visible = false
 		return
 	else
 		error.visible = false
-		table.visible = true
+		table.parent.visible = true
 	end
+
+	tier_digits = #tostring(tier_digits)
+	local background = table.parent.children[2]
+	background.style = "tiergen_tierlist_"..tier_digits.."_background"
 
 	local namespace = self.namespace
 	for tier, items in pairs(tierArray) do
-		make_new_tier_row(table, tier, items, namespace)
+		make_new_tier_row(table, tier, tier_digits, items, namespace)
 	end
 end
 
@@ -264,6 +267,8 @@ gui.new{
 						},
 						{ -- Tier graph
 							type = "scroll-pane", style = "naked_scroll_pane",
+---@diagnostic disable-next-line: missing-fields
+							elem_mods = {visible = false},
 							-- style_mods = {left_padding = 8},
 							children = {{
 								type = "table", direction = "vertical",
@@ -271,8 +276,8 @@ gui.new{
 								draw_horizontal_lines = true,
 	---@diagnostic disable-next-line: missing-fields
 								style_mods = {left_padding = 8},
-	---@diagnostic disable-next-line: missing-fields
-								elem_mods = {visible = false}
+							},{
+								type = "frame", style = "tiergen_tierlist_background",
 							}}
 						}
 					}
@@ -412,7 +417,7 @@ local function highlightItems(self)
 	if not highlightItem then return end
 
 	local table = self.elems["tier-table"]
-	if table and table.valid and not table.visible then
+	if table and table.valid and not table.parent.visible then
 		return -- No tiers error message
 	end
 
