@@ -629,7 +629,7 @@ function tierMenu.set_items(player_index, tabs)
 		local fluid_values = values[fluids] or {count=0}
 		values[fluids] = fluid_values
 
-		for index, item in pairs(tabs[i]) do
+		for index, item in pairs(tabs[i]) do -- FIXME: Doesn't clear the nil values
 			local elem_table, elem_values
 			if item.type == "item" then
 				elem_table = item_table
@@ -668,7 +668,7 @@ function tierMenu.update_base(base)
 			error("elem_selector_table's function didn't get restored on save/load")
 		end
 
-		for index, item in pairs(base) do
+		for index, item in pairs(base) do -- FIXME: Doesn't clear nil values
 			local elem_table, elem_values
 			if item.type == "item" then
 				elem_table = item_table
@@ -702,7 +702,7 @@ function tierMenu.update_ignored(ignored)
 		end
 
 		local index = 0
-		for recipe in pairs(ignored) do
+		for recipe in pairs(ignored) do -- FIXME: Doesn't clear nil values
 			index = index + 1
 			recipe_table.children[index].elem_value = recipe
 			update_rows(recipe_table, index, "recipe", state)
