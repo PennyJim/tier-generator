@@ -626,32 +626,51 @@ function tierMenu.set_items(player_index, tabs)
 
 		local items = i.."_item_selection"
 		local item_table = elems[items]
-		local item_values = values[items] or {count=0}
+		local item_values = {count=0,last=0}
 		values[items] = item_values
 
 		local fluids = i.."_fluid_selection"
 		local fluid_table = elems[fluids]
-		local fluid_values = values[fluids] or {count=0}
+		local fluid_values = {count=0,last=0}
 		values[fluids] = fluid_values
 
-		for index, item in pairs(tabs[i]) do -- FIXME: Doesn't clear the nil values
-			local elem_table, elem_values
+		local visited_items,visited_fluids = {},{}
+		for _, item in pairs(tabs[i]) do
+			local elem_table, elem_values, visited
 			if item.type == "item" then
 				elem_table = item_table
 				elem_values = item_values
+				visited = visited_items
 			else
 				elem_table = fluid_table
 				elem_values = fluid_values
+				visited = visited_fluids
 			end
 
+			local index = item.count or elem_values.last + 1
+			visited[index] = true
+
+			elem_values.last = math.max(index, elem_values.last)
+			update_rows(elem_table, elem_values.last, item.type, state)
+
 			elem_table.children[index].elem_value = item.name
-			update_rows(elem_table, elem_values.count, item.type, state)
 			elem_values[index] = item.name
 			elem_values.count = elem_values.count + 1
 		end
 
-		item_values.last = item_values.count
-		fluid_values.last = item_values.count
+		-- Clear unvisited elems
+		for index, elem in pairs(item_table.children) do
+			if not visited_items[index] then
+				elem.elem_value = nil
+			end
+		end
+		update_rows(item_table, item_values.last, "item", state)
+		for index, elem in pairs(fluid_table.children) do
+			if visited_fluids[index] then
+				elem.elem_value = nil
+			end
+		end
+		update_rows(fluid_table, fluid_values.last, "fluid", state)
     ::continue::
 	end
 end
@@ -674,7 +693,7 @@ function tierMenu.update_base(base)
 		end
 
 		local visited_items,visited_fluids = {},{}
-		for _, item in pairs(base) do -- FIXME: Doesn't clear nil values
+		for _, item in pairs(base) do
 			local elem_table, elem_values, visited
 			if item.type == "item" then
 				elem_table = item_table
@@ -727,7 +746,7 @@ function tierMenu.update_ignored(ignored)
 
 		---@type table<integer,true>
 		local visited = {}
-		for recipe, index in pairs(ignored) do -- FIXME: Doesn't clear nil values
+		for recipe, index in pairs(ignored) do
 			if type(index) == "boolean" then
 				index = recipe_values.last + 1
 				recipe_values.last = index
