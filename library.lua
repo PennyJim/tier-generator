@@ -370,6 +370,7 @@ local nth_tick_handlers = {}
 ---@param name string
 ---@param func fun(data:NthTickEventData)
 function library.register_func(name, func)
+	if game then error("You should not be calling register_func outside initial loading") end
 	if nth_tick_handlers[name] then
 		error("Two handlers cannot share a name", 2)
 	end
