@@ -674,17 +674,21 @@ function tierMenu.update_base(base)
 			error("elem_selector_table's function didn't get restored on save/load")
 		end
 
+		local visited_items,visited_fluids = {},{}
 		for _, item in pairs(base) do -- FIXME: Doesn't clear nil values
-			local elem_table, elem_values
+			local elem_table, elem_values, visited
 			if item.type == "item" then
 				elem_table = item_table
 				elem_values = item_values
+				visited = visited_items
 			else
 				elem_table = fluid_table
 				elem_values = fluid_values
+				visited = visited_fluids
 			end
 
 			local index = item.count or elem_values.last + 1
+			visited[index] = true
 
 			elem_table.children[index].elem_value = item.name
 			elem_values[index] = item.name
@@ -692,6 +696,20 @@ function tierMenu.update_base(base)
 			elem_values.last = math.max(elem_values.last, index)
 			update_rows(elem_table, elem_values.last, item.type, state)
 		end
+
+		-- Clear unvisited elems
+		for index, elem in pairs(item_table.children) do
+			if not visited_items[index] then
+				elem.elem_value = nil
+			end
+		end
+		update_rows(item_table, item_values.last, "item", state)
+		for index, elem in pairs(fluid_table.children) do
+			if visited_fluids[index] then
+				elem.elem_value = nil
+			end
+		end
+		update_rows(fluid_table, fluid_values.last, "fluid", state)
 	end
 end
 ---@param ignored table<data.RecipeID,true>
