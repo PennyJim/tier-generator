@@ -450,10 +450,62 @@ gui.new{
 			update_tier_table(self, results)
 		end,
 		["define-base"] = function (self, elem, event)
-			lib.log("BASED") -- TODO: implement base setting
+			elem.enabled = false
+
+			local new_base,old_base = {},global.config.base_items
+			local index, is_different = 0, false
+			for _, type in pairs{"item","fluid"} do
+				local table = self.selector_table["base_"..type.."_selection"] or {}
+				for _, value in ipairs(table) do
+					---@cast value string
+					index = index + 1
+					local new_item = lib.item(value, type)
+					new_base[index] = new_item
+					if not is_different and new_item ~= old_base[index] then
+						is_different = true
+					end
+				end
+			end
+
+			--Mark as different if the old one had more
+			if not is_different then
+				is_different = #old_base ~= index
+			end
+
+			if not is_different then
+				return -- Don't do anything if it wasn't changed
+			end
+
+			invalidateTiers()
+			tierMenu.update_base(new_base)
+			global.config.base_items = new_base
 		end,
 		["define-ignored"] = function (self, elem, event)
-			lib.log("IGNORED") -- TODO: implement ignored setting
+			elem.enabled = false
+
+			---@type table<string,true>
+			local new_ignored,old_ignored = {},global.config.ignored_recipes
+			local is_different = false
+			local table = self.selector_table["base_recipe_selection"] or {}
+			for _, recipe in ipairs(table) do
+				new_ignored[recipe] = true
+				if not is_different and not old_ignored[recipe] then
+					is_different = true
+				end
+			end
+
+			--Mark as different if the old one had a different amount
+			if not is_different then
+				is_different = #old_ignored ~= #new_ignored
+			end
+
+			if not is_different then
+				return -- Don't do anything if it wasn't changed
+			end
+
+			invalidateTiers()
+			tierMenu.update_ignored(new_ignored)
+			global.config.ignored_recipes = new_ignored
 		end
 	} --[[@as table<any, fun(self:WindowState.TierMenu,elem:LuaGuiElement,event:GuiEventData)>]],
 	state_setup = function (state)
