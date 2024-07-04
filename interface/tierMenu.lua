@@ -28,6 +28,9 @@ local tierMenu = {events={}--[[@as event_handler.events]]}
 ---@field ignored_changed boolean
 ---@field ignored_state simpleItem[]
 
+
+--#region Local Functions
+
 ---Crates the tab for item selection
 ---@param number integer
 ---@return GuiElemModuleDef
@@ -150,6 +153,76 @@ local function base_tab()
 		has_changed_from_default = false
 	}	--[[@as WindowState.TierMenu.tab]]
 end
+
+---Highlights the items in the player's global highlight array
+---@param self WindowState.TierMenu
+local function highlightItems(self)
+	local highlightedList = self.highlighted or {}
+	self.highlighted = highlightedList
+	local highlightItem = self.highlight
+	if not highlightItem then return end
+
+	local table = self.elems["tier-table"]
+	if table and table.valid and not table.parent.visible then
+		return -- No tiers error message
+	end
+
+	for item in calculator.get{highlightItem} do
+		local button_name = item.type.."/"..item.name
+		local button = self.elems[button_name]
+
+		-- ---@type LuaGuiElement
+		-- local item_table = table.children[(item.tier+1)*2]["tierlist-items"]
+		-- local button = item_table[item.type.."/"..item.name] --[[@as LuaGuiElement]]
+
+		if not button or not button.valid then
+			-- Can't highlight an invalid element,
+			-- so remove the invalid reference.
+			-- If it didn't exist, this does nothing
+			self.elems[button_name] = nil
+		else
+			button.toggled = true
+			highlightedList[#highlightedList+1] = button
+		end
+	end
+end
+---Highlights the items in the player's global highlight array
+---@param self WindowState.TierMenu
+local function unhighlightItems(self)
+	local highlightedList = self.highlighted
+	if not highlightedList then return end
+	for _, highlightedElem in ipairs(highlightedList) do
+		---@cast highlightedElem LuaGuiElement
+		if highlightedElem.valid then
+			highlightedElem.toggled = false
+		end
+	end
+	self.highlight = nil
+	self.highlighted = nil
+end
+
+--- Invalidates the tiers
+local function invalidateTiers()
+	calculator.uncalculate()
+
+	---@type WindowState.TierMenu[]
+	local namespace = global["tiergen-menu"]
+	for _, state in pairs(namespace) do
+		if _ == 0 then goto continue end
+		state.calculated_tab = 0
+		state[1] = base_tab()
+		state[2] = base_tab()
+		state[3] = base_tab()
+
+		state.highlight = nil
+		state.highlighted = nil
+
+		update_tier_table(state, {})
+    ::continue::
+	end
+end
+lib.register_func("invalidate_tiers", invalidateTiers)
+--#endregion
 
 gui.new{
 	window_def = {
@@ -406,77 +479,6 @@ gui.new{
 	end
 } --[[@as newWindowParams]]
 
---#region Local Functions
-
----Highlights the items in the player's global highlight array
----@param self WindowState.TierMenu
-local function highlightItems(self)
-	local highlightedList = self.highlighted or {}
-	self.highlighted = highlightedList
-	local highlightItem = self.highlight
-	if not highlightItem then return end
-
-	local table = self.elems["tier-table"]
-	if table and table.valid and not table.parent.visible then
-		return -- No tiers error message
-	end
-
-	for item in calculator.get{highlightItem} do
-		local button_name = item.type.."/"..item.name
-		local button = self.elems[button_name]
-
-		-- ---@type LuaGuiElement
-		-- local item_table = table.children[(item.tier+1)*2]["tierlist-items"]
-		-- local button = item_table[item.type.."/"..item.name] --[[@as LuaGuiElement]]
-
-		if not button or not button.valid then
-			-- Can't highlight an invalid element,
-			-- so remove the invalid reference.
-			-- If it didn't exist, this does nothing
-			self.elems[button_name] = nil
-		else
-			button.toggled = true
-			highlightedList[#highlightedList+1] = button
-		end
-	end
-end
----Highlights the items in the player's global highlight array
----@param self WindowState.TierMenu
-local function unhighlightItems(self)
-	local highlightedList = self.highlighted
-	if not highlightedList then return end
-	for _, highlightedElem in ipairs(highlightedList) do
-		---@cast highlightedElem LuaGuiElement
-		if highlightedElem.valid then
-			highlightedElem.toggled = false
-		end
-	end
-	self.highlight = nil
-	self.highlighted = nil
-end
-
---- Invalidates the tiers
-local function invalidateTiers()
-	calculator.uncalculate()
-
-	---@type WindowState.TierMenu[]
-	local namespace = global["tiergen-menu"]
-	for _, state in pairs(namespace) do
-		if _ == 0 then goto continue end
-		state.calculated_tab = 0
-		state[1] = base_tab()
-		state[2] = base_tab()
-		state[3] = base_tab()
-
-		state.highlight = nil
-		state.highlighted = nil
-
-		update_tier_table(state, {})
-    ::continue::
-	end
-end
-lib.register_func("invalidate_tiers", invalidateTiers)
---#endregion
 --#region Direct Handlers
 
 tierMenu.events[defines.events.on_gui_click] = function(EventData)
