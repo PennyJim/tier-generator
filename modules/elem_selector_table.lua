@@ -20,8 +20,38 @@ local handler_names = {
 ---@class selector_functions
 ---@field valid boolean
 ---@field set_index (fun(state:WindowState.ElemSelectorTable,table_name:string,index:integer,value:string|SignalID):boolean)?
----@field update_rows fun(state:WindowState.ElemSelectorTable,table_name:string)?
 ---@field set_enabled fun(is_enabled:boolean)?
+
+---@param state WindowState.ElemSelectorTable
+---@param table LuaGuiElement
+---@param last integer
+local function update_rows(state, table, last) -- TODO: Add a setter instead of calling this constantly
+	--MARK: update row
+	local elem_type = table.tags["type"]
+
+	local columns = table.column_count
+	local desired_rows = math.ceil(last/columns)+1
+
+	local children = table.children
+	local children_count = #children
+	local current_rows = children_count/columns
+
+	if current_rows > desired_rows then
+		-- Remove elements
+		for remove_index = children_count, desired_rows*columns+1, -1 do
+			children[remove_index].destroy()
+		end
+	else
+		-- Add elements
+		for _ = children_count, desired_rows*columns-1, 1 do
+			state.gui.add(state.namespace, table, {
+				type = "choose-elem-button",
+				elem_type = elem_type,
+				handler = {[defines.events.on_gui_elem_changed] = handler_names.elem_changed}
+			}, true)
+		end
+	end
+end
 
 local selector_funcs = {valid = true}
 ---@param state WindowState.ElemSelectorTable
@@ -45,7 +75,7 @@ function selector_funcs.set_index(state, table_name, index, value, update_elem)
 	if index > list.last then
 		-- Set new last index and update rows
 		list.last = index
-		selector_funcs.update_rows(state, table_name)
+		update_rows(state, table, index)
 	elseif index == list.last and value == nil then
 		-- Decrement the last_index to the last item with a value
 		for new_last = index-1, 0, -1 do
@@ -55,7 +85,7 @@ function selector_funcs.set_index(state, table_name, index, value, update_elem)
 			end
 		end
 		-- Update the rows
-		selector_funcs.update_rows(state, table_name)
+		update_rows(state, table, list.last)
 
 		-- Don't update if it'll modify a deleted element
 		if update_elem then
@@ -80,37 +110,6 @@ function selector_funcs.set_index(state, table_name, index, value, update_elem)
 	end
 	return true
 end
----@param state WindowState.ElemSelectorTable
----@param table_name string
-function selector_funcs.update_rows(state, table_name) -- TODO: Add a setter instead of calling this constantly
-	--MARK: update row
-	local table = state.elems[table_name]
-	local elem_type = table.tags["type"]
-
-	local last_index = state.selector_table[table_name].last
-	local columns = table.column_count
-	local desired_rows = math.ceil(last_index/columns)+1
-
-	local children = table.children
-	local children_count = #children
-	local current_rows = children_count/columns
-
-	if current_rows > desired_rows then
-		-- Remove elements
-		for remove_index = children_count, desired_rows*columns+1, -1 do
-			children[remove_index].destroy()
-		end
-	else
-		-- Add elements
-		for _ = children_count, desired_rows*columns-1, 1 do
-			state.gui.add(state.namespace, table, {
-				type = "choose-elem-button",
-				elem_type = elem_type,
-				handler = {[defines.events.on_gui_elem_changed] = handler_names.elem_changed}
-			}, true)
-		end
-	end
-end
 
 local selector_meta = {__index = selector_funcs}
 if not data then -- Is required during data to check its structure.
@@ -119,14 +118,14 @@ end
 
 ---@param state WindowState.ElemSelectorTable
 module.setup_state = function (state)
+	--MARK: setup
 	state.selector_table = state.selector_table or {}
 	state.selector_funcs = state.selector_funcs or setmetatable({valid = false}, selector_meta)
 
 	-- Restore table entries
 	for table_name, table_entries in pairs(state.selector_table) do
 		local table = state.elems[table_name]
-		local type = table.children[1].elem_type
-		selector_funcs.update_rows(state, table_name)
+		update_rows(state, table, table_entries.last)
 		for index, item in pairs(table_entries) do
 			table.children[index].elem_value = item
 		end
