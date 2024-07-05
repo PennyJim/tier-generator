@@ -55,7 +55,7 @@ local tierMenu = {events={}--[[@as event_handler.events]]}
 ---@class WindowState.TierMenu.tab
 ---@field has_changed boolean Whether the chosen elements have changed since last calculated
 ---@field has_changed_from_default boolean Whether the chosen elements have been changed from the default
----@field result {[integer]:tierResult[]}? the results of this tab's last calculation
+---@field result {[integer]:simpleItem[]}? the results of this tab's last calculation
 ---@field calculated simpleItem[] the list of items last calculated
 
 ---@class WindowState.TierMenu : WindowState.ElemSelectorTable
@@ -498,7 +498,7 @@ gui.new{
 		[names.base] = function (state, elem)
 			elem.enabled = false
 
-			---@type (simpleItem|tierResult)[]
+			---@type simpleItem[]
 			local new_base,old_base = {},global.config.base_items
 			local index, is_different = 0, false
 			for _, type in pairs{"item","fluid"} do

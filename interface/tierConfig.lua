@@ -9,7 +9,7 @@ local config_handlers = {}
 ---@field name LocalisedString?
 ---@field ultimate_science simpleItem
 ---@field all_sciences simpleItem[]
----@field base_items (simpleItem|tierResult)[]
+---@field base_items simpleItem[]
 ---@field ignored_recipes table<data.RecipeID,integer|true> -- The integer is for which index in the table it is. Defaults to the next elem
 ---@field ignored_patterns string[]? --An array of lua patterns
 ---@field consider_technology boolean?

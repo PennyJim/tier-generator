@@ -35,7 +35,7 @@ local function get(items)
 end
 ---Returns an iterator for the items and their dependencies
 ---@param items simpleItem[]
----@return fun(p1:DependencyIteratorState):tierResult?
+---@return fun(p1:DependencyIteratorState):simpleItem?
 ---@return DependencyIteratorState
 function calculator.get(items)
 	return eachDependency(get(items))
@@ -48,7 +48,7 @@ local function toArray(items)
 	local array = {}
 	for item in eachDependency(items) do
 		---@type simpleItem
-		lib.appendToArrayInTable(array, item.tier+1, {
+		lib.appendToArrayInTable(array, item.count+1, {
 			name = item.name,
 			type = item.type
 		})

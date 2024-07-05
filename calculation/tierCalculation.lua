@@ -693,7 +693,7 @@ local function calculateTier(itemID, type)
 end
 
 ---Directly set the tier of a given itemID
----@param item simpleItem|tierResult
+---@param item simpleItem
 local function setTier(item)
 	checkLookup()
 	local isValid, prototype = pcall(lib.getItemOrFluid, item.name, item.type)
@@ -702,7 +702,7 @@ local function setTier(item)
 		return
 	end
 	TierMaps[prototype.object_name][item.name] = {
-		tier = item.tier or 0,
+		tier = item.count or 0,
 		id = item.name,
 		type = item.type == "item" and "LuaItemPrototype" or "LuaFluidPrototype",
 		dependencies = {}

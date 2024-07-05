@@ -1,8 +1,3 @@
----@class tierResult
----@field tier tier
----@field type "item"|"fluid"
----@field name string
-
 ---Loops through the dependencies, and makes an array of all of their dependencies
 ---@param tierEntry tierEntry
 ---@param newDependencies tierEntry[]?
@@ -41,7 +36,7 @@ end
 
 ---Itterates over a dependency graph
 ---@param s DependencyIteratorState
----@return tierResult?
+---@return simpleItem?
 local function iterator(s)
 	---@type tierEntry[]
 	local nextItem
@@ -63,17 +58,17 @@ local function iterator(s)
 		end
 	end
 
-	---@type tierResult
-	return {
-		tier = nextItem.tier,
-		name = nextItem.id,
-		type = nextItem.type == "LuaItemPrototype" and "item" or "fluid"
-	}
+	---@type simpleItem
+	return lib.item(
+		nextItem.id,
+		nextItem.type == "LuaItemPrototype" and "item" or "fluid",
+		nextItem.tier
+	)
 end
 
 ---Returns an itterable for the dependencies of givenItems
 ---@param givenItems simpleItem[]
----@return fun(s:DependencyIteratorState):tierResult?
+---@return fun(s:DependencyIteratorState):simpleItem?
 ---@return DependencyIteratorState
 local function eachDependency(givenItems)
 	if #givenItems == 0 then
