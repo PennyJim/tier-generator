@@ -19,10 +19,56 @@ local handler_names = {
 
 ---@class selector_functions
 ---@field valid boolean
+---@field set_index fun(state:WindowState.ElemSelectorTable,table_name:string,index:integer,value:string|SignalID)?
 ---@field update_rows fun(state:WindowState.ElemSelectorTable,table_name:string)?
 ---@field set_enabled fun(is_enabled:boolean)?
 
 local selector_funcs = {valid = true}
+---@param state WindowState.ElemSelectorTable
+---@param table_name string
+---@param index integer
+---@param value string|SignalID
+---@param reactionary true?
+function selector_funcs.set_index(state, table_name, index, value, reactionary)
+	--MARK: set index
+	local table = state.elems[table_name]
+	local list = state.selector_table[table_name]
+
+	local elem = table.children[index]
+	old_value = list[index]
+
+	-- Update the row-count
+	if index > list.last then
+		-- Set new last index and update rows
+		list.last = index
+		selector_funcs.update_rows(state, table.name)
+	elseif index == list.last and value == nil then
+		-- Decrement the last_index to the last item with a value
+		for new_last = index, 0, -1 do
+			if list[new_last] or new_last == 0 then
+				list.last = new_last
+				break
+			end
+		end
+		-- Update the rows
+		selector_funcs.update_rows(state, table.name)
+	end
+
+	-- Update the count
+	if value == nil
+	and old_value ~= nil then
+		list.count = list.count - 1
+	elseif value ~= nil
+	and old_value == nil then
+		list.count = list.count + 1
+	end
+
+	-- Update list (and elem)
+	list[index] = value
+	if not reactionary then
+		elem.elem_value = value
+	end
+end
 ---@param state WindowState.ElemSelectorTable
 ---@param table_name string
 function selector_funcs.update_rows(state, table_name) -- TODO: Add a setter instead of calling this constantly
@@ -165,43 +211,9 @@ module.handlers[handler_names.elem_changed] = function (state, elem, OriginalEve
 	local table = elem.parent --[[@as LuaGuiElement]]
 	local elem_list = state.selector_table[table.name] or {count=0,last=0} --[[@as ElemList]]
 	state.selector_table[table.name] = elem_list
-	local elem = OriginalEvent.element
 	local index = elem.get_index_in_parent()
-	local type = elem.elem_type
-	local new_value, old_value = elem.elem_value, elem_list[index]
 
-	-- Element was not actually changed
-	if new_value == old_value then return end
-
-	-- Update the count
-	if new_value == nil
-	and old_value ~= nil then
-		elem_list.count = elem_list.count - 1
-	elseif new_value ~= nil
-	and old_value == nil then
-		elem_list.count = elem_list.count + 1
-	end
-
-	-- Update list
-	elem_list[index] = new_value
-
-
-	if index > elem_list.last then
-		-- Set new last index and update rows
-		elem_list.last = index
-		selector_funcs.update_rows(state, table.name)
-	elseif index == elem_list.last then
-		-- Decrement the last_index to the last item with a value
-		for new_last = index, 0, -1 do
-			if elem_list[new_last] or new_last == 0 then
-				elem_list.last = new_last
-				break
-			end
-		end
-		-- Update the rows
-		local last_index = elem_list.last
-		selector_funcs.update_rows(state, table.name)
-	end
+	selector_funcs.set_index(state, table.name, index, elem.elem_value, true)
 
 	return table
 end
