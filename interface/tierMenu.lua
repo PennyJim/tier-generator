@@ -666,7 +666,7 @@ function tierMenu.set_items(player_index, tabs)
 		end
 		update_rows(item_table, item_values.last, "item", state)
 		for index, elem in pairs(fluid_table.children) do
-			if visited_fluids[index] then
+			if not visited_fluids[index] then
 				elem.elem_value = nil
 			end
 		end
@@ -724,7 +724,7 @@ function tierMenu.update_base(base)
 		end
 		update_rows(item_table, item_values.last, "item", state)
 		for index, elem in pairs(fluid_table.children) do
-			if visited_fluids[index] then
+			if not visited_fluids[index] then
 				elem.elem_value = nil
 			end
 		end
