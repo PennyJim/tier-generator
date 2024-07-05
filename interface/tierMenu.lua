@@ -295,7 +295,7 @@ local function update_defining_permission(state, can_define, update_anyways)
 
 	local set_enabled = state.selector_funcs.set_enabled
 	if not set_enabled then
-		return error("elem_selector_table's function didn't get restored on save/load")
+		return error("selector_funcs's function didn't get restored on save/load")
 	end
 
 	local define_base = state.elems[names.base]
@@ -756,7 +756,7 @@ function tierMenu.set_items(player_index, tabs)
 
 	local set_index = state.selector_funcs.set_index
 	if not set_index then
-		error("elem_selector_table's function didn't get restored on save/load")
+		error("selector_funcs's function didn't get restored on save/load")
 	end
 
 	for i = 1, 3, 1 do
@@ -816,7 +816,7 @@ function tierMenu.update_base(base)
 
 		local selector_funcs = state.selector_funcs
 		if not selector_funcs.valid then
-			error("elem_selector_table's function didn't get restored on save/load")
+			error("selector_funcs's function didn't get restored on save/load")
 		end
 
 		local item_name = names.base_items
@@ -854,7 +854,7 @@ function tierMenu.update_ignored(ignored)
 
 		local selector_funcs = state.selector_funcs
 		if not selector_funcs.valid then
-			error("elem_selector_table's function didn't get restored on save/load")
+			error("selector_funcs's function didn't get restored on save/load")
 		end
 
 		selector_funcs.clear(state, table_name)
