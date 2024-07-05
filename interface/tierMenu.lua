@@ -576,6 +576,7 @@ gui.new{ --MARK: window_def
 			end
 
 			invalidateTiers()
+			state.base_changed = false
 			tierMenu.update_base(new_base)
 			global.config.base_items = new_base
 		end,
@@ -615,6 +616,7 @@ gui.new{ --MARK: window_def
 
 			global.reprocess = true
 			invalidateTiers()
+			state.ignored_changed = false
 			tierMenu.update_ignored(new_ignored)
 			global.config.ignored_recipes = new_ignored
 		end
@@ -814,6 +816,10 @@ function tierMenu.update_base(base)
 	for player_index in pairs(game.players) do
 		local state = global[names.namespace][player_index] --[[@as WindowState.TierMenu]]
 
+		if state.base_changed then
+			return -- Don't update menu's that've changed
+		end
+
 		local selector_funcs = state.selector_funcs
 		if not selector_funcs.valid then
 			error("selector_funcs's function didn't get restored on save/load")
@@ -851,6 +857,10 @@ function tierMenu.update_ignored(ignored)
 	for player_index in pairs(game.players) do
 		local state = global[names.namespace][player_index] --[[@as WindowState.TierMenu]]
 		local table_name = names.ignored_recipes
+
+		if state.ignored_changed then
+			return -- Don't update menu's that've changed
+		end
 
 		local selector_funcs = state.selector_funcs
 		if not selector_funcs.valid then
