@@ -795,52 +795,34 @@ function tierMenu.update_base(base)
 	for player_index in pairs(game.players) do
 		local state = global[names.namespace][player_index] --[[@as WindowState.TierMenu]]
 
-		local item_name = names.base_items
-		---@type ElemList
-		local item_values = {count=0,last=0}
-		state.selector_table[names.base_items] = item_values
-
-		local fluid_name = names.base_fluids
-		---@type ElemList
-		local fluid_values = {count=0,last=0}
-		state.selector_table[names.base_fluids] = fluid_values
-
-		local set_index = state.selector_funcs.set_index
-		if not set_index then
+		local selector_funcs = state.selector_funcs
+		if not selector_funcs.valid then
 			error("elem_selector_table's function didn't get restored on save/load")
 		end
 
-		---@type table<integer,true>,table<integer,true>
-		local visited_items,visited_fluids = {},{}
+		local item_name = names.base_items
+		local fluid_name = names.base_fluids
+
+		selector_funcs.clear(state, item_name)
+		selector_funcs.clear(state, fluid_name)
+		
+		local item_values = state.selector_table[names.base_items]
+		local fluid_values = state.selector_table[names.base_fluids]
+
 		for _, item in pairs(base) do
 			---@type string, ElemList, table<integer,true>
 			local elem_name, elem_values, visited
 			if item.type == "item" then
 				elem_name = item_name
 				elem_values = item_values
-				visited = visited_items
 			else
 				elem_name = fluid_name
 				elem_values = fluid_values
-				visited = visited_fluids
 			end
 
 			local index = item.count or elem_values.last + 1
-			visited[index] = true
 
-			set_index(state, elem_name, index, item.name)
-		end
-
-		-- Clear unvisited elems
-		for index, elem in pairs(state.elems[item_name].children) do
-			if not visited_items[index] then
-				elem.elem_value = nil
-			end
-		end
-		for index, elem in pairs(state.elems[fluid_name].children) do
-			if not visited_fluids[index] then
-				elem.elem_value = nil
-			end
+			selector_funcs.set_index(state, elem_name, index, item.name)
 		end
 	end
 end
@@ -850,30 +832,20 @@ function tierMenu.update_ignored(ignored)
 	for player_index in pairs(game.players) do
 		local state = global[names.namespace][player_index] --[[@as WindowState.TierMenu]]
 		local table_name = names.ignored_recipes
-		---@type ElemList
-		local recipe_values = {count=0,last=0}
-		state.selector_table[names.ignored_recipes] = recipe_values
 
-		local set_index = state.selector_funcs.set_index
-		if not set_index then
+		local selector_funcs = state.selector_funcs
+		if not selector_funcs.valid then
 			error("elem_selector_table's function didn't get restored on save/load")
 		end
 
-		---@type table<integer,true>
-		local visited = {}
+		selector_funcs.clear(state, table_name)
+		local recipe_values = state.selector_table[table_name]
+
 		for recipe, index in pairs(ignored) do
 			if type(index) == "boolean" then
 				index = recipe_values.last+1
 			end
-			visited[index] = true
-			set_index(state, table_name, index, recipe)
-		end
-
-		--- Clear unvisited elems
-		for index, elem in pairs(state.elems[table_name].children) do
-			if not visited[index] then
-				elem.elem_value = nil
-			end
+			selector_funcs.set_index(state, table_name, index, recipe)
 		end
 	end
 end
