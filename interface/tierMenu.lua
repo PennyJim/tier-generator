@@ -288,6 +288,7 @@ lib.register_func("invalidate_tiers", invalidateTiers)
 ---Enable/Disables the elem buttons of 
 ---@param state WindowState.TierMenu
 ---@param can_define boolean
+---@param update_anyways true?
 local function update_defining_permission(state, can_define, update_anyways)
 	--MARK: update permission
 	if not update_anyways and state.can_define == can_define then return end
@@ -305,7 +306,7 @@ local function update_defining_permission(state, can_define, update_anyways)
 	if state.base_changed then
 		state.base_changed = false
 		if global.config then
-			tierMenu.update_base(global.config.base_items)
+			tierMenu.update_base(global.config.base_items, state.player.index, true)
 		end
 	end
 
@@ -315,7 +316,7 @@ local function update_defining_permission(state, can_define, update_anyways)
 	if state.ignored_changed then
 		state.ignored_changed = false
 		if global.config then
-			tierMenu.update_ignored(global.config.ignored_recipes)
+			tierMenu.update_ignored(global.config.ignored_recipes, state.player.index, true)
 		end
 	end
 end
@@ -811,12 +812,24 @@ function tierMenu.set_items(player_index, tabs)
 	end
 end
 ---@param base simpleItem[]
-function tierMenu.update_base(base)
+---@param player_index integer?
+---@param update_anyways true?
+function tierMenu.update_base(base, player_index, update_anyways)
 	--MARK: update base
-	for player_index in pairs(game.players) do
+	---@type table<integer, LuaPlayer>
+	local players
+	if player_index then
+		local player = game.get_player(player_index)
+		if not player then return end
+		players = {[player_index] = player}
+	else
+		players = game.players --[[@as table<integer, LuaPlayer>]]
+	end
+
+	for player_index in pairs(players) do
 		local state = global[names.namespace][player_index] --[[@as WindowState.TierMenu]]
 
-		if state.base_changed then
+		if not update_anyways and state.base_changed then
 			return -- Don't update menu's that've changed
 		end
 
@@ -852,13 +865,25 @@ function tierMenu.update_base(base)
 	end
 end
 ---@param ignored table<data.RecipeID,integer|true>
-function tierMenu.update_ignored(ignored)
+---@param player_index integer?
+---@param update_anyways true?
+function tierMenu.update_ignored(ignored, player_index, update_anyways)
 	--MARK: update ignored
-	for player_index in pairs(game.players) do
+	---@type table<integer, LuaPlayer>
+	local players
+	if player_index then
+		local player = game.get_player(player_index)
+		if not player then return end
+		players = {[player_index] = player}
+	else
+		players = game.players --[[@as table<integer, LuaPlayer>]]
+	end
+
+	for player_index in pairs(players) do
 		local state = global[names.namespace][player_index] --[[@as WindowState.TierMenu]]
 		local table_name = names.ignored_recipes
 
-		if state.ignored_changed then
+		if not update_anyways and state.ignored_changed then
 			return -- Don't update menu's that've changed
 		end
 

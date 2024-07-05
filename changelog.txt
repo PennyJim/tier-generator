@@ -4,6 +4,7 @@ Date: ????
   Features:
     - You can now pin the window to look at it and another window at the same time
     - Actually implement the ability to define base items or ignored recipes
+    - The ability to define base items or ignored recipes are tied to the ability to change mod settings
   Changes:
     - Refactored dependencyEntry and tierEntry to be the same
     - Changed the dependency graph to only follow the items and fluids
