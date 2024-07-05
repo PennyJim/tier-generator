@@ -702,7 +702,9 @@ local function setTier(item)
 		return
 	end
 	TierMaps[prototype.object_name][item.name] = {
-		tier = item.count or 0,
+		-- tier = item.count or 0,
+		-- item.count is now used for something else
+		tier = 0,
 		id = item.name,
 		type = item.type == "item" and "LuaItemPrototype" or "LuaFluidPrototype",
 		dependencies = {}
