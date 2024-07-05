@@ -14,47 +14,48 @@ local handler_names = {
 ---@class WindowState.ElemSelectorTable : WindowState
 -- Where custom fields would go
 ---@field selector_table table<string,ElemList>
----@field selector_funcs update_row_obj
+---@field selector_funcs selector_functions
 ---@field selector_enabled table<string,boolean>
 
----@class update_row_obj
+---@class selector_functions
 ---@field valid boolean
 ---@field update_rows fun(state:WindowState.ElemSelectorTable,table_name:string)?
 ---@field set_enabled fun(is_enabled:boolean)?
-local selector_meta = {__index = {
-	valid = false,
 
-	---@param state WindowState.ElemSelectorTable
-	---@param table_name string
-	update_rows = function (state, table_name) -- TODO: Add a setter instead of calling this constantly
-		local table = state.elems[table_name]
-		local elem_type = table.tags["type"]
+local selector_funcs = {valid = true}
+---@param state WindowState.ElemSelectorTable
+---@param table_name string
+function selector_funcs.update_rows(state, table_name) -- TODO: Add a setter instead of calling this constantly
+	--MARK: update row
+	local table = state.elems[table_name]
+	local elem_type = table.tags["type"]
 
-		local last_index = state.selector_table[table_name].last
-		local columns = table.column_count
-		local desired_rows = math.ceil(last_index/columns)+1
+	local last_index = state.selector_table[table_name].last
+	local columns = table.column_count
+	local desired_rows = math.ceil(last_index/columns)+1
 
-		local children = table.children
-		local children_count = #children
-		local current_rows = children_count/columns
+	local children = table.children
+	local children_count = #children
+	local current_rows = children_count/columns
 
-		if current_rows > desired_rows then
-			-- Remove elements
-			for remove_index = children_count, desired_rows*columns+1, -1 do
-				children[remove_index].destroy()
-			end
-		else
-			-- Add elements
-			for _ = children_count, desired_rows*columns-1, 1 do
-				state.gui.add(state.namespace, table, {
-					type = "choose-elem-button",
-					elem_type = elem_type,
-					handler = {[defines.events.on_gui_elem_changed] = handler_names.elem_changed}
-				}, true)
-			end
+	if current_rows > desired_rows then
+		-- Remove elements
+		for remove_index = children_count, desired_rows*columns+1, -1 do
+			children[remove_index].destroy()
+		end
+	else
+		-- Add elements
+		for _ = children_count, desired_rows*columns-1, 1 do
+			state.gui.add(state.namespace, table, {
+				type = "choose-elem-button",
+				elem_type = elem_type,
+				handler = {[defines.events.on_gui_elem_changed] = handler_names.elem_changed}
+			}, true)
 		end
 	end
-}}
+end
+
+local selector_meta = {__index = selector_funcs}
 if not data then -- Is required during data to check its structure.
 	script.register_metatable("update_row_meta", selector_meta)
 end
@@ -68,7 +69,7 @@ module.setup_state = function (state)
 	for table_name, table_entries in pairs(state.selector_table) do
 		local table = state.elems[table_name]
 		local type = table.children[1].elem_type
-		selector_meta.update_rows(state, table_name)
+		selector_funcs.update_rows(state, table_name)
 		for index, item in pairs(table_entries) do
 			table.children[index].elem_value = item
 		end
@@ -77,13 +78,13 @@ end
 
 ---@class ElemSelectorTableParams : ModuleDef
 ---@field module_type "elem_selector_table"
+-- where LuaLS parameter definitons go
 ---@field name string
 ---@field height integer How many elements tall this table takes up
 ---@field width integer How many elements wide this table is
 ---@field elem_type ElemType
 ---@field frame_style string
 ---@field on_elem_changed string?
--- where LuaLS parameter definitons go
 ---@type ModuleParameterDict
 module.parameters = {
 	-- Where gui-modules parameter definitons go
@@ -188,7 +189,7 @@ module.handlers[handler_names.elem_changed] = function (state, elem, OriginalEve
 	if index > elem_list.last then
 		-- Set new last index and update rows
 		elem_list.last = index
-		selector_meta.update_rows(state, table.name)
+		selector_funcs.update_rows(state, table.name)
 	elseif index == elem_list.last then
 		-- Decrement the last_index to the last item with a value
 		for new_last = index, 0, -1 do
@@ -199,7 +200,7 @@ module.handlers[handler_names.elem_changed] = function (state, elem, OriginalEve
 		end
 		-- Update the rows
 		local last_index = elem_list.last
-		selector_meta.update_rows(state, table.name)
+		selector_funcs.update_rows(state, table.name)
 	end
 
 	return table
