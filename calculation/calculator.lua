@@ -23,8 +23,8 @@ local function get(items)
 	if not has_setup_core then
 		updateBase()
 	end
-	local successfulItems, processed = {},{}
-	lib.initTierMapTables(processed)
+	---@type simpleItem[]
+	local successfulItems = {}
 	for _, item in ipairs(items) do
 		local tier = core.calculate(item.name, item.type)
 		if tier >= 0 then

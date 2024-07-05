@@ -39,6 +39,9 @@ local function process_result(player_index, item, result)
 	return true
 end
 
+---@class Global
+---@field debug_table table<integer, debug_state>
+
 ---@class debug_state
 ---@field last_index integer
 ---@field cur_index integer
@@ -73,6 +76,7 @@ end
 
 local function debug_command_tick()
 	local debug_table = global.debug_table
+	---@type integer[]
 	local finished_players = {}
 
 	for player_index, debug_state in pairs(debug_table or {}) do

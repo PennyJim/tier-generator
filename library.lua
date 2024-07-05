@@ -4,6 +4,10 @@ local lookup = require("__tier-generator__.calculation.lookupTables")
 ---@class TiergenLibrary : event_handler
 local library = {}
 
+---@class Global
+---@field tick_later string[]
+---@field next_tick boolean?
+---@field seconds table<integer,string>
 
 --#region Settings
 ---@alias tierSettings
@@ -20,6 +24,7 @@ local tiergenSettings = {
 	["tiergen-reduce-category"] = true,
 	["tiergen-debug-log"] = true,
 }
+---@type table<tierSettings, any>
 local cachedSettings = {}
 ---Gets the global setting, and caches it
 ---@param setting tierSettings
@@ -58,13 +63,14 @@ library.type = type
 ---@param sep string
 ---@return string[]
 function library.split(s, sep)
+	---@type string[]
 	local fields = {}
-	
-	local sep = sep or " "
+
+	sep = sep or " "
 	local pattern = string.format("([^%s]+)", sep)
 ---@diagnostic disable-next-line: discard-returns
 	string.gsub(s, pattern, function(c) fields[#fields + 1] = c end)
-	
+
 	return fields
 end
 --#endregion
@@ -190,6 +196,7 @@ end
 ---@return tier
 ---@return dependency[]?
 function library.getMinTierInArray(array, invalid, callback)
+	---@cast array any[]
 	---@type dependency[]?
 	local dependencies
 	local tier = math.huge
@@ -269,12 +276,11 @@ end
 ---@param type "item"|"fluid"
 ---@return LuaItemPrototype|LuaFluidPrototype
 function library.getItemOrFluid(name, type)
-	local table
-	if type == "item" then
-		table = game.item_prototypes
-	else
-		table = game.fluid_prototypes
-	end
+	---@type LuaCustomTable<string,LuaItemPrototype|LuaFluidPrototype>
+	local table =
+	type == "item"
+		and game.item_prototypes
+		or game.fluid_prototypes
 	return getGeneric(name, table)
 end
 ---Returns the given recipe category
@@ -431,6 +437,7 @@ library.register_func("register-seconds", register_all_seconds)
 function library.seconds_later(seconds, func_name)
 	local cur_tick = game.tick
 	local next_tick = math.floor(seconds*60 + cur_tick)
+	---@type table<integer, string>
 	local registered_table = global.seconds or {}
 	while registered_table[next_tick] do
 		next_tick = next_tick + 1

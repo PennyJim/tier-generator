@@ -45,6 +45,10 @@ local function gen_sprite(type,name)
 	return type.."/"..name --[[@as string]]
 end
 
+---@class Global
+---@field tiergen-menu WindowGlobal
+---@field reprocess boolean?
+
 ---@class tierMenu : event_handler
 local tierMenu = {events={}--[[@as event_handler.events]]}
 
@@ -454,10 +458,10 @@ gui.new{
 			for _, type in pairs{"item","fluid"} do
 				local table = state.selector_table[selected_index.."_"..type.."_selection"] or {}
 				for index, value in pairs(table) do
-					if lib.type(index) ~= "number" then goto continue end
-					---@cast value string
-					new_calculated[#new_calculated+1] = lib.item(value, type)
-			    ::continue::
+					if lib.type(index) == "number" then 
+						---@cast value string
+						new_calculated[#new_calculated+1] = lib.item(value, type)
+					end
 				end
 			end
 			tab.has_changed = false
@@ -494,6 +498,7 @@ gui.new{
 		[names.base] = function (state, elem)
 			elem.enabled = false
 
+			---@type (simpleItem|tierResult)[]
 			local new_base,old_base = {},global.config.base_items
 			local index, is_different = 0, false
 			for _, type in pairs{"item","fluid"} do
@@ -534,6 +539,7 @@ gui.new{
 			local table = state.selector_table["ignored_recipe_selection"] or {}
 			for index, recipe in pairs(table) do
 				if lib.type(index) ~= "number" then goto continue end
+				---@cast recipe string
 				new_count = new_count + 1
 				new_ignored[recipe] = index
 				if not is_different and not old_ignored[recipe] then
@@ -605,7 +611,7 @@ tierMenu.events[defines.events.on_gui_click] = function(EventData)
 	if parent.name:match("^tierlist%-items") then
 		local type_item = element.name
 		local type = type_item:match("^[^/]+")
-		local item = type_item:match("/.+"):sub(2)
+		local item = type_item:match("/.+")--[[@as string]]:sub(2)
 		---@type simpleItem
 		local highlightItem = {name=item,type=type}
 		local oldHighlight = state.highlight
@@ -664,16 +670,20 @@ function tierMenu.set_items(player_index, tabs)
 
 		local items = gen_item_selection(i)
 		local item_table = elems[items]
+		---@type ElemList
 		local item_values = {count=0,last=0}
 		values[items] = item_values
 
 		local fluids = gen_fluid_selection(i)
 		local fluid_table = elems[fluids]
+		---@type ElemList
 		local fluid_values = {count=0,last=0}
 		values[fluids] = fluid_values
 
+		---@type table<integer,true>, table<integer,true>
 		local visited_items,visited_fluids = {},{}
 		for _, item in pairs(tabs[i]) do
+			---@type LuaGuiElement, ElemList, table<integer,true>
 			local elem_table, elem_values, visited
 			if item.type == "item" then
 				elem_table = item_table
@@ -718,10 +728,12 @@ function tierMenu.update_base(base)
 		local state = global[names.namespace][player_index] --[[@as WindowState.TierMenu]]
 
 		local item_table = state.elems[names.base_items]
+		---@type ElemList
 		local item_values = {count=0,last=0}
 		state.selector_table[names.base_items] = item_values
 
 		local fluid_table = state.elems[names.base_fluids]
+		---@type ElemList
 		local fluid_values = {count=0,last=0}
 		state.selector_table[names.base_fluids] = fluid_values
 
@@ -730,8 +742,10 @@ function tierMenu.update_base(base)
 			error("elem_selector_table's function didn't get restored on save/load")
 		end
 
+		---@type table<integer,true>,table<integer,true>
 		local visited_items,visited_fluids = {},{}
 		for _, item in pairs(base) do
+			---@type LuaGuiElement, ElemList, table<integer,true>
 			local elem_table, elem_values, visited
 			if item.type == "item" then
 				elem_table = item_table
@@ -774,6 +788,7 @@ function tierMenu.update_ignored(ignored)
 	for player_index in pairs(game.players) do
 		local state = global[names.namespace][player_index] --[[@as WindowState.TierMenu]]
 		local recipe_table = state.elems[names.ignored_recipes]
+		---@type ElemList
 		local recipe_values = {count=0,last=0}
 		state.selector_table[names.ignored_recipes] = recipe_values
 

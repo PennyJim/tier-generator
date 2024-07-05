@@ -30,6 +30,7 @@ invalidReason = {
 	not_an_item = -100,
 }
 for key, value in pairs(invalidReason) do
+---@diagnostic disable-next-line: no-unknown
 	invalidReason[value] = key
 end
 setmetatable(invalidReason, {
@@ -97,6 +98,7 @@ end
 ---@param dependencies dependency[]
 ---@return dependency[]
 local function resolve_to_items(dependencies)
+	---@type dependency[], table<string,true>
 	local new_dependencies, dependency_lookup = {}, {}
 	for _, dependency in pairs(dependencies) do
 		if not dependency then goto continue end
@@ -144,8 +146,8 @@ local function CallTierSwitch(prototypeID, value)
 	-- Attempt to calculate
 	calculating[type][prototypeID] = true
 	-- lib.debug("Starting to calculate "..type..":"..prototypeID)
-	local result, dependencies = -math.huge, {}
-	result, dependencies = tierSwitch[type](prototypeID, value)
+	---@type integer, dependency[]|blockedReason[]
+	local result, dependencies = tierSwitch[type](prototypeID, value)
 	-- lib.debug("Done calculating "..type..":"..prototypeID.." with a tier of "..result.." or error "..invalidReason[result])
 
 	-- Finish calculating
@@ -157,6 +159,7 @@ local function CallTierSwitch(prototypeID, value)
 			type = type,
 			id = prototypeID
 		} --[[@as tierEntry]]
+---@diagnostic disable-next-line: cast-local-type
 		dependencies = nil -- Memory management?
 		TierMaps[type][prototypeID] = tier
 		-- if type == "LuaFluidPrototype" or type == "LuaItemPrototype" then
@@ -213,6 +216,7 @@ local dependencyCache = setmetatable({}, {__mode = "v"})
 ---@param type LuaObject.object_name
 ---@return dependency
 local function getDependency(id, type)
+	---@type string
 	local lookup_string = type..id
 	local dependency = dependencyCache[lookup_string]
 
@@ -235,6 +239,7 @@ local blockedCache = setmetatable({}, {__mode = "v"})
 ---@param reason invalidReason
 ---@return blockedReason
 local function getBlocked(id, type, reason)
+	---@type string
 	local lookup_string = type..id
 	local blocked = blockedCache[lookup_string]
 
@@ -339,6 +344,7 @@ end
 ---Determine the tier of mining an item or fluid
 ---@type fun(ItemID:data.ItemID|data.FluidID,prototype:fakePrototype):tier,blockedReason[]|dependency[]
 tierSwitch["mining"] = function (ItemID, prototype)
+	---@type table<string, OptionalFluidFakeRecipe[]|OptionalFluidFakeRecipe[]>
 	local miningRecipes
 	if prototype.real_object_name == "LuaItemPrototype" then
 		miningRecipes = lookup.ItemMining[ItemID]
@@ -567,6 +573,7 @@ tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 		return invalidReason.ignored_recipe, blockedBy
 	end
 
+	---@type (fun(p1:dependency[]):tier)?
 	local considerTechnology
 	if lib.getSetting("tiergen-consider-technology") and not recipe.enabled then
 		local technologies = lookup.RecipeTechnology[recipeID] or rawget(recipe, "technologies")
@@ -607,6 +614,7 @@ end
 ---Determine the tier of the given item or fluid
 ---@type fun(ItemID:data.ItemID|data.FluidID,value:LuaItemPrototype|LuaFluidPrototype):tier,blockedReason[]|dependency[]
 tierSwitch["LuaFluidPrototype"] = function (ItemID, value)
+	---@type table<string, string[]>
 	local recipes
 	if value.object_name == "LuaItemPrototype" then
 		recipes = lookup.ItemRecipe[ItemID]
@@ -630,13 +638,14 @@ tierSwitch["LuaFluidPrototype"] = function (ItemID, value)
 			local dependencies = {}
 
 			local _, realstart = recipe:find("^tiergen[-]")
+			---@type string, tierSwitchValues
 			local id, prototype
 			if realstart then
 				id = ItemID
 				prototype = {
 					object_name = recipe:sub(realstart+1),
 					real_object_name = value.object_name
-				}
+				} --[[@as fakePrototype ]]
 			else
 				id = recipe
 				prototype = lib.getRecipe(recipe)
@@ -729,6 +738,7 @@ return {
 	---@param type "item"|"fluid"
 	---@return table<data.ItemID|data.FluidID,"item"|"fluid">
 	get_ingredients = function (item, type)
+		---@type table<string, string[]>
 		local recipes
 		if type == "item" then
 			recipes = lookup.ItemRecipe[item]

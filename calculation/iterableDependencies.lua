@@ -82,6 +82,7 @@ local function eachDependency(givenItems)
 		end, {}
 	end
 	local items = getGivenAsDependencyArray(givenItems)
+	---@type table<tierSwitchTypes,table<string,tierEntry>>
 	local completedItems = lib.initTierMapTables{}
 	for _, item in pairs(items) do
 		completedItems[item.type][item.id] = item

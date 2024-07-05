@@ -1,4 +1,5 @@
 local lookup = require("__tier-generator__.calculation.lookupTables")
+---@type fun()[]
 local processFunctions = {}
 
 --#region Process functions & loops
@@ -84,6 +85,7 @@ function ProcessAutoplace(EntityID, placedEntity)
 	end
 
 	local category = placedEntity.resource_category
+	---@type string,string
 	local resource_category, player_category
 	if category then
 		resource_category = "tiergen-mining-"..category
@@ -422,6 +424,7 @@ end
 ---@param itemID data.ItemID
 ---@param recipe CompleteFakeRecipe
 local function injectRecipe(itemID, recipe)
+	---@type table<string,string[]>
 	local recipeLookup
 	if recipe.isFluid then
 		recipeLookup = lookup.FluidRecipe
@@ -452,7 +455,9 @@ return {
 		return lookup
 	end,
 	unprocess = function ()
+---@diagnostic disable-next-line: no-unknown
 		for key in pairs(lookup) do
+---@diagnostic disable-next-line: no-unknown
 			lookup[key] = {}
 		end
 		hasReturned = false

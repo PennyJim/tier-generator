@@ -1,5 +1,7 @@
 ---@type event_handler
 local handlers = {events={}}
+---@type Global
+global = global
 
 ---Initializes the global variables
 local function setup()

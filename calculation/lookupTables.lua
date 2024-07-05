@@ -2,6 +2,9 @@
 ---@class LookupTables
 local lookup = {}
 
+---@class OptionalItemFakeRecipe
+---@field input data.ItemID?
+---@field category data.RecipeCategoryID
 ---@class OptionalFluidFakeRecipe
 ---@field input data.FluidID?
 ---@field category data.RecipeCategoryID
@@ -32,7 +35,7 @@ lookup.CategoryItem = {}
 --#endregion
 --#region Fake recipe lookup tables
 
----@type table<data.ItemID,OptionalFluidFakeRecipe[]>
+---@type table<data.ItemID,OptionalItemFakeRecipe[]>
 lookup.ItemMining = {}
 ---@type table<data.FluidID,OptionalFluidFakeRecipe[]>
 lookup.FluidMining = {}

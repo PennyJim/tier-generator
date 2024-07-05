@@ -2,6 +2,9 @@ local menu = require("__tier-generator__.interface.tierMenu")
 ---@type event_handler
 local config_handlers = {}
 
+---@class Global
+---@field config config
+
 ---@class defaultConfig
 ---@field name LocalisedString?
 ---@field ultimate_science simpleItem
@@ -91,6 +94,7 @@ local function actually_init()
 		lib.clearSettingCache("tiergen-consider-autoplace-setting")
 	end
 
+	---@type LocalisedString
 	local message
 	if mod then
 		message = {"tiergen.mod-config", config.name or mod}

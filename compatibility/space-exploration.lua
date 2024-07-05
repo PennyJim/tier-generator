@@ -1,3 +1,4 @@
+---@param fragments string[]
 local function se_core_fragements(fragments)
 	---@type table<data.ItemID,CompleteFakeRecipe>
 	local recipes = {}

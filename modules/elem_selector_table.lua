@@ -6,10 +6,10 @@ local handler_names = {
 	elem_changed = "elem_selector_table.elem_changed" -- Standardly prepended with module name to avoid naming collisions
 }
 
----@class ElemList
+---@class ElemList : {[integer]: string|SignalID}
 ---@field last integer The last index of a chosen element
 ---@field count integer How many elements have been chosen
----@field [integer] string|SignalID the chosen element at an index
+--@field [integer] string|SignalID the chosen element at an index
 
 ---@class WindowState.ElemSelectorTable : WindowState
 -- Where custom fields would go
@@ -108,12 +108,14 @@ module.parameters = {
 ---@param params ElemSelectorTableParams
 ---@return GuiElemDef
 function module.build_func(params)
+	---@type GuiElemModuleDef
 	local button = {
 		type = "choose-elem-button",
 		elem_type = params.elem_type,
 		handler = {[defines.events.on_gui_elem_changed] = handler_names.elem_changed}
 		-- style = "slot_button",
 	}
+	---@type GuiElemModuleDef[]
 	local buttons = {}
 	for i = 1, params.width, 1 do
 		buttons[i] = button
