@@ -20,7 +20,7 @@ local handler_names = {
 ---@class selector_functions
 ---@field valid boolean
 ---@field set_index (fun(state:WindowState.ElemSelectorTable,table_name:string,index:integer,value:string|SignalID):boolean)?
----@field set_enabled fun(is_enabled:boolean)?
+---@field set_enabled fun(state:WindowState.ElemSelectorTable,table_name:string,enabled:boolean)?
 
 ---@param state WindowState.ElemSelectorTable
 ---@param table LuaGuiElement
@@ -28,6 +28,7 @@ local handler_names = {
 local function update_rows(state, table, last) -- TODO: Add a setter instead of calling this constantly
 	--MARK: update row
 	local elem_type = table.tags["type"]
+	local enabled = table.enabled
 
 	local columns = table.column_count
 	local desired_rows = math.ceil(last/columns)+1
@@ -35,6 +36,14 @@ local function update_rows(state, table, last) -- TODO: Add a setter instead of 
 	local children = table.children
 	local children_count = #children
 	local current_rows = children_count/columns
+
+	---@type GuiElemModuleDef
+	local new_child = {
+		type = "choose-elem-button",
+		elem_type = elem_type,
+		handler = {[defines.events.on_gui_elem_changed] = handler_names.elem_changed},
+		elem_mods = not enabled and {enabled = enabled} or nil
+	}
 
 	if current_rows > desired_rows then
 		-- Remove elements
@@ -44,11 +53,7 @@ local function update_rows(state, table, last) -- TODO: Add a setter instead of 
 	else
 		-- Add elements
 		for _ = children_count, desired_rows*columns-1, 1 do
-			state.gui.add(state.namespace, table, {
-				type = "choose-elem-button",
-				elem_type = elem_type,
-				handler = {[defines.events.on_gui_elem_changed] = handler_names.elem_changed}
-			}, true)
+			state.gui.add(state.namespace, table, new_child, true)
 		end
 	end
 end
@@ -110,6 +115,21 @@ function selector_funcs.set_index(state, table_name, index, value, update_elem)
 	end
 	return true
 end
+---@param state WindowState.ElemSelectorTable
+---@param table_name string
+---@param enabled boolean
+function selector_funcs.set_enabled(state, table_name, enabled)
+	--MARK: set enabled
+	local table = state.elems[table_name]
+	state.selector_enabled[table_name] = enabled
+
+	if table.enabled ~= enabled then
+		table.enabled = enabled
+		for _, button in pairs(table.children) do
+			button.enabled = enabled
+		end
+	end
+end
 
 local selector_meta = {__index = selector_funcs}
 if not data then -- Is required during data to check its structure.
@@ -120,8 +140,13 @@ end
 module.setup_state = function (state)
 	--MARK: setup
 	state.selector_table = state.selector_table or {}
+	state.selector_enabled = state.selector_enabled or {}
 	state.selector_funcs = state.selector_funcs or setmetatable({valid = false}, selector_meta)
 
+	-- Restore enabled status
+	for table_name, enabled in pairs (state.selector_enabled) do
+		selector_funcs.set_enabled(state, table_name, enabled)
+	end
 	-- Restore table entries
 	for table_name, table_entries in pairs(state.selector_table) do
 		local table = state.elems[table_name]
@@ -143,6 +168,7 @@ end
 ---@field on_elem_changed string?
 ---@type ModuleParameterDict
 module.parameters = {
+	--MARK: parameters
 	-- Where gui-modules parameter definitons go
 	name = {is_optional = false, type = {"string"}},
 	height = {is_optional = false, type = {"number"}},
@@ -171,6 +197,7 @@ module.parameters = {
 ---@param params ElemSelectorTableParams
 ---@return GuiElemDef
 function module.build_func(params)
+	--MARK: build
 	---@type GuiElemModuleDef
 	local button = {
 		type = "choose-elem-button",
@@ -218,6 +245,7 @@ end
 ---@param state WindowState.ElemSelectorTable
 ---@param OriginalEvent EventData.on_gui_elem_changed
 module.handlers[handler_names.elem_changed] = function (state, elem, OriginalEvent)
+	--MARK: on_elem_changed
 	local table = elem.parent --[[@as LuaGuiElement]]
 	local elem_list = state.selector_table[table.name] or {count=0,last=0} --[[@as ElemList]]
 	state.selector_table[table.name] = elem_list
