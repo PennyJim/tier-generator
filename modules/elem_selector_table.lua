@@ -19,7 +19,8 @@ local handler_names = {
 
 ---@class selector_functions
 ---@field valid boolean
----@field set_index (fun(state:WindowState.ElemSelectorTable,table_name:string,index:integer,value:string|SignalID):boolean)?
+---@field clear fun(state:WindowState.ElemSelectorTable,table_name:string)?
+---@field set_index (fun(state:WindowState.ElemSelectorTable,table_name:string,index:integer,value:string|SignalID?):boolean)?
 ---@field set_enabled fun(state:WindowState.ElemSelectorTable,table_name:string,enabled:boolean)?
 
 ---@param state WindowState.ElemSelectorTable
@@ -61,8 +62,18 @@ end
 local selector_funcs = {valid = true}
 ---@param state WindowState.ElemSelectorTable
 ---@param table_name string
+function selector_funcs.clear(state, table_name)
+	state.selector_table[table_name] = {count=0,last=0}
+	local table = state.elems[table_name]
+	update_rows(state, table, 0)
+	for _, elem in pairs(table.children) do
+		elem.elem_value = nil
+	end
+end
+---@param state WindowState.ElemSelectorTable
+---@param table_name string
 ---@param index integer
----@param value string|SignalID
+---@param value string|SignalID?
 ---@param update_elem false?
 ---@returns boolean did_change
 function selector_funcs.set_index(state, table_name, index, value, update_elem)
@@ -135,13 +146,14 @@ local selector_meta = {__index = selector_funcs}
 if not data then -- Is required during data to check its structure.
 	script.register_metatable("update_row_meta", selector_meta)
 end
+local selector_with_meta = setmetatable({}, selector_meta)
 
 ---@param state WindowState.ElemSelectorTable
 module.setup_state = function (state)
 	--MARK: setup
 	state.selector_table = state.selector_table or {}
 	state.selector_enabled = state.selector_enabled or {}
-	state.selector_funcs = state.selector_funcs or setmetatable({valid = false}, selector_meta)
+	state.selector_funcs = state.selector_funcs or selector_with_meta
 
 	-- Restore enabled status
 	for table_name, enabled in pairs (state.selector_enabled) do
