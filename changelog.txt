@@ -12,6 +12,7 @@ Date: ????
     - Refactored into using the event_handler
     - Completely reconstructed the tier menu to use my GUI library Gui Modules
     - Made a tiling background for the bottom of the tier list
+    - Fixed save/load issue with timing functions
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.9
 Date: 2024-06-30

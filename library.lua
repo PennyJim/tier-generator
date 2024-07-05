@@ -468,8 +468,8 @@ function library.on_load()
 	if global.next_tick then
 		script.on_nth_tick(1, tick)
 	end
-	
-	if global.seconds and #global.seconds > 0 then
+
+	if global.seconds and next(global.seconds) then
 		register_all_seconds()
 	end
 end
