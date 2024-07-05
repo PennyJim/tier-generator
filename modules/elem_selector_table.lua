@@ -136,8 +136,10 @@ function selector_funcs.set_enabled(state, table_name, enabled)
 
 	if table.enabled ~= enabled then
 		table.enabled = enabled
+		table.ignored_by_interaction = not enabled
 		for _, button in pairs(table.children) do
 			button.enabled = enabled
+			button.ignored_by_interaction = not enabled
 		end
 	end
 end
