@@ -5,6 +5,45 @@ local table_size = {
 	item_height = 2,
 	fluid_height = 1
 }
+---@enum ElementNames
+local names = {
+	namespace = "tiergen-menu",
+	tier_items_table = "tierlist-items",
+	---@deprecated
+	---USE `gen_item_selection` INSTEAD
+	item_selection = "tab_item_selection",
+	---@deprecated
+	---USE `gen_fluid_selection` INSTEAD
+	fluid_selection = "tab_fluid_selection",
+	---@deprecated
+	---USE `gen_sprite` INSTEAD
+	sprite = "type/name",
+	-- tier_items = function(tier) return "tier-"..tier.."-items" end, -- Kept just in case the table *does* need a name
+	calculate = "calculate",
+	base = "define_base",
+	base_items = "base_item_selection",
+	base_fluids = "base_fluid_selection",
+	ignored = "define_ignored",
+	ignored_recipes = "ignored_recipes_selection",
+	error_message = "error_message",
+	tier_table = "tier_table",
+}
+---@param tab_num integer
+---@return string
+local function gen_item_selection(tab_num)
+	return tab_num.."_item_selection" --[[@as string]]
+end
+---@param tab_num integer
+---@return string
+local function gen_fluid_selection(tab_num)
+	return tab_num.."_fluid_selection" --[[@as string]]
+end
+---@param type string
+---@param name string
+---@return string
+local function gen_sprite(type,name)
+	return type.."/"..name --[[@as string]]
+end
 
 ---@class tierMenu : event_handler
 local tierMenu = {events={}--[[@as event_handler.events]]}
@@ -16,6 +55,7 @@ local tierMenu = {events={}--[[@as event_handler.events]]}
 ---@field calculated simpleItem[] the list of items last calculated
 
 ---@class WindowState.TierMenu : WindowState.ElemSelectorTable
+---@field elems table<ElementNames,LuaGuiElement>
 ---@field highlight simpleItem? The item clicked to highlight everything
 ---@field highlighted LuaGuiElement[]? List of elements currently highlighted
 ---@field selected_tab integer the tab that is currently selected
@@ -54,7 +94,7 @@ local function make_item_selection_pane(number)
 				{
 					type = "module", module_type = "elem_selector_table",
 					frame_style = "tiergen_elem_selector_table_frame",
-					name = number.."_item_selection", elem_type = "item",
+					name = gen_item_selection(number), elem_type = "item",
 					height = table_size.item_height, width = table_size.width,
 					on_elem_changed = "elems-changed",
 				} --[[@as ElemSelectorTableParams]],
@@ -65,7 +105,7 @@ local function make_item_selection_pane(number)
 				{
 					type = "module", module_type = "elem_selector_table",
 					frame_style = "tiergen_elem_selector_table_frame",
-					name = number.."_fluid_selection", elem_type = "fluid",
+					name = gen_fluid_selection(number), elem_type = "fluid",
 					height = table_size.fluid_height, width = table_size.width,
 					on_elem_changed = "elems-changed",
 				} --[[@as ElemSelectorTableParams]],
@@ -88,7 +128,7 @@ local function make_new_tier_row(table, tier, tierdigits, items, namespace)
 	local item_elements = {}
 	for i, item in ipairs(items) do
 		local itemPrototype = lib.getItemOrFluid(item.name, item.type)
-		local sprite = item.type.."/"..item.name
+		local sprite = gen_sprite(item.type, item.name)
 		item_elements[i] = {
 			type = "sprite-button", style = "slot_button",
 			name = sprite, sprite = sprite,
@@ -98,13 +138,12 @@ local function make_new_tier_row(table, tier, tierdigits, items, namespace)
 
 	gui.add(namespace, table, {
 		type = "frame",
-		name = "tier-"..tier.."-items",
 		style = "slot_button_deep_frame",
 ---@diagnostic disable-next-line: missing-fields
 		style_mods = {horizontally_stretchable = true},
 		children ={{
 			type = "table", style = "filter_slot_table",
-			name = "tierlist-items-"..tier, column_count = 12,
+			name = names.tier_items_table, column_count = 12,
 ---@diagnostic disable-next-line: missing-fields
 			style_mods = {minimal_width = 40*12},
 			children = item_elements
@@ -116,8 +155,8 @@ end
 ---@param tierArray table<integer, simpleItem[]>
 local function update_tier_table(state, tierArray)
 	local elems = state.elems
-	local error = elems["error-message"]
-	local table = elems["tier-table"]
+	local error = elems[names.error_message]
+	local table = elems[names.tier_table]
 	if not error.valid or not table.valid then
 		return lib.log("Table or Error are invalid references")
 	end
@@ -163,13 +202,13 @@ local function highlightItems(state)
 	local highlightItem = state.highlight
 	if not highlightItem then return end
 
-	local table = state.elems["tier-table"]
+	local table = state.elems[names.tier_table]
 	if table and table.valid and not table.parent.visible then
 		return -- No tiers error message
 	end
 
 	for item in calculator.get{highlightItem} do
-		local button_name = item.type.."/"..item.name
+		local button_name = gen_sprite(item.type, item.name)
 		local button = state.elems[button_name]
 
 		-- ---@type LuaGuiElement
@@ -212,7 +251,7 @@ local function invalidateTiers()
 	end
 
 	---@type WindowState.TierMenu[]
-	local namespace = global["tiergen-menu"]
+	local namespace = global[names.namespace]
 	for _, state in pairs(namespace) do
 		if _ == 0 then goto continue end
 		state.calculated_tab = 0
@@ -223,7 +262,7 @@ local function invalidateTiers()
 		state.highlight = nil
 		state.highlighted = nil
 
-		state.elems["calculate"].enabled = true
+		state.elems[names.calculate].enabled = true
 
 		update_tier_table(state, {})
     ::continue::
@@ -234,14 +273,14 @@ lib.register_func("invalidate_tiers", invalidateTiers)
 
 gui.new{
 	window_def = {
-		namespace = "tiergen-menu",
+		namespace = names.namespace,
 		root = "screen",
 		version = 1,
-		custominput = "tiergen-menu",
-		shortcut = "tiergen-menu",
+		custominput = names.namespace,
+		shortcut = names.namespace,
 		definition = {
 			type = "module", module_type = "window_frame",
-			name = "tiergen-menu", title = {"tiergen.menu"},
+			name = names.namespace, title = {"tiergen.menu"},
 			has_close_button = true, has_pin_button = true,
 			children = {
 				{ -- Options
@@ -252,8 +291,8 @@ gui.new{
 						{ -- Requested items
 							type = "module", module_type = "tiergen_selection_area",
 							caption = {"tiergen.item-selection"},
-							confirm_name = "calculate", confirm_locale = {"tiergen.calculate"},
-							confirm_handler = "calculate",
+							confirm_name = names.calculate, confirm_locale = {"tiergen.calculate"},
+							confirm_handler = names.calculate,
 	---@diagnostic disable-next-line: missing-fields
 							style_mods = {top_margin = 8},
 							children = {{
@@ -276,8 +315,8 @@ gui.new{
 						{ -- Base items
 							type = "module", module_type = "tiergen_selection_area",
 							caption = {"tiergen.base-selection"},
-							confirm_name = "define-base", confirm_locale = {"tiergen.define-base"},
-							confirm_handler = "define-base", confirm_enabled_default = false,
+							confirm_name = names.base, confirm_locale = {"tiergen.define-base"},
+							confirm_handler = names.base, confirm_enabled_default = false,
 							children = {
 								{
 									type = "label",
@@ -286,7 +325,7 @@ gui.new{
 								{
 									type = "module", module_type = "elem_selector_table",
 									frame_style = "tiergen_elem_selector_table_frame",
-									name = "base_item_selection", elem_type = "item",
+									name = names.base_items, elem_type = "item",
 									height = table_size.item_height, width = table_size.width,
 									on_elem_changed = "elems-changed",
 								} --[[@as ElemSelectorTableParams]],
@@ -297,7 +336,7 @@ gui.new{
 								{
 									type = "module", module_type = "elem_selector_table",
 									frame_style = "tiergen_elem_selector_table_frame",
-									name = "base_fluid_selection", elem_type = "fluid",
+									name = names.base_fluids, elem_type = "fluid",
 									height = table_size.fluid_height, width = table_size.width,
 									on_elem_changed = "elems-changed",
 								} --[[@as ElemSelectorTableParams]],
@@ -310,15 +349,15 @@ gui.new{
 						{ -- Ignored recipes
 							type = "module", module_type = "tiergen_selection_area",
 							caption = {"tiergen.ignored-selection"},
-							confirm_name = "define-ignored", confirm_locale = {"tiergen.define-ignored"},
-							confirm_handler = "define-ignored", confirm_enabled_default = false,
+							confirm_name = names.ignored, confirm_locale = {"tiergen.define-ignored"},
+							confirm_handler = names.ignored, confirm_enabled_default = false,
 	---@diagnostic disable-next-line: missing-fields
 							style_mods = {bottom_margin = 4},
 							children = {
 								{
 									type = "module", module_type = "elem_selector_table",
 									frame_style = "tiergen_elem_selector_table_frame",
-									name = "ignored_recipe_selection", elem_type = "recipe",
+									name = names.ignored_recipes, elem_type = "recipe",
 									height = table_size.fluid_height, width = table_size.width,
 									on_elem_changed = "elems-changed",
 								} --[[@as ElemSelectorTableParams]],
@@ -332,7 +371,7 @@ gui.new{
 					style_mods = {height = 16*44 },
 					children = {
 						{ -- Error message
-							type = "flow", name = "error-message",
+							type = "flow", name = names.error_message,
 							direction = "vertical",
 							children = {
 								{type = "empty-widget", style = "flib_vertical_pusher"},
@@ -352,7 +391,7 @@ gui.new{
 							-- style_mods = {left_padding = 8},
 							children = {{
 								type = "table", direction = "vertical",
-								name = "tier-table", column_count = 2,
+								name = names.tier_table, column_count = 2,
 								draw_horizontal_lines = true,
 	---@diagnostic disable-next-line: missing-fields
 								style_mods = {left_padding = 8},
@@ -369,7 +408,7 @@ gui.new{
 		["tab-changed"] = function (state, elem)
 			local selected_tab = elem.selected_tab_index --[[@as integer]]
 			state.selected_tab = selected_tab
-			local calculate = state.elems["calculate"]
+			local calculate = state.elems[names.calculate]
 
 			if state.selected_tab ~= state.calculated_tab then
 				calculate.enabled = true
@@ -382,23 +421,23 @@ gui.new{
 			if name:match("base") then
 				-- Base items
 				state.base_changed = true
-				state.elems["define-base"].enabled = true
+				state.elems[names.base].enabled = true
 
 			elseif name:match("ignored") then
 				-- Ignored items
 				state.ignored_changed = true
-				state.elems["define-ignored"].enabled = true
+				state.elems[names.ignored].enabled = true
 
 			else
 				-- Tab
 				local tab = state[state.selected_tab]
 				tab.has_changed = true
 				tab.has_changed_from_default = true
-				state.elems["calculate"].enabled = true
+				state.elems[names.calculate].enabled = true
 			end
 		end,
 
-		["calculate"] = function (state, elem)
+		[names.calculate] = function (state, elem)
 			elem.enabled = false
 			local selected_index = state.selected_tab
 			local calculated_index = state.calculated_tab
@@ -452,7 +491,7 @@ gui.new{
 			tab.result = results
 			update_tier_table(state, results)
 		end,
-		["define-base"] = function (state, elem)
+		[names.base] = function (state, elem)
 			elem.enabled = false
 
 			local new_base,old_base = {},global.config.base_items
@@ -485,7 +524,7 @@ gui.new{
 			tierMenu.update_base(new_base)
 			global.config.base_items = new_base
 		end,
-		["define-ignored"] = function (state, elem)
+		[names.ignored] = function (state, elem)
 			elem.enabled = false
 
 			---@type table<string,integer>
@@ -555,7 +594,7 @@ gui.new{
 
 tierMenu.events[defines.events.on_gui_click] = function(EventData)
 	local element = EventData.element
-	local WindowStates = global["tiergen-menu"] --[[@as WindowState[] ]]
+	local WindowStates = global[names.namespace] --[[@as WindowState[] ]]
 	if not WindowStates then return end -- Don't do anything if the namespace isn't setup
 	local state = WindowStates[EventData.player_index] --[[@as WindowState.TierMenu]]
 	if not state then return end -- Don't do anything if the player isn't setup
@@ -601,7 +640,6 @@ end
 function tierMenu.on_init()
 	lib.tick_later("invalidate_tiers") -- Is this actually necessary?
 end
-
 function tierMenu.on_configuration_changed()
 	lib.tick_later("invalidate_tiers")
 end
@@ -611,7 +649,7 @@ end
 ---@param player_index integer
 ---@param tabs {[1]:simpleItem[],[2]:simpleItem[],[3]:simpleItem[]}
 function tierMenu.set_items(player_index, tabs)
-	local state = global["tiergen-menu"][player_index] --[[@as WindowState.TierMenu]]
+	local state = global[names.namespace][player_index] --[[@as WindowState.TierMenu]]
 	local elems = state.elems
 	local values = state.selector_table
 
@@ -624,12 +662,12 @@ function tierMenu.set_items(player_index, tabs)
 		-- Don't change it to the default if they've altered it
 		if state[i].has_changed_from_default then goto continue end
 
-		local items = i.."_item_selection"
+		local items = gen_item_selection(i)
 		local item_table = elems[items]
 		local item_values = {count=0,last=0}
 		values[items] = item_values
 
-		local fluids = i.."_fluid_selection"
+		local fluids = gen_fluid_selection(i)
 		local fluid_table = elems[fluids]
 		local fluid_values = {count=0,last=0}
 		values[fluids] = fluid_values
@@ -677,15 +715,15 @@ end
 ---@param base simpleItem[]
 function tierMenu.update_base(base)
 	for player_index in pairs(game.players) do
-		local state = global["tiergen-menu"][player_index] --[[@as WindowState.TierMenu]]
+		local state = global[names.namespace][player_index] --[[@as WindowState.TierMenu]]
 
-		local item_table = state.elems["base_item_selection"]
+		local item_table = state.elems[names.base_items]
 		local item_values = {count=0,last=0}
-		state.selector_table["base_item_selection"] = item_values
+		state.selector_table[names.base_items] = item_values
 
-		local fluid_table = state.elems["base_fluid_selection"]
+		local fluid_table = state.elems[names.base_fluids]
 		local fluid_values = {count=0,last=0}
-		state.selector_table["base_fluid_selection"] = fluid_values
+		state.selector_table[names.base_fluids] = fluid_values
 
 		local update_rows = state.selector_update_rows.call
 		if not update_rows then
@@ -734,10 +772,10 @@ end
 ---@param ignored table<data.RecipeID,integer|true>
 function tierMenu.update_ignored(ignored)
 	for player_index in pairs(game.players) do
-		local state = global["tiergen-menu"][player_index] --[[@as WindowState.TierMenu]]
-		local recipe_table = state.elems["ignored_recipe_selection"]
+		local state = global[names.namespace][player_index] --[[@as WindowState.TierMenu]]
+		local recipe_table = state.elems[names.ignored_recipes]
 		local recipe_values = {count=0,last=0}
-		state.selector_table["ignored_recipe_selection"] = recipe_values
+		state.selector_table[names.ignored_recipes] = recipe_values
 
 		local update_rows = state.selector_update_rows.call
 		if not update_rows then
