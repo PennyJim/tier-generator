@@ -57,6 +57,16 @@ end
 module.setup_state = function (state)
 	state.selector_table = state.selector_table or {}
 	state.selector_update_rows = state.selector_update_rows or setmetatable({valid = false}, update_row_meta)
+
+	-- Restore table entries
+	for table_name, table_entries in pairs(state.selector_table) do
+		local table = state.elems[table_name]
+		local type = table.children[1].elem_type
+		update_row_meta.call(table, table_entries.last, type, state)
+		for index, item in pairs(table_entries) do
+			table.children[index].elem_value = item
+		end
+	end
 end
 
 ---@class ElemSelectorTableParams : ModuleDef
