@@ -288,18 +288,35 @@ lib.register_func("invalidate_tiers", invalidateTiers)
 ---Enable/Disables the elem buttons of 
 ---@param state WindowState.TierMenu
 ---@param can_define boolean
-local function update_defining_permission(state, can_define)
+local function update_defining_permission(state, can_define, update_anyways)
 	--MARK: update permission
-	if state.can_define == can_define then return end
+	if not update_anyways and state.can_define == can_define then return end
 	state.can_define = can_define
 
-	local elems = state.elems
-	local base_item_table = elems[gen_item_selection(1)]
+	local set_enabled = state.selector_funcs.set_enabled
+	if not set_enabled then
+		return error("elem_selector_table's function didn't get restored on save/load")
+	end
 
-	if can_define then
-		lib.print(state.player.index, "You *CAN* edit now")
-	else
-		lib.print(state.player.index, "No editing for you!")
+	local define_base = state.elems[names.base]
+	define_base.enabled = false
+	set_enabled(state, names.base_items, can_define)
+	set_enabled(state, names.base_fluids, can_define)
+	if state.base_changed then
+		state.base_changed = false
+		if global.config then
+			tierMenu.update_base(global.config.base_items)
+		end
+	end
+
+	local define_ignored = state.elems[names.ignored]
+	define_ignored.enabled = false
+	set_enabled(state, names.ignored_recipes, can_define)
+	if state.ignored_changed then
+		state.ignored_changed = false
+		if global.config then
+			tierMenu.update_ignored(global.config.ignored_recipes)
+		end
 	end
 end
 --#endregion
@@ -613,12 +630,14 @@ gui.new{ --MARK: window_def
 		state[3] = state[3] or base_tab(true)
 
 		local permission_group = state.player.permission_group
+		---@type boolean
+		local can_define
 		if permission_group then
-			state.can_define = permission_group.allows_action(defines.input_action.mod_settings_changed)
+			can_define = permission_group.allows_action(defines.input_action.mod_settings_changed)
 		else
-			state.can_define = state.can_define == true
+			can_define = state.can_define == true
 		end
-		update_defining_permission(state, state.can_define)
+		update_defining_permission(state, can_define, true)
 
 		state.base_changed = false
 		state.base_state = {}
