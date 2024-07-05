@@ -735,8 +735,8 @@ function tierMenu.set_items(player_index, tabs)
 	local elems = state.elems
 	local values = state.selector_table
 
-	local update_rows = state.selector_funcs.update_rows
-	if not update_rows then
+	local set_index = state.selector_funcs.set_index
+	if not set_index then
 		error("elem_selector_table's function didn't get restored on save/load")
 	end
 
@@ -744,29 +744,27 @@ function tierMenu.set_items(player_index, tabs)
 		-- Don't change it to the default if they've altered it
 		if state[i].has_changed_from_default then goto continue end
 
-		local items = gen_item_selection(i)
-		local item_table = elems[items]
+		local item_name = gen_item_selection(i)
 		---@type ElemList
 		local item_values = {count=0,last=0}
-		values[items] = item_values
+		values[item_name] = item_values
 
-		local fluids = gen_fluid_selection(i)
-		local fluid_table = elems[fluids]
+		local fluid_name = gen_fluid_selection(i)
 		---@type ElemList
 		local fluid_values = {count=0,last=0}
-		values[fluids] = fluid_values
+		values[fluid_name] = fluid_values
 
 		---@type table<integer,true>, table<integer,true>
 		local visited_items,visited_fluids = {},{}
 		for _, item in pairs(tabs[i]) do
-			---@type LuaGuiElement, ElemList, table<integer,true>
-			local elem_table, elem_values, visited
+			---@type string, ElemList, table<integer,true>
+			local elem_name, elem_values, visited
 			if item.type == "item" then
-				elem_table = item_table
+				elem_name = item_name
 				elem_values = item_values
 				visited = visited_items
 			else
-				elem_table = fluid_table
+				elem_name = fluid_name
 				elem_values = fluid_values
 				visited = visited_fluids
 			end
@@ -774,27 +772,20 @@ function tierMenu.set_items(player_index, tabs)
 			local index = item.count or elem_values.last + 1
 			visited[index] = true
 
-			elem_values.last = math.max(index, elem_values.last)
-			update_rows(state, elem_table.name)
-
-			elem_table.children[index].elem_value = item.name
-			elem_values[index] = item.name
-			elem_values.count = elem_values.count + 1
+			set_index(state, elem_name, index, item.name)
 		end
 
 		-- Clear unvisited elems
-		for index, elem in pairs(item_table.children) do
+		for index, elem in pairs(state.elems[item_name].children) do
 			if not visited_items[index] then
 				elem.elem_value = nil
 			end
 		end
-		update_rows(state, item_table.name)
-		for index, elem in pairs(fluid_table.children) do
+		for index, elem in pairs(state.elems[fluid_name].children) do
 			if not visited_fluids[index] then
 				elem.elem_value = nil
 			end
 		end
-		update_rows(state, fluid_table.name)
     ::continue::
 	end
 end
@@ -804,32 +795,32 @@ function tierMenu.update_base(base)
 	for player_index in pairs(game.players) do
 		local state = global[names.namespace][player_index] --[[@as WindowState.TierMenu]]
 
-		local item_table = state.elems[names.base_items]
+		local item_name = names.base_items
 		---@type ElemList
 		local item_values = {count=0,last=0}
 		state.selector_table[names.base_items] = item_values
 
-		local fluid_table = state.elems[names.base_fluids]
+		local fluid_name = names.base_fluids
 		---@type ElemList
 		local fluid_values = {count=0,last=0}
 		state.selector_table[names.base_fluids] = fluid_values
 
-		local update_rows = state.selector_funcs.update_rows
-		if not update_rows then
+		local set_index = state.selector_funcs.set_index
+		if not set_index then
 			error("elem_selector_table's function didn't get restored on save/load")
 		end
 
 		---@type table<integer,true>,table<integer,true>
 		local visited_items,visited_fluids = {},{}
 		for _, item in pairs(base) do
-			---@type LuaGuiElement, ElemList, table<integer,true>
-			local elem_table, elem_values, visited
+			---@type string, ElemList, table<integer,true>
+			local elem_name, elem_values, visited
 			if item.type == "item" then
-				elem_table = item_table
+				elem_name = item_name
 				elem_values = item_values
 				visited = visited_items
 			else
-				elem_table = fluid_table
+				elem_name = fluid_name
 				elem_values = fluid_values
 				visited = visited_fluids
 			end
@@ -837,27 +828,20 @@ function tierMenu.update_base(base)
 			local index = item.count or elem_values.last + 1
 			visited[index] = true
 
-			elem_values.last = math.max(elem_values.last, index)
-			update_rows(state, elem_table.name)
-
-			elem_table.children[index].elem_value = item.name
-			elem_values[index] = item.name
-			elem_values.count = elem_values.count + 1
+			set_index(state, elem_name, index, item.name)
 		end
 
 		-- Clear unvisited elems
-		for index, elem in pairs(item_table.children) do
+		for index, elem in pairs(state.elems[item_name].children) do
 			if not visited_items[index] then
 				elem.elem_value = nil
 			end
 		end
-		update_rows(state, item_table.name)
-		for index, elem in pairs(fluid_table.children) do
+		for index, elem in pairs(state.elems[fluid_name].children) do
 			if not visited_fluids[index] then
 				elem.elem_value = nil
 			end
 		end
-		update_rows(state, fluid_table.name)
 	end
 end
 ---@param ignored table<data.RecipeID,integer|true>
@@ -865,13 +849,13 @@ function tierMenu.update_ignored(ignored)
 	--MARK: update ignored
 	for player_index in pairs(game.players) do
 		local state = global[names.namespace][player_index] --[[@as WindowState.TierMenu]]
-		local recipe_table = state.elems[names.ignored_recipes]
+		local table_name = names.ignored_recipes
 		---@type ElemList
 		local recipe_values = {count=0,last=0}
 		state.selector_table[names.ignored_recipes] = recipe_values
 
-		local update_rows = state.selector_funcs.update_rows
-		if not update_rows then
+		local set_index = state.selector_funcs.set_index
+		if not set_index then
 			error("elem_selector_table's function didn't get restored on save/load")
 		end
 
@@ -879,26 +863,18 @@ function tierMenu.update_ignored(ignored)
 		local visited = {}
 		for recipe, index in pairs(ignored) do
 			if type(index) == "boolean" then
-				index = recipe_values.last + 1
-				recipe_values.last = index
-			elseif index > recipe_values.last then
-				recipe_values.last = index
+				index = recipe_values.last+1
 			end
 			visited[index] = true
-			update_rows(state, recipe_table.name)
-
-			recipe_table.children[index].elem_value = recipe
-			recipe_values[index] = recipe
-			recipe_values.count = recipe_values.count + 1
+			set_index(state, table_name, index, recipe)
 		end
 
 		--- Clear unvisited elems
-		for index, elem in pairs(recipe_table.children) do
+		for index, elem in pairs(state.elems[table_name].children) do
 			if not visited[index] then
 				elem.elem_value = nil
 			end
 		end
-		update_rows(state, recipe_table.name)
 	end
 end
 --#endregion
