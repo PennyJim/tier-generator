@@ -44,17 +44,17 @@ function selector_funcs.set_index(state, table_name, index, value, reactionary)
 	if index > list.last then
 		-- Set new last index and update rows
 		list.last = index
-		selector_funcs.update_rows(state, table.name)
+		selector_funcs.update_rows(state, table_name)
 	elseif index == list.last and value == nil then
 		-- Decrement the last_index to the last item with a value
-		for new_last = index, 0, -1 do
+		for new_last = index-1, 0, -1 do
 			if list[new_last] or new_last == 0 then
 				list.last = new_last
 				break
 			end
 		end
 		-- Update the rows
-		selector_funcs.update_rows(state, table.name)
+		selector_funcs.update_rows(state, table_name)
 	end
 
 	-- Update the count
