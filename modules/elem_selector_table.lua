@@ -28,9 +28,9 @@ local selector_funcs = {valid = true}
 ---@param table_name string
 ---@param index integer
 ---@param value string|SignalID
----@param reactionary true?
+---@param update_elem false?
 ---@returns boolean did_change
-function selector_funcs.set_index(state, table_name, index, value, reactionary)
+function selector_funcs.set_index(state, table_name, index, value, update_elem)
 	--MARK: set index
 	local table = state.elems[table_name]
 	local list = state.selector_table[table_name]
@@ -39,6 +39,7 @@ function selector_funcs.set_index(state, table_name, index, value, reactionary)
 	old_value = list[index]
 
 	if old_value == value then return false end
+	update_elem = update_elem ~= false
 
 	-- Update the row-count
 	if index > list.last then
@@ -55,6 +56,12 @@ function selector_funcs.set_index(state, table_name, index, value, reactionary)
 		end
 		-- Update the rows
 		selector_funcs.update_rows(state, table_name)
+
+		-- Don't update if it'll modify a deleted element
+		if update_elem then
+			local last_real = #table.children
+			update_elem = index <= last_real
+		end
 	end
 
 	-- Update the count
@@ -68,7 +75,7 @@ function selector_funcs.set_index(state, table_name, index, value, reactionary)
 
 	-- Update list (and elem)
 	list[index] = value
-	if not reactionary then
+	if update_elem then
 		elem.elem_value = value
 	end
 	return true
@@ -217,7 +224,7 @@ module.handlers[handler_names.elem_changed] = function (state, elem, OriginalEve
 	state.selector_table[table.name] = elem_list
 	local index = elem.get_index_in_parent()
 
-	local did_change = selector_funcs.set_index(state, table.name, index, elem.elem_value, true)
+	local did_change = selector_funcs.set_index(state, table.name, index, elem.elem_value, false)
 
 	return did_change and table or nil
 end
