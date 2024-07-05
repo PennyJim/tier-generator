@@ -14,24 +14,30 @@ local handler_names = {
 ---@class WindowState.ElemSelectorTable : WindowState
 -- Where custom fields would go
 ---@field selector_table table<string,ElemList>
----@field selector_update_rows update_row_obj
+---@field selector_funcs update_row_obj
+---@field selector_enabled table<string,boolean>
 
 ---@class update_row_obj
 ---@field valid boolean
----@field call fun(table:LuaGuiElement,last_index:integer,elem_type:ElemType,state:WindowState.ElemSelectorTable)?
-local update_row_meta = {__index = {
+---@field update_rows fun(state:WindowState.ElemSelectorTable,table_name:string)?
+---@field set_enabled fun(is_enabled:boolean)?
+local selector_meta = {__index = {
 	valid = false,
 
-	---@param table LuaGuiElement
-	---@param last_index integer
-	---@param elem_type ElemType
 	---@param state WindowState.ElemSelectorTable
-	call = function (table, last_index, elem_type, state) -- TODO: Add a setter instead of calling this constantly
+	---@param table_name string
+	update_rows = function (state, table_name) -- TODO: Add a setter instead of calling this constantly
+		local table = state.elems[table_name]
+		local elem_type = table.tags["type"]
+
+		local last_index = state.selector_table[table_name].last
 		local columns = table.column_count
 		local desired_rows = math.ceil(last_index/columns)+1
+
 		local children = table.children
 		local children_count = #children
 		local current_rows = children_count/columns
+
 		if current_rows > desired_rows then
 			-- Remove elements
 			for remove_index = children_count, desired_rows*columns+1, -1 do
@@ -50,19 +56,19 @@ local update_row_meta = {__index = {
 	end
 }}
 if not data then -- Is required during data to check its structure.
-	script.register_metatable("update_row_meta", update_row_meta)
+	script.register_metatable("update_row_meta", selector_meta)
 end
 
 ---@param state WindowState.ElemSelectorTable
 module.setup_state = function (state)
 	state.selector_table = state.selector_table or {}
-	state.selector_update_rows = state.selector_update_rows or setmetatable({valid = false}, update_row_meta)
+	state.selector_funcs = state.selector_funcs or setmetatable({valid = false}, selector_meta)
 
 	-- Restore table entries
 	for table_name, table_entries in pairs(state.selector_table) do
 		local table = state.elems[table_name]
 		local type = table.children[1].elem_type
-		update_row_meta.call(table, table_entries.last, type, state)
+		selector_meta.update_rows(state, table_name)
 		for index, item in pairs(table_entries) do
 			table.children[index].elem_value = item
 		end
@@ -134,6 +140,7 @@ function module.build_func(params)
 							{
 								type = "table", style = "filter_slot_table",
 								name = params.name, column_count = params.width,
+								tags = {["type"] = params.elem_type},
 ---@diagnostic disable-next-line: missing-fields
 								style_mods = {
 									width = 40*params.width,
@@ -181,7 +188,7 @@ module.handlers[handler_names.elem_changed] = function (state, elem, OriginalEve
 	if index > elem_list.last then
 		-- Set new last index and update rows
 		elem_list.last = index
-		state.selector_update_rows.call(table, index, type, state)
+		selector_meta.update_rows(state, table.name)
 	elseif index == elem_list.last then
 		-- Decrement the last_index to the last item with a value
 		for new_last = index, 0, -1 do
@@ -192,7 +199,7 @@ module.handlers[handler_names.elem_changed] = function (state, elem, OriginalEve
 		end
 		-- Update the rows
 		local last_index = elem_list.last
-		state.selector_update_rows.call(table, last_index, type, state)
+		selector_meta.update_rows(state, table.name)
 	end
 
 	return table

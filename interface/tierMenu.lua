@@ -735,7 +735,7 @@ function tierMenu.set_items(player_index, tabs)
 	local elems = state.elems
 	local values = state.selector_table
 
-	local update_rows = state.selector_update_rows.call
+	local update_rows = state.selector_funcs.update_rows
 	if not update_rows then
 		error("elem_selector_table's function didn't get restored on save/load")
 	end
@@ -775,7 +775,7 @@ function tierMenu.set_items(player_index, tabs)
 			visited[index] = true
 
 			elem_values.last = math.max(index, elem_values.last)
-			update_rows(elem_table, elem_values.last, item.type, state)
+			update_rows(state, elem_table.name)
 
 			elem_table.children[index].elem_value = item.name
 			elem_values[index] = item.name
@@ -788,13 +788,13 @@ function tierMenu.set_items(player_index, tabs)
 				elem.elem_value = nil
 			end
 		end
-		update_rows(item_table, item_values.last, "item", state)
+		update_rows(state, item_table.name)
 		for index, elem in pairs(fluid_table.children) do
 			if not visited_fluids[index] then
 				elem.elem_value = nil
 			end
 		end
-		update_rows(fluid_table, fluid_values.last, "fluid", state)
+		update_rows(state, fluid_table.name)
     ::continue::
 	end
 end
@@ -814,7 +814,7 @@ function tierMenu.update_base(base)
 		local fluid_values = {count=0,last=0}
 		state.selector_table[names.base_fluids] = fluid_values
 
-		local update_rows = state.selector_update_rows.call
+		local update_rows = state.selector_funcs.update_rows
 		if not update_rows then
 			error("elem_selector_table's function didn't get restored on save/load")
 		end
@@ -838,7 +838,7 @@ function tierMenu.update_base(base)
 			visited[index] = true
 
 			elem_values.last = math.max(elem_values.last, index)
-			update_rows(elem_table, elem_values.last, item.type, state)
+			update_rows(state, elem_table.name)
 
 			elem_table.children[index].elem_value = item.name
 			elem_values[index] = item.name
@@ -851,13 +851,13 @@ function tierMenu.update_base(base)
 				elem.elem_value = nil
 			end
 		end
-		update_rows(item_table, item_values.last, "item", state)
+		update_rows(state, item_table.name)
 		for index, elem in pairs(fluid_table.children) do
 			if not visited_fluids[index] then
 				elem.elem_value = nil
 			end
 		end
-		update_rows(fluid_table, fluid_values.last, "fluid", state)
+		update_rows(state, fluid_table.name)
 	end
 end
 ---@param ignored table<data.RecipeID,integer|true>
@@ -870,7 +870,7 @@ function tierMenu.update_ignored(ignored)
 		local recipe_values = {count=0,last=0}
 		state.selector_table[names.ignored_recipes] = recipe_values
 
-		local update_rows = state.selector_update_rows.call
+		local update_rows = state.selector_funcs.update_rows
 		if not update_rows then
 			error("elem_selector_table's function didn't get restored on save/load")
 		end
@@ -885,7 +885,7 @@ function tierMenu.update_ignored(ignored)
 				recipe_values.last = index
 			end
 			visited[index] = true
-			update_rows(recipe_table, recipe_values.last, "recipe", state)
+			update_rows(state, recipe_table.name)
 
 			recipe_table.children[index].elem_value = recipe
 			recipe_values[index] = recipe
@@ -898,7 +898,7 @@ function tierMenu.update_ignored(ignored)
 				elem.elem_value = nil
 			end
 		end
-		update_rows(recipe_table, recipe_values.last, "recipe", state)
+		update_rows(state, recipe_table.name)
 	end
 end
 --#endregion
