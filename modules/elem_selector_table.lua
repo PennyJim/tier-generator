@@ -19,7 +19,7 @@ local handler_names = {
 
 ---@class selector_functions
 ---@field valid boolean
----@field set_index fun(state:WindowState.ElemSelectorTable,table_name:string,index:integer,value:string|SignalID)?
+---@field set_index (fun(state:WindowState.ElemSelectorTable,table_name:string,index:integer,value:string|SignalID):boolean)?
 ---@field update_rows fun(state:WindowState.ElemSelectorTable,table_name:string)?
 ---@field set_enabled fun(is_enabled:boolean)?
 
@@ -29,6 +29,7 @@ local selector_funcs = {valid = true}
 ---@param index integer
 ---@param value string|SignalID
 ---@param reactionary true?
+---@returns boolean did_change
 function selector_funcs.set_index(state, table_name, index, value, reactionary)
 	--MARK: set index
 	local table = state.elems[table_name]
@@ -36,6 +37,8 @@ function selector_funcs.set_index(state, table_name, index, value, reactionary)
 
 	local elem = table.children[index]
 	old_value = list[index]
+
+	if old_value == value then return false end
 
 	-- Update the row-count
 	if index > list.last then
@@ -68,6 +71,7 @@ function selector_funcs.set_index(state, table_name, index, value, reactionary)
 	if not reactionary then
 		elem.elem_value = value
 	end
+	return true
 end
 ---@param state WindowState.ElemSelectorTable
 ---@param table_name string
@@ -213,9 +217,9 @@ module.handlers[handler_names.elem_changed] = function (state, elem, OriginalEve
 	state.selector_table[table.name] = elem_list
 	local index = elem.get_index_in_parent()
 
-	selector_funcs.set_index(state, table.name, index, elem.elem_value, true)
+	local did_change = selector_funcs.set_index(state, table.name, index, elem.elem_value, true)
 
-	return table
+	return did_change and table or nil
 end
 
 return module --[[@as GuiModuleDef]]
