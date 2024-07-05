@@ -587,7 +587,7 @@ gui.new{ --MARK: window_def
 			local new_ignored,old_ignored = {},global.config.ignored_recipes
 			local new_count,old_count = 0,0
 			local is_different = false
-			local table = state.selector_table["ignored_recipe_selection"] or {}
+			local table = state.selector_table[names.ignored_recipes] or {}
 			for index, recipe in pairs(table) do
 				if lib.type(index) ~= "number" then goto continue end
 				---@cast recipe string
