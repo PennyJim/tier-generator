@@ -70,6 +70,7 @@ local tierMenu = {events={}--[[@as event_handler.events]]}
 ---@field [1] WindowState.TierMenu.tab
 ---@field [2] WindowState.TierMenu.tab
 ---@field [3] WindowState.TierMenu.tab
+---@field can_define boolean Whether this player can edit mod settings
 ---@field base_changed boolean
 ---@field base_state simpleItem[]
 ---@field ignored_changed boolean
@@ -283,6 +284,24 @@ local function invalidateTiers()
 	end
 end
 lib.register_func("invalidate_tiers", invalidateTiers)
+
+---Enable/Disables the elem buttons of 
+---@param state WindowState.TierMenu
+---@param can_define boolean
+local function update_defining_permission(state, can_define)
+	--MARK: update permission
+	if state.can_define == can_define then return end
+	state.can_define = can_define
+
+	local elems = state.elems
+	local base_item_table = elems[gen_item_selection(1)]
+
+	if can_define then
+		lib.print(state.player.index, "You *CAN* edit now")
+	else
+		lib.print(state.player.index, "No editing for you!")
+	end
+end
 --#endregion
 
 gui.new{ --MARK: window_def
@@ -593,6 +612,14 @@ gui.new{ --MARK: window_def
 		state[2] = state[2] or base_tab(true)
 		state[3] = state[3] or base_tab(true)
 
+		local permission_group = state.player.permission_group
+		if permission_group then
+			state.can_define = permission_group.allows_action(defines.input_action.mod_settings_changed)
+		else
+			state.can_define = state.can_define == true
+		end
+		update_defining_permission(state, state.can_define)
+
 		state.base_changed = false
 		state.base_state = {}
 		state.ignored_changed = false
@@ -661,6 +688,36 @@ tierMenu.events[defines.events.on_runtime_mod_setting_changed] = function (Event
 	end
 end
 
+tierMenu.events[defines.events.on_permission_group_edited] = function (EventData)
+	--MARK: permissions edited
+	local event_type = EventData.type
+	if event_type == "rename" then return end
+	local states = global[names.namespace] --[[@as WindowState.TierMenu[] ]]
+
+	if event_type == "add-permission"
+	or event_type == "remove-permission"
+	or event_type == "enable-all"
+	or event_type == "disable-all" then
+		if EventData.action and EventData.action ~= defines.input_action.mod_settings_changed then
+			return -- We only care about mod settings (if there's an action)
+		end
+		local can_define =
+			event_type == "add-permission"
+			or event_type == "enable-all"
+		for _, player in pairs(EventData.group.players) do
+			local state = states[player.index]
+			update_defining_permission(state, can_define)
+		end
+		
+	elseif event_type == "add-player" then
+		-- Get permission in group and update player
+		local can_define = EventData.group.allows_action(defines.input_action.mod_settings_changed)
+		local state = states[EventData.other_player_index]
+		update_defining_permission(state, can_define)
+	end
+end
+
+-- MARK: init/config changed
 function tierMenu.on_init()
 	lib.tick_later("invalidate_tiers") -- Is this actually necessary?
 end
