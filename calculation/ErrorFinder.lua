@@ -75,7 +75,7 @@ local function process_ingredients(player_index, item, item_type, debug_state)
 end
 
 local function debug_command_tick()
-	local debug_table = global.debug_table
+	local debug_table = global.debug_table --[[@as table<integer, debug_state>]]
 	---@type integer[]
 	local finished_players = {}
 
