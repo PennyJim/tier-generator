@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.4.0
-Date: ????
+Date: 2024-07-06
   Features:
     - You can now pin the window to look at it and another window at the same time
     - Actually implement the ability to define base items or ignored recipes
