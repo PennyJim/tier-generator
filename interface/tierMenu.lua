@@ -265,10 +265,10 @@ local function invalidateTiers()
 		calculator.uncalculate()
 	end
 
-	---@type WindowState.TierMenu[]
-	local namespace = global[names.namespace]
-	for _, state in pairs(namespace) do
-		if _ == 0 then goto continue end
+	for player_index in pairs(game.players) do
+		---@cast player_index integer
+		local state = gui.get_state(names.namespace, player_index) --[[@as WindowState.TierMenu]]
+
 		state.calculated_tab = 0
 		state[1] = base_tab(not state[1].has_changed_from_default)
 		state[2] = base_tab(not state[2].has_changed_from_default)
@@ -666,10 +666,7 @@ gui.new{ --MARK: window_def
 tierMenu.events[defines.events.on_gui_click] = function(EventData)
 	--MARK: on_click
 	local element = EventData.element
-	local WindowStates = global[names.namespace] --[[@as WindowState[] ]]
-	if not WindowStates then return end -- Don't do anything if the namespace isn't setup
-	local state = WindowStates[EventData.player_index] --[[@as WindowState.TierMenu]]
-	if not state then return end -- Don't do anything if the player isn't setup
+	local state = gui.get_state(names.namespace, EventData.player_index) --[[@as WindowState.TierMenu]]
 
 	local parent = element.parent
 	if not parent or not parent.name then return end
@@ -714,7 +711,6 @@ tierMenu.events[defines.events.on_permission_group_edited] = function (EventData
 	--MARK: permissions edited
 	local event_type = EventData.type
 	if event_type == "rename" then return end
-	local states = global[names.namespace] --[[@as WindowState.TierMenu[] ]]
 
 	if event_type == "add-permission"
 	or event_type == "remove-permission"
@@ -727,14 +723,14 @@ tierMenu.events[defines.events.on_permission_group_edited] = function (EventData
 			event_type == "add-permission"
 			or event_type == "enable-all"
 		for _, player in pairs(EventData.group.players) do
-			local state = states[player.index]
+			local state = gui.get_state(names.namespace, player.index) --[[@as WindowState.TierMenu]]
 			update_defining_permission(state, can_define)
 		end
 		
 	elseif event_type == "add-player" then
 		-- Get permission in group and update player
 		local can_define = EventData.group.allows_action(defines.input_action.mod_settings_changed)
-		local state = states[EventData.other_player_index]
+		local state = gui.get_state(names.namespace, EventData.other_player_index) --[[@as WindowState.TierMenu]]
 		update_defining_permission(state, can_define)
 	end
 end
@@ -753,7 +749,7 @@ end
 ---@param tabs {[1]:simpleItem[],[2]:simpleItem[],[3]:simpleItem[]}
 function tierMenu.set_items(player_index, tabs)
 	--MARK: set items
-	local state = global[names.namespace][player_index] --[[@as WindowState.TierMenu]]
+	local state = gui.get_state(names.namespace, player_index) --[[@as WindowState.TierMenu]]
 	local elems = state.elems
 	local values = state.selector_table
 
@@ -798,12 +794,12 @@ function tierMenu.set_items(player_index, tabs)
 		end
 
 		-- Clear unvisited elems
-		for index, elem in pairs(state.elems[item_name].children) do
+		for index, elem in pairs(elems[item_name].children) do
 			if not visited_items[index] then
 				elem.elem_value = nil
 			end
 		end
-		for index, elem in pairs(state.elems[fluid_name].children) do
+		for index, elem in pairs(elems[fluid_name].children) do
 			if not visited_fluids[index] then
 				elem.elem_value = nil
 			end
@@ -827,7 +823,7 @@ function tierMenu.update_base(base, player_index, update_anyways)
 	end
 
 	for player_index in pairs(players) do
-		local state = global[names.namespace][player_index] --[[@as WindowState.TierMenu]]
+		local state = gui.get_state(names.namespace, player_index) --[[@as WindowState.TierMenu]]
 
 		if not update_anyways and state.base_changed then
 			return -- Don't update menu's that've changed
@@ -880,7 +876,7 @@ function tierMenu.update_ignored(ignored, player_index, update_anyways)
 	end
 
 	for player_index in pairs(players) do
-		local state = global[names.namespace][player_index] --[[@as WindowState.TierMenu]]
+		local state = gui.get_state(names.namespace, player_index) --[[@as WindowState.TierMenu]]
 		local table_name = names.ignored_recipes
 
 		if not update_anyways and state.ignored_changed then
