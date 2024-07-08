@@ -1,7 +1,8 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.4.3
 Date: ????
-  Changes:
+  Bugfixes:
+    - Fixed the 0_4_0 migrator. It no longer clears the menus *just* created (I did not realize migrations ran after init..)
 ---------------------------------------------------------------------------------------------------
 Version: 0.4.2
 Date: 2024-07-07

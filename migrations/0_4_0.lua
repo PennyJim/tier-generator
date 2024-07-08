@@ -1,12 +1,13 @@
 ---@diagnostic disable: inject-field, no-unknown
 -- Clean destroy old tiergen-menus
-for _, player in pairs(game.players) do
-	local menu = player.gui.screen["tiergen-menu"]
-	if menu then
-		menu.destroy()
+if global.menu then
+	for _, player in pairs(game.players) do
+		local menu = player.gui.screen["tiergen-menu"]
+		if menu then
+			menu.destroy()
+		end
 	end
-end
 
--- Clear the old global values
-global.player = nil
-global.menu = nil
+	global.player = nil
+	global.menu = nil
+end
