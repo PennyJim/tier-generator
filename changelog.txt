@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.4.3
-Date: ????
+Date: 2024-07-08
   Bugfixes:
     - Fixed the 0_4_0 migrator. It no longer clears the menus *just* created (I did not realize migrations ran after init..)
     - Used a function in the new gui-modules to safely get state rather than hope it still exists
