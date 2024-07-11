@@ -2,7 +2,7 @@ local menu = require("__tier-generator__.interface.tierMenu")
 ---@type event_handler
 local config_handlers = {}
 
----@class Global
+---@class TierGlobal
 ---@field config config
 
 ---@class defaultConfig

@@ -48,8 +48,7 @@ end
 
 --- MARK: Definitions
 
----@class Global
----@field tiergen-menu WindowGlobal
+---@class TierGlobal : ModulesGlobal
 ---@field reprocess boolean?
 
 ---@class tierMenu : event_handler
@@ -337,7 +336,6 @@ gui.new{ --MARK: window_def
 				{ --MARK: Options
 					type = "frame", style = "inside_shallow_frame",
 					direction = "vertical",
----@diagnostic disable-next-line: missing-fields
 					children = {
 						{ --MARK: Requested items
 							type = "module", module_type = "tiergen_selection_area",

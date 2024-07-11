@@ -4,7 +4,7 @@ local lookup = require("__tier-generator__.calculation.lookupTables")
 ---@class TiergenLibrary : event_handler
 local library = {}
 
----@class Global
+---@class TierGlobal
 ---@field tick_later string[]
 ---@field next_tick boolean?
 ---@field seconds table<integer,string>

@@ -39,7 +39,7 @@ local function process_result(player_index, item, result)
 	return true
 end
 
----@class Global
+---@class TierGlobal
 ---@field debug_table table<integer, debug_state>
 
 ---@class debug_state
