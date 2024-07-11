@@ -166,7 +166,9 @@ module.setup_state = function (state)
 		local table = state.elems[table_name]
 		update_rows(state, table, table_entries.last)
 		for index, item in pairs(table_entries) do
-			table.children[index].elem_value = item
+			if type(index) == "number" then
+				table.children[index].elem_value = item
+			end
 		end
 	end
 end
