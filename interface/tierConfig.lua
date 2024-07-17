@@ -33,6 +33,7 @@ builtin_configs["pyalternativeenergy"]			= require("__tier-generator__.compatibi
 builtin_configs["pypostprocessing"]					= require("__tier-generator__.compatibility.py").base
 builtin_configs["nullius"]									= require("__tier-generator__.compatibility.nullius")
 builtin_configs["SimpleSeablock"]						= require("__tier-generator__.compatibility.simple-seablock")
+builtin_configs["FreightForwarding"]				= require("__tier-generator__.compatibility.FreightForwarding")
 
 -- Small(er) mods
 builtin_configs["space-exploration"]				= require("__tier-generator__.compatibility.space-exploration")
