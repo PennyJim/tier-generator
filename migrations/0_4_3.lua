@@ -1,3 +1,4 @@
+---@diagnostic disable: no-unknown
 local states = global["tiergen-menu"]
 if states then
 	global["tiergen-menu"] = nil
