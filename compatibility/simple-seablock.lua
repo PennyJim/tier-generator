@@ -13,5 +13,5 @@ return function ()
 			-- Since it's basically a category, rather than a recipe, it might
 			-- have unintended consequences, so I don't like it even if it worked
 		}
-	}
+	} --[[@as config]]
 end

@@ -1,7 +1,7 @@
 ---@type event_handler
 local handlers = {events={}}
 ---@type TierGlobal
-global = {}
+global = {tick_later = {}, seconds = {}, debug_table = {}, config = {}}
 
 ---Initializes the global variables
 local function setup()
