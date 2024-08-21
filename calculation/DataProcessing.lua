@@ -113,8 +113,8 @@ end
 processFunctions[#processFunctions+1] = function ()
 	lib.log("\tProcessing autoplace resources")
 	for EntityID, entityPrototype in pairs(game.get_filtered_entity_prototypes{
----@diagnostic disable-next-line: missing-fields
-		{filter = "autoplace"}
+		{filter = "autoplace"},
+		{filter = "minable", mode = "and"}
 	}) do
 		ProcessAutoplace(EntityID, entityPrototype)
 	end
