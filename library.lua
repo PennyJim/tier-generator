@@ -263,13 +263,13 @@ end
 ---@param name data.ItemID
 ---@return LuaItemPrototype
 function library.getItem(name)
-	return getGeneric(name, game.item_prototypes)
+	return getGeneric(name, prototypes.item)
 end
 ---Returns the given fluid
 ---@param name data.FluidID
 ---@return LuaFluidPrototype
 function library.getFluid(name)
-	return getGeneric(name, game.fluid_prototypes)
+	return getGeneric(name, prototypes.fluid)
 end
 ---Returns the given item or fluid
 ---@param name data.ItemID|data.FluidID
@@ -279,27 +279,27 @@ function library.getItemOrFluid(name, type)
 	---@type LuaCustomTable<string,LuaItemPrototype|LuaFluidPrototype>
 	local table =
 	type == "item"
-		and game.item_prototypes
-		or game.fluid_prototypes
+		and prototypes.item
+		or prototypes.fluid
 	return getGeneric(name, table)
 end
 ---Returns the given recipe category
 ---@param name data.RecipeCategoryID
 ---@return LuaRecipeCategoryPrototype
 function library.getRecipeCategory(name)
-	return getGeneric(name, game.recipe_category_prototypes)
+	return getGeneric(name, prototypes.recipe_category)
 end
 ---Returns the given recipe category
 ---@param name data.TechnologyID
 ---@return LuaTechnologyPrototype
 function library.getTechnology(name)
-	return getGeneric(name, game.technology_prototypes)
+	return getGeneric(name, prototypes.technology)
 end
 ---Returns the given recipe category
 ---@param name data.RecipeID
 ---@return LuaRecipePrototype
 function library.getRecipe(name)
-	return getGeneric(name, game.recipe_prototypes)
+	return getGeneric(name, prototypes.recipe)
 end
 
 ---Gets the placable item that results in the entity

@@ -31,7 +31,7 @@ local function processRecipe(recipeID, recipePrototype)
 end
 processFunctions[#processFunctions+1] = function ()
 	lib.log("\tProcessing recipes")
-	for recipeID, rawRecipe in pairs(game.recipe_prototypes) do
+	for recipeID, rawRecipe in pairs(prototypes.recipe) do
 		processRecipe(recipeID, rawRecipe);
 	end
 end
@@ -112,7 +112,7 @@ function ProcessAutoplace(EntityID, placedEntity)
 end
 processFunctions[#processFunctions+1] = function ()
 	lib.log("\tProcessing autoplace resources")
-	for EntityID, entityPrototype in pairs(game.get_filtered_entity_prototypes{
+	for EntityID, entityPrototype in pairs(prototypes.get_entity_filtered{
 		{filter = "autoplace"},
 		{filter = "minable", mode = "and"}
 	}) do
@@ -141,7 +141,7 @@ local function processTechnology(technologyID, technologyPrototype)
 end
 processFunctions[#processFunctions+1] = function ()
 	lib.log("\tProcessing technology")
-	for technologyID, technologyData in pairs(game.technology_prototypes) do
+	for technologyID, technologyData in pairs(prototypes.technology) do
 		processTechnology(technologyID, technologyData)
 	end
 end
@@ -162,7 +162,7 @@ local function processCraftingMachine(EntityID, machinePrototype)
 end
 processFunctions[#processFunctions+1] = function ()
 	lib.log("\tProcessing crafting categories")
-	for EntityID, machinePrototype in pairs(game.get_filtered_entity_prototypes{
+	for EntityID, machinePrototype in pairs(prototypes.get_entity_filtered{
 		{filter = "type", type = "assembling-machine"},
 		{filter = "type", type = "furnace"}
 	}) do
@@ -196,7 +196,7 @@ function ProcessMiners(EntityID, Miner)
 end
 processFunctions[#processFunctions+1] = function ()
 	lib.log("\tProcessing miners")
-	for EntityID, entityPrototype in pairs(game.get_filtered_entity_prototypes{
+	for EntityID, entityPrototype in pairs(prototypes.get_entity_filtered{
 		{filter = "type", type = "mining-drill"}
 	}) do
 		ProcessMiners(EntityID, entityPrototype)
@@ -233,7 +233,7 @@ local function processCharacterMining(EntityID, CharacterPrototype)
 end
 processFunctions[#processFunctions+1] = function ()
 	lib.log("\tProcessing CharacterPrototypes")
-	for EntityID, EntityPrototype in pairs(game.get_filtered_entity_prototypes{
+	for EntityID, EntityPrototype in pairs(prototypes.get_entity_filtered{
 		{filter = "type", type = "character"}
 	}) do
 		if EntityID ~= "character" then
@@ -263,7 +263,7 @@ end
 processFunctions[#processFunctions+1] = function ()
 	lib.log("\tProcessing burner categories")
 	-- Not all the right places to look?
-	for EntityID, BurnerMachinePrototype in pairs(game.get_filtered_entity_prototypes{
+	for EntityID, BurnerMachinePrototype in pairs(prototypes.get_entity_filtered{
 		{filter = "type", type = "burner"},
 		{filter = "type", type = "boiler"},
 		{filter = "type", type = "reactor"},
@@ -301,7 +301,7 @@ local function processRocketSilos(EntityID, RocketSiloPrototype)
 end
 processFunctions[#processFunctions+1] = function ()
 	lib.log("\tProcessing rocket silos")
-	for EntityID, RocketSiloPrototype in pairs(game.get_filtered_entity_prototypes{
+	for EntityID, RocketSiloPrototype in pairs(prototypes.get_entity_filtered{
 		{filter = "type", type = "rocket-silo"}
 	}) do
 		processCraftingMachine(EntityID, RocketSiloPrototype)
@@ -342,7 +342,7 @@ local function processBoilers(BoilerID, boilerPrototype)
 end
 processFunctions[#processFunctions+1] = function ()
 	lib.log("\tProcessing boiler recipes")
-	for boilerID, boilerPrototype in pairs(game.get_filtered_entity_prototypes{
+	for boilerID, boilerPrototype in pairs(prototypes.get_entity_filtered{
 		{filter = "type", type = "boiler"},
 	}) do
 		processBoilers(boilerID, boilerPrototype)
@@ -355,7 +355,7 @@ end
 ---@param PumpID data.EntityID
 ---@param pumpPrototype LuaEntityPrototype
 local function processOffshorePumps(PumpID, pumpPrototype)
-	local fluid = pumpPrototype.fluid
+	local fluid = prototypes.fluid["water"] -- pumpPrototype.fluid -- Oh Fuck
 	if not fluid then
 		return lib.ignore(PumpID, "has no fluid output!?")
 	end
@@ -373,7 +373,7 @@ local function processOffshorePumps(PumpID, pumpPrototype)
 end
 processFunctions[#processFunctions+1] = function ()
 	lib.log("\tProcessing offshore pumps")
-	for EntityID, entityPrototype in pairs(game.get_filtered_entity_prototypes{
+	for EntityID, entityPrototype in pairs(prototypes.get_entity_filtered{
 		{filter = "type", type = "offshore-pump"}
 	}) do
 		processOffshorePumps(EntityID, entityPrototype)
@@ -411,7 +411,7 @@ local function processRocketRecipe(ItemID, itemPrototype)
 end
 processFunctions[#processFunctions+1] = function ()
 	lib.log("\tProcessing items")
-	for ItemID, itemPrototype in pairs(game.item_prototypes) do
+	for ItemID, itemPrototype in pairs(prototypes.item) do
 		-- processItemSubtype(ItemID, itemPrototype)
 		processBurningRecipe(ItemID, itemPrototype)
 		processRocketRecipe(ItemID, itemPrototype)

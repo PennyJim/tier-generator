@@ -49,7 +49,7 @@ local vanilla_config = require("__tier-generator__.compatibility.base")
 ---@param ignored_recipes table<string,integer|true> the list of ignored recipes
 local function expand_patterns(ignored_patterns, ignored_recipes)
 	for _, pattern in pairs(ignored_patterns) do
-		for key in pairs(game.recipe_prototypes) do
+		for key in pairs(prototypes.recipe) do
 			if ignored_recipes[key] then
 			elseif key:match(pattern) then
 				ignored_recipes[key] = true
@@ -67,7 +67,7 @@ local function choose_config()
 	end
 
 	for mod, default in pairs(builtin_configs) do
-		if game.active_mods[mod] then
+		if script.active_mods[mod] then
 			return default(), mod
 		end
 	end

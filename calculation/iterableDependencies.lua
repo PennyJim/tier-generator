@@ -38,7 +38,7 @@ end
 ---@param s DependencyIteratorState
 ---@return simpleItem?
 local function iterator(s)
-	---@type tierEntry[]
+	---@type tierEntry?
 	local nextItem
 	while not nextItem do
 		--Make sure we have an index into dependencies
@@ -47,12 +47,12 @@ local function iterator(s)
 			s.current = s.nextDependencies
 			s.currentIndex, nextItem = next(s.current)
 			-- If we still don't have dependencies, then we finished
-			if not s.currentIndex then return nil end
+			if not nextItem then return nil end
 			s.nextDependencies = getNextDependencies(nextItem, nil, s.completedItems)
 		else
 			-- Get next index of tierEntry[]
 			s.currentIndex, nextItem = next(s.current, s.currentIndex)
-			if s.currentIndex then
+			if nextItem then
 				s.nextDependencies = getNextDependencies(nextItem, s.nextDependencies, s.completedItems)
 			end
 		end

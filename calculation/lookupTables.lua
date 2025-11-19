@@ -22,6 +22,7 @@ local lookup = {}
 ---@field technologies data.TechnologyID[]?
 ---@field ingredients Ingredient.base[]
 ---@field object_name "LuaRecipePrototype"
+---@field real_object_name nil
 
 --#region Standard lookup tables
 ---@type table<data.ItemID,data.RecipeID[]>

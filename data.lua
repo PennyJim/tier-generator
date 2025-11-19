@@ -1,4 +1,7 @@
 local iron_gear = data.raw["item"]["iron-gear-wheel"]
+---@type data.ElementImageSet
+top_shadow = top_shadow
+
 data:extend{
 	{
 		type = "custom-input",
@@ -14,7 +17,6 @@ data:extend{
 		icon = {
 			filename = iron_gear.icon,
 			size = iron_gear.icon_size,
-			mipmap_count = iron_gear.icon_mipmaps,
 		},
 		toggleable = true,
 	}
@@ -31,7 +33,7 @@ styles.tiergen_tabbed_pane = {
 				top = {position = {76, 0}, size = {1, 8}},
 				center = {position = {76, 8}, size = {1, 1}}
 			},
-			shadow = top_shadow
+			shadow = top_shadow --[[@as data.ElementImageSetLayer]]
 		}
 	}
 }

@@ -1,5 +1,6 @@
 local processor = require("__tier-generator__.calculation.DataProcessing")
 lookup = nil ---@type LookupTables
+---@class LuaObject : userdata
 
 ---@alias fakeRecipes "mining"|"hand-mining"|"burning"|"rocket-launch"|"boil"|"offshore-pump"
 ---@class fakePrototype : LuaObject
@@ -213,7 +214,7 @@ end
 ---@type table<string,dependency>
 local dependencyCache = setmetatable({}, {__mode = "v"})
 ---@param id string
----@param type LuaObject.object_name
+---@param type tierSwitchTypes
 ---@return dependency
 local function getDependency(id, type)
 	---@type string
@@ -235,7 +236,7 @@ end
 ---@type table<string,blockedReason>
 local blockedCache = setmetatable({}, {__mode = "v"})
 ---@param id string
----@param type LuaObject.object_name
+---@param type tierSwitchTypes
 ---@param reason invalidReason
 ---@return blockedReason
 local function getBlocked(id, type, reason)
@@ -285,8 +286,9 @@ local function getIngredientsTier(ingredients, dependencies, blocked)
 	local ingredientsTier = 0;
 	---@type dependency[]
 	for _, ingredient in pairs(ingredients) do
-		local itemName = ingredient.name or ingredient[1]
-		local itemType = ingredient.type or "item"
+		--TODO: Should I be checking amount?
+		local itemName = ingredient.name
+		local itemType = ingredient.type
 		local itemPrototype = lib.getItemOrFluid(itemName, itemType)
 		local itemTier = resolveTierWithDependency(
 			itemName, itemPrototype, dependencies, blocked
@@ -297,6 +299,22 @@ local function getIngredientsTier(ingredients, dependencies, blocked)
 		ingredientsTier = math.max(ingredientsTier, itemTier)
 	end
 	return ingredientsTier
+end
+---Takes a given list of items, and makes ingredients out of them
+---@param ... data.ItemID
+---@return Ingredient[]
+local function quick_ingredients(...)
+	---@type Ingredient.base[]
+	local array, index = {}, 0
+	for _, item in pairs{...} do
+		index = index + 1
+		array[index] = {
+			type = "item",
+			name = item,
+			amount = 1,
+		}
+	end
+	return array
 end
 ---Does everything that both real and all fake recipes require
 ---@param ingredients Ingredient[]
@@ -346,6 +364,7 @@ end
 tierSwitch["mining"] = function (ItemID, prototype)
 	---@type table<string, OptionalFluidFakeRecipe[]|OptionalFluidFakeRecipe[]>
 	local miningRecipes
+	--[[TODO: fix the requirement for this behavior now that type is equal to userdata]]
 	if prototype.real_object_name == "LuaItemPrototype" then
 		miningRecipes = lookup.ItemMining[ItemID]
 	else
@@ -360,7 +379,7 @@ tierSwitch["mining"] = function (ItemID, prototype)
 			---@type Ingredient.fluid?
 			local ingredient
 			if item.input then
-				ingredient = {name = item.input, type = "fluid"}
+				ingredient = {name = item.input, type = "fluid", amount = 1}
 			end
 			return doRecipe(
 				{ingredient},
@@ -405,7 +424,7 @@ tierSwitch["burning"] = function (ItemID, _)
 		function (fuelID)
 			local fuel = lib.getItem(fuelID)
 			return doRecipe(
-				{{fuelID}},
+				quick_ingredients(fuelID),
 				"tiergen-fuel-"..fuel.fuel_category,
 				blockedBy
 			)
@@ -424,7 +443,7 @@ tierSwitch["rocket-launch"] = function (ItemID, _)
 		rocketRecipes, invalidReason.no_valid_rocket,
 		function (satellite)
 			return doRecipe(
-				{{satellite}},
+				quick_ingredients(satellite),
 				"tiergen-rocket-launch",
 				blockedBy
 			)
@@ -444,7 +463,7 @@ tierSwitch["boil"] = function (FluidID,_)
 		function (recipe)
 			return doRecipe(
 				{
-					{name = recipe.input, type = "fluid"}
+					{type = "fluid", name = recipe.input, amount = 1}
 				},
 				recipe.category,
 				blockedBy

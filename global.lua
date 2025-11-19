@@ -1,7 +1,8 @@
 ---@type event_handler
 local handlers = {events={}}
 ---@type TierStorage
-storage = {tick_later = {}, seconds = {}, debug_table = {}, config = {}}
+storage =---@diagnostic disable-next-line: missing-fields
+ {tick_later = {}, seconds = {}, debug_table = {}, config = {}}
 
 ---Initializes the global variables
 local function setup()
