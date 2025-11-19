@@ -8,7 +8,7 @@
 	"dependencies": [
 		"base >= 1.1",
 		"? better-chat >= 0.3",
-		"gui-modules = 0.0.5"
+		"gui-modules = 0.0.6"
 	],
 	"package": {
 		"gallery": [

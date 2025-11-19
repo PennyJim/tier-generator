@@ -1,4 +1,9 @@
-local module = {module_type = "elem_selector_table", handlers = {} --[[@as GuiModuleEventHandlers]]}
+---@type modules.GuiModuleDef
+---@diagnostic disable-next-line: missing-fields
+local module = {
+	module_type = "elem_selector_table",
+	handlers = {}
+}
 
 local handler_names = {
 	-- A generic place to make sure handler names match
@@ -11,7 +16,7 @@ local handler_names = {
 ---@field count integer How many elements have been chosen
 --@field [integer] string|SignalID the chosen element at an index
 
----@class WindowState.ElemSelectorTable : WindowState
+---@class WindowState.ElemSelectorTable : modules.WindowState
 -- Where custom fields would go
 ---@field selector_table table<string,ElemList>
 ---@field selector_funcs selector_functions
@@ -38,7 +43,7 @@ local function update_rows(state, table, last) -- TODO: Add a setter instead of 
 	local children_count = #children
 	local current_rows = children_count/columns
 
-	---@type GuiElemModuleDef
+	---@type modules.GuiElemDef
 	local new_child = {
 		type = "choose-elem-button",
 		elem_type = elem_type,
@@ -54,7 +59,7 @@ local function update_rows(state, table, last) -- TODO: Add a setter instead of 
 	else
 		-- Add elements
 		for _ = children_count, desired_rows*columns-1, 1 do
-			state.gui.add(state.namespace, table, new_child, true)
+			state.gui.add(state.namespace, table, new_child)
 		end
 	end
 end
@@ -173,8 +178,15 @@ module.setup_state = function (state)
 	end
 end
 
----@class ElemSelectorTableParams : ModuleDef
+---@alias (partial) modules.types
+---| "elem_selector_table"
+---@alias (partial) modules.ModuleElem
+---| ElemSelectorTableElem
+---@class ElemSelectorTableElem
 ---@field module_type "elem_selector_table"
+---@field args ElemSelectorTableArgs
+
+---@class ElemSelectorTableArgs
 -- where LuaLS parameter definitons go
 ---@field name string
 ---@field height integer How many elements tall this table takes up
@@ -210,37 +222,45 @@ module.parameters = {
 }
 
 ---Creates the frame for a window with an exit button
----@param params ElemSelectorTableParams
----@return GuiElemDef
+---@param params ElemSelectorTableArgs
+---@return modules.GuiElemDef.base
 function module.build_func(params)
 	--MARK: build
-	---@type GuiElemModuleDef
+	---@type modules.GuiElemDef
 	local button = {
 		type = "choose-elem-button",
 		elem_type = params.elem_type,
 		handler = {[defines.events.on_gui_elem_changed] = handler_names.elem_changed}
 		-- style = "slot_button",
 	}
-	---@type GuiElemModuleDef[]
+	---@type modules.GuiElemDef[]
 	local buttons = {}
 	for i = 1, params.width, 1 do
 		buttons[i] = button
 	end
 	return {
-		type = "frame", style = params.frame_style,
+		args = {
+			type = "frame", style = params.frame_style,
+		},
 		children = {
 			{
-				type = "scroll-pane", style = "naked_scroll_pane",
+				args = {
+					type = "scroll-pane", style = "naked_scroll_pane",
+				},
 ---@diagnostic disable-next-line: missing-fields
 				style_mods = {height = 40*params.height},
 				children = {
 					{
-						type = "frame", style = "slot_button_deep_frame",
+						args = {
+							type = "frame", style = "slot_button_deep_frame",
+						},
 						children = {
 							{
-								type = "table", style = "filter_slot_table",
-								name = params.name, column_count = params.width,
-								tags = {["type"] = params.elem_type},
+								args = {
+									type = "table", style = "filter_slot_table",
+									name = params.name, column_count = params.width,
+									tags = {["type"] = params.elem_type},
+								},
 ---@diagnostic disable-next-line: missing-fields
 								style_mods = {
 									width = 40*params.width,
@@ -254,7 +274,7 @@ function module.build_func(params)
 				}
 			}
 		}
-	} --[[@as GuiElemDef]]
+	} --[[@as modules.GuiElemDef.base]]
 end
 
 -- How to define handlers
@@ -267,9 +287,9 @@ module.handlers[handler_names.elem_changed] = function (state, elem, OriginalEve
 	state.selector_table[table.name] = elem_list
 	local index = elem.get_index_in_parent()
 
-	local did_change = selector_funcs.set_index(state, table.name, index, elem.elem_value, false)
+	local did_change = selector_funcs.set_index(state, table.name, index, elem.elem_value--[[@as SignalID]], false)
 
 	return did_change and table or nil
 end
 
-return module --[[@as GuiModuleDef]]
+return module --[[@as modules.GuiModuleDef]]

@@ -80,50 +80,60 @@ local tierMenu = {events={}--[[@as event_handler.events]]}
 
 ---Crates the tab for item selection
 ---@param number integer
----@return GuiElemModuleDef
+---@return modules.GuiElemDef
 local function make_item_selection_pane(number)
 	--MARK: selection_pane
 	return {
 		tab = {
-			type = "tab",
-			caption = {"tiergen.tab", number},
+			type = "tab", args = {
+				caption = {"tiergen.tab", number},
+			},
 ---@diagnostic disable-next-line: missing-fields
 			style_mods = {minimal_width = 40},
-		} --[[@as GuiElemModuleDef]],
+		} --[[@as modules.GuiElemDef]],
 		content = {
-			type = "flow", direction = "vertical",
+			type = "flow",  args = {
+				direction = "vertical",
 ---@diagnostic disable-next-line: missing-fields
-			style_mods = {minimal_width = table_size.width*40 +24},
+				style_mods = {minimal_width = table_size.width*40 +24},
+			},
 			children = {
 				{
-					type = "label",
-					caption = {"tiergen.items"}
+					type = "label", args = {
+						caption = {"tiergen.items"}
+					}
 				},
 				{
 					type = "module", module_type = "elem_selector_table",
-					frame_style = "tiergen_elem_selector_table_frame",
-					name = gen_item_selection(number), elem_type = "item",
-					height = table_size.item_height, width = table_size.width,
-					on_elem_changed = "elems-changed",
-				} --[[@as ElemSelectorTableParams]],
+					args = {
+						frame_style = "tiergen_elem_selector_table_frame",
+						name = gen_item_selection(number), elem_type = "item",
+						height = table_size.item_height, width = table_size.width,
+						on_elem_changed = "elems-changed",
+					}
+				}--[[@as ElemSelectorTableElem ]],
 				{
-					type = "label",
-					caption = {"tiergen.fluids"}
+					type = "label", args = {
+						caption = {"tiergen.fluids"}
+					}
 				},
 				{
 					type = "module", module_type = "elem_selector_table",
-					frame_style = "tiergen_elem_selector_table_frame",
-					name = gen_fluid_selection(number), elem_type = "fluid",
-					height = table_size.fluid_height, width = table_size.width,
-					on_elem_changed = "elems-changed",
-				} --[[@as ElemSelectorTableParams]],
+					args = {
+						frame_style = "tiergen_elem_selector_table_frame",
+						name = gen_fluid_selection(number), elem_type = "fluid",
+						height = table_size.fluid_height, width = table_size.width,
+						on_elem_changed = "elems-changed",
+					}
+				} --[[@as ElemSelectorTableElem ]],
 			}
-		} --[[@as GuiElemModuleDef]],
+		} --[[@as modules.GuiElemDef]],
 	}
 end
 ---Creates the row of a single tier
 ---@param table LuaGuiElement
 ---@param tier integer
+---@param tierdigits integer
 ---@param items simpleItem[]
 ---@param namespace namespace
 local function make_new_tier_row(table, tier, tierdigits, items, namespace)
@@ -133,7 +143,7 @@ local function make_new_tier_row(table, tier, tierdigits, items, namespace)
 		caption = {"tiergen.tier-label", tier-1},
 	}, true)
 
-	---@type GuiElemModuleDef[]
+	---@type modules.GuiElemDef[]
 	local item_elements = {}
 	for i, item in ipairs(items) do
 		local itemPrototype = lib.getItemOrFluid(item.name, item.type)
@@ -330,128 +340,158 @@ gui.new{ --MARK: window_def
 		shortcut = names.namespace,
 		definition = {
 			type = "module", module_type = "window_frame",
-			name = names.namespace, title = {"tiergen.menu"},
-			has_close_button = true, has_pin_button = true,
+			args = {
+				name = names.namespace, title = {"tiergen.menu"},
+				has_close_button = true, has_pin_button = true,
+			},
 			children = {
 				{ --MARK: Options
-					type = "frame", style = "inside_shallow_frame",
-					direction = "vertical",
+					type = "frame",
+					args = {
+						style = "inside_shallow_frame",
+						direction = "vertical",
+					},
 					children = {
 						{ --MARK: Requested items
 							type = "module", module_type = "tiergen_selection_area",
-							caption = {"tiergen.item-selection"},
-							confirm_name = names.calculate, confirm_locale = {"tiergen.calculate"},
-							confirm_handler = names.calculate,
-	---@diagnostic disable-next-line: missing-fields
-							style_mods = {top_margin = 8},
-							children = {{
-								type = "tabbed-pane", style = "tiergen_tabbed_pane",
-	---@diagnostic disable-next-line: missing-fields
-								elem_mods = {selected_tab_index = 1},
-								handler = {
-									[defines.events.on_gui_selected_tab_changed] = "tab-changed"
-								},
-								children = {
-									make_item_selection_pane(1),
-									make_item_selection_pane(2),
-									make_item_selection_pane(3),
+							args = {
+								caption = {"tiergen.item-selection"},
+								confirm_name = names.calculate, confirm_locale = {"tiergen.calculate"},
+								confirm_handler = names.calculate,
+---@diagnostic disable-next-line: missing-fields
+								style_mods = {top_margin = 8},
+								children = {{
+									type = "tabbed-pane", args = {
+										style = "tiergen_tabbed_pane",
+									},
+---@diagnostic disable-next-line: missing-fields
+									elem_mods = {selected_tab_index = 1},
+									handler = {
+										[defines.events.on_gui_selected_tab_changed] = "tab-changed"
+									},
+									children = {
+										make_item_selection_pane(1),
+										make_item_selection_pane(2),
+										make_item_selection_pane(3),
+									}
 								}
 							},{
 ---@diagnostic disable-next-line: missing-fields
 								type = "empty-widget", style_mods = {height = 0, width = 5}
 							}}
-						} --[[@as SelectionAreaParams]],
+						} --[[@as SelectionAreaElem ]],
 						{ --MARK: Base items
 							type = "module", module_type = "tiergen_selection_area",
-							caption = {"tiergen.base-selection"},
-							confirm_name = names.base, confirm_locale = {"tiergen.define-base"},
-							confirm_handler = names.base, confirm_enabled_default = false,
-							children = {
-								{
-									type = "label",
-									caption = {"tiergen.items"}
-								},
-								{
-									type = "module", module_type = "elem_selector_table",
-									frame_style = "tiergen_elem_selector_table_frame",
-									name = names.base_items, elem_type = "item",
-									height = table_size.item_height, width = table_size.width,
-									on_elem_changed = "elems-changed",
-								} --[[@as ElemSelectorTableParams]],
-								{
-									type = "label",
-									caption = {"tiergen.fluids"}
-								},
-								{
-									type = "module", module_type = "elem_selector_table",
-									frame_style = "tiergen_elem_selector_table_frame",
-									name = names.base_fluids, elem_type = "fluid",
-									height = table_size.fluid_height, width = table_size.width,
-									on_elem_changed = "elems-changed",
-								} --[[@as ElemSelectorTableParams]],
-								{
----@diagnostic disable-next-line: missing-fields
-									type = "empty-widget", style_mods = {height = 0, width = 5}
+							args = {
+								caption = {"tiergen.base-selection"},
+								confirm_name = names.base, confirm_locale = {"tiergen.define-base"},
+								confirm_handler = names.base, confirm_enabled_default = false,
+								children = {
+									{
+										type = "label", args = {
+											caption = {"tiergen.items"}
+										}
+									},
+									{
+										type = "module", module_type = "elem_selector_table",
+										args = {
+											frame_style = "tiergen_elem_selector_table_frame",
+											name = names.base_items, elem_type = "item",
+											height = table_size.item_height, width = table_size.width,
+											on_elem_changed = "elems-changed",
+										}
+									} --[[@as ElemSelectorTableElem ]],
+									{
+										type = "label", args = {
+											caption = {"tiergen.fluids"}
+										}
+									},
+									{
+										type = "module", module_type = "elem_selector_table",
+										args = {
+											frame_style = "tiergen_elem_selector_table_frame",
+											name = names.base_fluids, elem_type = "fluid",
+											height = table_size.fluid_height, width = table_size.width,
+											on_elem_changed = "elems-changed",
+										}
+									} --[[@as ElemSelectorTableElem ]],
+									{
+	---@diagnostic disable-next-line: missing-fields
+										type = "empty-widget", style_mods = {height = 0, width = 5}
+									}
 								}
 							}
-						} --[[@as SelectionAreaParams]],
+						} --[[@as SelectionAreaElem ]],
 						{ --MARK: Ignored recipes
 							type = "module", module_type = "tiergen_selection_area",
-							caption = {"tiergen.ignored-selection"},
-							confirm_name = names.ignored, confirm_locale = {"tiergen.define-ignored"},
-							confirm_handler = names.ignored, confirm_enabled_default = false,
-	---@diagnostic disable-next-line: missing-fields
-							style_mods = {bottom_margin = 4},
-							children = {
-								{
-									type = "module", module_type = "elem_selector_table",
-									frame_style = "tiergen_elem_selector_table_frame",
-									name = names.ignored_recipes, elem_type = "recipe",
-									height = table_size.fluid_height, width = table_size.width,
-									on_elem_changed = "elems-changed",
-								} --[[@as ElemSelectorTableParams]],
+							args = {
+								caption = {"tiergen.ignored-selection"},
+								confirm_name = names.ignored, confirm_locale = {"tiergen.define-ignored"},
+								confirm_handler = names.ignored, confirm_enabled_default = false,
+		---@diagnostic disable-next-line: missing-fields
+								style_mods = {bottom_margin = 4},
+								children = {
+									{
+										type = "module", module_type = "elem_selector_table",
+										args = {
+											frame_style = "tiergen_elem_selector_table_frame",
+											name = names.ignored_recipes, elem_type = "recipe",
+											height = table_size.fluid_height, width = table_size.width,
+											on_elem_changed = "elems-changed",
+										}
+									} --[[@as ElemSelectorTableElem ]],
+								}
 							}
-						} --[[@as SelectionAreaParams]],
+						} --[[@as SelectionAreaElem ]],
 					}
 				},
 				{ --MARK: Tier pane
-					type = "frame", style = "inside_shallow_frame",
+					type = "frame", args = {
+						style = "inside_shallow_frame",
+					},
 ---@diagnostic disable-next-line: missing-fields
 					style_mods = {height = 16*44 },
 					children = {
 						{ --MARK: Error message
-							type = "flow", name = names.error_message,
-							direction = "vertical",
+							type = "flow", args = {
+								name = names.error_message,
+								direction = "vertical",
+							},
 							children = {
-								{type = "empty-widget", style = "flib_vertical_pusher"},
+								{type = "empty-widget", args = {style = "modules_vertical_pusher"}},
 								{
-									type = "label",
-									caption = {"tiergen.no-tiers"},
+									type = "label", args = {
+										caption = {"tiergen.no-tiers"},
+									},
 	---@diagnostic disable-next-line: missing-fields
 									style_mods = {padding = 40},
 								},
-								{type = "empty-widget", style = "flib_vertical_pusher"},
+								{type = "empty-widget", args = {style = "modules_vertical_pusher"}},
 							}
 						},
 						{ --MARK: Tier graph
-							type = "scroll-pane", style = "naked_scroll_pane",
+							type = "scroll-pane", args = {
+								style = "naked_scroll_pane",
+							},
 ---@diagnostic disable-next-line: missing-fields
 							elem_mods = {visible = false},
 							-- style_mods = {left_padding = 8},
 							children = {{
-								type = "table", direction = "vertical",
-								name = names.tier_table, column_count = 2,
-								draw_horizontal_lines = true,
+								type = "table", args = {
+									direction = "vertical",
+									name = names.tier_table, column_count = 2,
+									draw_horizontal_lines = true,
+								},
 	---@diagnostic disable-next-line: missing-fields
 								style_mods = {left_padding = 8},
 							},{
-								type = "frame", style = "tiergen_tierlist_background",
+								type = "frame", args = {style = "tiergen_tierlist_background"},
 							}}
 						}
 					}
 				}
 			}
-		} --[[@as WindowFrameButtonsDef]]
+		}
 	} --[[@as GuiWindowDef]],
 	handlers = {
 		["tab-changed"] = function (state, elem)
@@ -619,7 +659,7 @@ gui.new{ --MARK: window_def
 			tierMenu.update_ignored(new_ignored)
 			storage.config.ignored_recipes = new_ignored
 		end
-	} --[[@as table<any, fun(state:WindowState.TierMenu,elem:LuaGuiElement,event:GuiEventData)>]],
+	} --[[@as table<any, fun(state:WindowState.TierMenu,elem:LuaGuiElement,event:EventData.GuiEvents)>]],
 	state_setup = function (state)
 		--MARK: Window setup
 		---@cast state WindowState.TierMenu
