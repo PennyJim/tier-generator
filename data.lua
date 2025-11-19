@@ -14,10 +14,11 @@ data:extend{
 		name = "tiergen-menu",
 		associated_control_input = "tiergen-menu",
 		action = "lua",
-		icon = {
-			filename = iron_gear.icon,
-			size = iron_gear.icon_size,
-		},
+		--TODO: Get an *actual* icon!
+		icon = iron_gear.icon,
+		icon_size = iron_gear.icon_size,
+		small_icon = iron_gear.icon,
+		small_icon_size = iron_gear.icon_size,
 		toggleable = true,
 	}
 }
@@ -45,7 +46,9 @@ styles.tiergen_elem_selector_table_frame = {
 }
 styles.tiergen_selection_area_frame = {
 	type = "frame_style",
-	parent = "bordered_frame_with_extra_side_margins",
+	parent = "bordered_frame",
+	left_margin = 8,
+	right_margin = 8,
 	top_margin = 4,
 	bottom_padding = 4,
 }
