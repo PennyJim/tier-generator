@@ -568,7 +568,7 @@ tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 	---@type blockedReason[]
 	local blockedBy = {}
 
-	if global.config.ignored_recipes[recipeID] then
+	if storage.config.ignored_recipes[recipeID] then
 		lib.ignore(recipeID, "is currently ignored", true)
 		return invalidReason.ignored_recipe, blockedBy
 	end

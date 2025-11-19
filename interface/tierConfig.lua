@@ -2,7 +2,7 @@ local menu = require("__tier-generator__.interface.tierMenu")
 ---@type event_handler
 local config_handlers = {}
 
----@class TierGlobal
+---@class TierStorage
 ---@field config config
 
 ---@class defaultConfig
@@ -81,7 +81,7 @@ local function actually_init()
 	---@cast config config
 	config.ignored_patterns = nil
 	config.mod = mod
-	global.config = config
+	storage.config = config
 
 	if config.consider_technology ~= nil
 	and config.consider_technology ~= lib.getSetting("tiergen-consider-technology") then
@@ -123,7 +123,7 @@ function config_handlers.on_init()
 	lib.seconds_later(1, "config-setup")
 end
 function config_handlers.on_configuration_changed(ChangedData)
-	if not global.config then
+	if not storage.config then
 		config_handlers.on_init()
 	end
 end

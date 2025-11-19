@@ -435,7 +435,7 @@ local function injectRecipe(itemID, recipe)
 	lib.appendToArrayInTable(lookup.Injected, itemID, recipe)
 end
 processFunctions[#processFunctions+1] = function ()
-	for itemID, recipe in pairs(global.config.injected_recipes or {}) do
+	for itemID, recipe in pairs(storage.config.injected_recipes or {}) do
 		injectRecipe(itemID, recipe)
 	end
 end

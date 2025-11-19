@@ -8,7 +8,7 @@ local has_setup_core = false
 ---Tells the core calculator to drop its cache and consider sets its base items
 local function updateBase()
 	lib.log("Setting base item overrides")
-	local baseItems = global.config.base_items
+	local baseItems = storage.config.base_items
 	for _, item in pairs(baseItems) do
 		lib.log("\tSetting "..tostring(item).." to tier 0")
 		core.set(item)

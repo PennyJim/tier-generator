@@ -39,7 +39,7 @@ local function process_result(player_index, item, result)
 	return true
 end
 
----@class TierGlobal
+---@class TierStorage
 ---@field debug_table table<integer, debug_state>
 
 ---@class debug_state
@@ -75,7 +75,7 @@ local function process_ingredients(player_index, item, item_type, debug_state)
 end
 
 local function debug_command_tick()
-	local debug_table = global.debug_table
+	local debug_table = storage.debug_table
 	---@type integer[]
 	local finished_players = {}
 
@@ -113,8 +113,8 @@ commands.add_command("tierdebug", {"tiergen-debug-command.help"}, function (Comm
 	end
 
 	---@type table<integer,debug_state>
-	local debug_table = global.debug_table or {}
-	global.debug_table = debug_table
+	local debug_table = storage.debug_table or {}
+	storage.debug_table = debug_table
 	if debug_table[player_index] then
 		print(player_index, {"tiergen-debug-command.already-debugging"})
 		return
@@ -129,7 +129,7 @@ commands.add_command("tierdebug", {"tiergen-debug-command.help"}, function (Comm
 		cur_index = 0, last_index = 0,
 		considered_items = {}
 	}
-	global.debug_table[player_index] = debug_state
+	storage.debug_table[player_index] = debug_state
 	process_ingredients(player_index, item, "item", debug_state)
 
 	lib.tick_later("debug_command_tick")

@@ -4,7 +4,7 @@ local lookup = require("__tier-generator__.calculation.lookupTables")
 ---@class TiergenLibrary : event_handler
 local library = {}
 
----@class TierGlobal
+---@class TierStorage
 ---@field tick_later string[]
 ---@field next_tick boolean?
 ---@field seconds table<integer,string>
@@ -392,9 +392,9 @@ local function tick(data)
 	-- No one intends to 'tick later' onto tick 0
 	if data.tick == 0 then return end
 	-- reset tick data so handlers can re-register without fear
-	local this_tick = global.tick_later
-	global.tick_later = {}
-	global.next_tick = nil
+	local this_tick = storage.tick_later
+	storage.tick_later = {}
+	storage.next_tick = nil
 	script.on_nth_tick(data.nth_tick, nil)
 
 	for _, funcName in ipairs(this_tick) do
@@ -404,9 +404,9 @@ end
 ---Calls the given function next tick
 ---@param func_name string
 function library.tick_later(func_name)
-	global.tick_later[#global.tick_later+1] = func_name
-	if not global.next_tick then
-		global.next_tick = true
+	storage.tick_later[#storage.tick_later+1] = func_name
+	if not storage.next_tick then
+		storage.next_tick = true
 		script.on_nth_tick(1, tick)
 	end
 end
@@ -417,14 +417,14 @@ local function seconds_later_tick(data)
 	if data.nth_tick ~= data.tick then
 		error("Should only ever be called once for an nth_tick")
 	end
-	local func_name = global.seconds[data.tick]
+	local func_name = storage.seconds[data.tick]
 	nth_tick_handlers[func_name](data)
-	global.seconds[data.tick] = nil
+	storage.seconds[data.tick] = nil
 	script.on_nth_tick(data.nth_tick, nil)
 end
----Will only be used when seconds_later is called on tick 0. Will run at tick 1
+---Will only be used when seconds_later is called on tick 0 or on_load.
 local function register_all_seconds()
-	for time in pairs(global.seconds) do
+	for time in pairs(storage.seconds) do
 		script.on_nth_tick(time, seconds_later_tick)
 	end
 end
@@ -438,12 +438,12 @@ function library.seconds_later(seconds, func_name)
 	local cur_tick = game.tick
 	local next_tick = math.floor(seconds*60 + cur_tick)
 	---@type table<integer, string>
-	local registered_table = global.seconds or {}
+	local registered_table = storage.seconds or {}
 	while registered_table[next_tick] do
 		next_tick = next_tick + 1
 	end
 	registered_table[next_tick] = func_name
-	global.seconds = registered_table
+	storage.seconds = registered_table
 
 	if cur_tick == 0 then
 		library.tick_later("register-seconds")
@@ -465,11 +465,11 @@ library.events = {
 }
 ---Correct state on load
 function library.on_load()
-	if global.next_tick then
+	if storage.next_tick then
 		script.on_nth_tick(1, tick)
 	end
 
-	if global.seconds and next(global.seconds) then
+	if storage.seconds and next(storage.seconds) then
 		register_all_seconds()
 	end
 end

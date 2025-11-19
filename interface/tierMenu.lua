@@ -48,7 +48,7 @@ end
 
 --- MARK: Definitions
 
----@class TierGlobal : ModulesGlobal
+---@class TierStorage : ModulesStorage
 ---@field reprocess boolean?
 
 ---@class tierMenu : event_handler
@@ -257,8 +257,8 @@ end
 --- Invalidates the tiers
 local function invalidateTiers()
 	--MARK: invalidate
-	if global.reprocess then
-		global.reprocess = nil
+	if storage.reprocess then
+		storage.reprocess = nil
 		calculator.unprocess()
 	else
 		calculator.uncalculate()
@@ -304,8 +304,8 @@ local function update_defining_permission(state, can_define, update_anyways)
 	set_enabled(state, names.base_fluids, can_define)
 	if state.base_changed then
 		state.base_changed = false
-		if global.config then
-			tierMenu.update_base(global.config.base_items, state.player.index, true)
+		if storage.config then
+			tierMenu.update_base(storage.config.base_items, state.player.index, true)
 		end
 	end
 
@@ -314,8 +314,8 @@ local function update_defining_permission(state, can_define, update_anyways)
 	set_enabled(state, names.ignored_recipes, can_define)
 	if state.ignored_changed then
 		state.ignored_changed = false
-		if global.config then
-			tierMenu.update_ignored(global.config.ignored_recipes, state.player.index, true)
+		if storage.config then
+			tierMenu.update_ignored(storage.config.ignored_recipes, state.player.index, true)
 		end
 	end
 end
@@ -548,7 +548,7 @@ gui.new{ --MARK: window_def
 			elem.enabled = false
 
 			---@type simpleItem[]
-			local new_base,old_base = {},global.config.base_items
+			local new_base,old_base = {},storage.config.base_items
 			local index, is_different = 0, false
 			for _, type in pairs{"item","fluid"} do
 				local table = state.selector_table["base_"..type.."_selection"] or {}
@@ -577,14 +577,14 @@ gui.new{ --MARK: window_def
 			invalidateTiers()
 			state.base_changed = false
 			tierMenu.update_base(new_base)
-			global.config.base_items = new_base
+			storage.config.base_items = new_base
 		end,
 		[names.ignored] = function (state, elem)
 			--MARK: define ignored
 			elem.enabled = false
 
 			---@type table<string,integer>
-			local new_ignored,old_ignored = {},global.config.ignored_recipes
+			local new_ignored,old_ignored = {},storage.config.ignored_recipes
 			local new_count,old_count = 0,0
 			local is_different = false
 			local table = state.selector_table[names.ignored_recipes] or {}
@@ -613,11 +613,11 @@ gui.new{ --MARK: window_def
 				return -- Don't do anything if it wasn't changed
 			end
 
-			global.reprocess = true
+			storage.reprocess = true
 			invalidateTiers()
 			state.ignored_changed = false
 			tierMenu.update_ignored(new_ignored)
-			global.config.ignored_recipes = new_ignored
+			storage.config.ignored_recipes = new_ignored
 		end
 	} --[[@as table<any, fun(state:WindowState.TierMenu,elem:LuaGuiElement,event:GuiEventData)>]],
 	state_setup = function (state)
@@ -645,7 +645,7 @@ gui.new{ --MARK: window_def
 		state.ignored_changed = false
 		state.ignored_state = {}
 
-		local config = global.config
+		local config = storage.config
 		if config then
 			local player_index = state.player.index
 			tierMenu.set_items(player_index, {
@@ -696,7 +696,7 @@ tierMenu.events[defines.events.on_runtime_mod_setting_changed] = function (Event
 	local setting = EventData.setting
 
 	if setting == "tiergen-consider-autoplace-setting" then
-		global.reprocess = true
+		storage.reprocess = true
 	end
 
 	if lib.isOurSetting(setting)
