@@ -33,7 +33,7 @@ local handler_names = {
 ---@param last integer
 local function update_rows(state, table, last) -- TODO: Add a setter instead of calling this constantly
 	--MARK: update row
-	local elem_type = table.tags["type"]
+	local elem_type = table.tags["type"] --[[@as ElemType]]
 	local enabled = table.enabled
 
 	local columns = table.column_count
@@ -45,8 +45,10 @@ local function update_rows(state, table, last) -- TODO: Add a setter instead of 
 
 	---@type modules.GuiElemDef
 	local new_child = {
-		type = "choose-elem-button",
-		elem_type = elem_type,
+		args = {
+			type = "choose-elem-button",
+			elem_type = elem_type,
+		},
 		handler = {[defines.events.on_gui_elem_changed] = handler_names.elem_changed},
 		elem_mods = not enabled and {enabled = enabled} or nil
 	}
@@ -228,8 +230,10 @@ function module.build_func(params)
 	--MARK: build
 	---@type modules.GuiElemDef
 	local button = {
-		type = "choose-elem-button",
-		elem_type = params.elem_type,
+		args = {
+			type = "choose-elem-button",
+			elem_type = params.elem_type,
+		},
 		handler = {[defines.events.on_gui_elem_changed] = handler_names.elem_changed}
 		-- style = "slot_button",
 	}

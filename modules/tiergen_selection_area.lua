@@ -46,10 +46,10 @@ function module.build_func(params)
 	---@type modules.GuiElemDef[]
 	local children = params.children
 	-- Add the label as the first element
-	table.insert(children, 1, {
+	table.insert(children, 1, {args = {
 		type = "label", style = "caption_label",
 		caption = params.caption
-	})
+	}})
 
 	-- Add the confirm button as last element
 	table.insert(children, {
