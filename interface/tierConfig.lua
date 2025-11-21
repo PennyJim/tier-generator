@@ -26,6 +26,8 @@ local interface_configs
 local interface_mod
 ---@type table<string,fun():defaultConfig>
 local builtin_configs = {}
+-- Official Overhaul
+builtin_configs["space-age"]								= require("__tier-generator__.compatibility.space-age")
 -- Overhauls
 builtin_configs["Ultracube"]								= require("__tier-generator__.compatibility.Ultracube")
 builtin_configs["pyhardmode"]								= require("__tier-generator__.compatibility.py").hard
