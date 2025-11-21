@@ -46,6 +46,7 @@ function ProcessAutoplace(EntityID, placedEntity)
 	if not autoplace then
 		return lib.ignore(EntityID, "has no autoplace!?")
 	end
+	--FIXME: Account for new autoplace shit
 
 	-- TODO: See if there's a way to make a 'recipe' for getting to other surfaces
 	-- Might just need to make compatibility for specific mods.
@@ -134,6 +135,9 @@ local function processTechnology(technologyID, technologyPrototype)
 	for _, modifier in pairs(technologyPrototype.effects) do
 		if modifier.type == "unlock-recipe" then
 			lib.appendToArrayInTable(lookup.RecipeTechnology, modifier.recipe, technologyID)
+
+		elseif modifier.type == "unlock-quality" then
+			lib.appendToArrayInTable(lookup.QualityTechnology, modifier.quality, technologyID)
 		end
 		-- Theoretically, it can give an item.
 		-- TODO: make that a recipe
@@ -277,6 +281,9 @@ end
 --#endregion
 --#region Rocket Silos
 
+--TODO: handle the two different types of rocket silo
+-- Since some can `launch_to_space_platforms`
+
 ---Processes rocket silos
 ---@param EntityID data.EntityID
 ---@param RocketSiloPrototype LuaEntityPrototype
@@ -315,6 +322,10 @@ end
 ---@param BoilerID data.EntityID
 ---@param boilerPrototype LuaEntityPrototype
 local function processBoilers(BoilerID, boilerPrototype)
+	if boilerPrototype.boiler_mode == "heat-fluid-inside" then
+		return lib.ignore(BoilerID, "is a heat fluid inside type.")
+	end
+
 	local fluidboxes = boilerPrototype.fluidbox_prototypes
 	if #fluidboxes ~= 2 then
 		return lib.ignore(BoilerID, "is not a standard boiler?")
@@ -355,6 +366,7 @@ end
 ---@param PumpID data.EntityID
 ---@param pumpPrototype LuaEntityPrototype
 local function processOffshorePumps(PumpID, pumpPrototype)
+	--FIXME: Make based off of tiles and their autoplace (oh no)
 	local fluid = prototypes.fluid["water"] -- pumpPrototype.fluid -- Oh Fuck
 	if not fluid then
 		return lib.ignore(PumpID, "has no fluid output!?")

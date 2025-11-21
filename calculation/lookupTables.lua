@@ -31,6 +31,8 @@ lookup.ItemRecipe = {}
 lookup.FluidRecipe = {}
 ---@type table<data.RecipeID,data.TechnologyID[]>
 lookup.RecipeTechnology = {}
+---@type table<data.QualityID,data.TechnologyID[]>
+lookup.QualityTechnology = {}
 ---@type table<data.RecipeCategoryID, data.ItemID[]>
 lookup.CategoryItem = {}
 --#endregion

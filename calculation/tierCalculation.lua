@@ -6,7 +6,7 @@ lookup = nil ---@type LookupTables
 ---@class fakePrototype : LuaObject
 ---@field object_name fakeRecipes|"LuaRecipeCategoryPrototype"
 ---@field real_object_name LuaObject.object_name
----@alias handledPrototypes LuaRecipeCategoryPrototype|LuaTechnologyPrototype|LuaRecipePrototype|LuaFluidPrototype|LuaItemPrototype
+---@alias handledPrototypes LuaRecipeCategoryPrototype|LuaTechnologyPrototype|LuaRecipePrototype|LuaFluidPrototype|LuaItemPrototype|LuaQualityPrototype
 ---@alias tierSwitchValues fakePrototype|handledPrototypes
 ---@alias tierSwitchTypes fakeRecipes|LuaObject.object_name
 
@@ -544,9 +544,43 @@ tierSwitch["LuaTechnologyPrototype"] = function (technologyID, technology)
 	end
 	return tier, dependencies
 end
+
+---@type fun(QualityID:data.QualityID,prototype:LuaQualityPrototype):tier,blockedReason[]|dependency[]
+tierSwitch["LuaQualityPrototype"] = function (qualityID, prototype)
+	--MARK: LuaQualityPrototype
+	-- Short circuit on always-unlocked normal
+	if qualityID == "normal" then
+		return 0, {}
+	end
+
+	local technologies = lookup.QualityTechnology[qualityID]
+	if not technologies then
+		lib.debug("\tQuality "..qualityID.." has no technology to unlock it")
+		return invalidReason.not_unlockable, {}
+	end
+
+	---@type blockedReason[]
+	local blocked_by
+	local quality_tier, quality_dependencies = lib.getMinTierInArray(
+		technologies, invalidReason.no_valid_technology,
+		function (technologyID)
+			local technology = lib.getTechnology(technologyID)
+			---@type dependency[]
+			local tech_dependencies = {}
+			local tech_tier = resolveTierWithDependency(
+				technologyID, technology, tech_dependencies, blocked_by
+			)
+			return tech_tier, tech_dependencies
+		end
+	)
+
+	return blockedOrDependency(quality_tier, quality_dependencies, blocked_by)
+end
+
 ---Determine the tier of the given recipe category
 ---@type fun(CategoryID:data.RecipeCategoryID):tier,blockedReason[]|dependency[]
 tierSwitch["LuaRecipeCategoryPrototype"] = function (CategoryID)
+	--MARK: LuaRecipeCategoryPrototype
 	local machines = lookup.CategoryItem[CategoryID]
 	if not machines then
 		lib.debug("\tCategory "..CategoryID.." has no machines")
@@ -584,6 +618,7 @@ end
 ---Determine the tier of the given recipe
 ---@type fun(recipeID:data.RecipeID,recipe:LuaRecipePrototype|CompleteFakeRecipe):tier,blockedReason[]|dependency[]
 tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
+	--MARK: LuaRecipePrototype
 	---@type blockedReason[]
 	local blockedBy = {}
 
@@ -633,6 +668,7 @@ end
 ---Determine the tier of the given item or fluid
 ---@type fun(ItemID:data.ItemID|data.FluidID,value:LuaItemPrototype|LuaFluidPrototype):tier,blockedReason[]|dependency[]
 tierSwitch["LuaFluidPrototype"] = function (ItemID, value)
+	--MARK: LuaFluidPrototype
 	---@type table<string, string[]>
 	local recipes
 	if value.object_name == "LuaItemPrototype" then
@@ -678,6 +714,7 @@ tierSwitch["LuaFluidPrototype"] = function (ItemID, value)
 	)
 	return blockedOrDependency(tier, dependencies, blockedBy)
 end
+--MARK: LuaItemPrototype
 tierSwitch["LuaItemPrototype"] = tierSwitch["LuaFluidPrototype"] --[[@as fun(ItemID:data.ItemID|data.FluidID,value:LuaItemPrototype|LuaFluidPrototype):tier,blockedReason[]|dependency[] ]]
 --#endregion
 

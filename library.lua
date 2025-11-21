@@ -225,6 +225,7 @@ function library.initTierMapTables(...)
 		"LuaRecipePrototype",
 		"LuaFluidPrototype",
 		"LuaItemPrototype",
+		"LuaQualityPrototype",
 		"mining",
 		"hand-mining",
 		"burning",
@@ -300,6 +301,12 @@ end
 ---@return LuaRecipePrototype
 function library.getRecipe(name)
 	return getGeneric(name, prototypes.recipe)
+end
+---Returns the given quality prototype
+---@param name data.QualityID
+---@return LuaQualityPrototype
+function library.getQuality(name)
+	return getGeneric(name, prototypes.quality)
 end
 
 ---Gets the placable item that results in the entity
