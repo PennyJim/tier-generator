@@ -288,7 +288,7 @@ local function getIngredientsTier(ingredients, dependencies, blocked)
 	for _, ingredient in pairs(ingredients) do
 		--TODO: Should I be checking amount?
 		local itemName = ingredient.name
-		local itemType = ingredient.type
+		local itemType = ingredient.type or "item" -- still required because of research units
 		local itemPrototype = lib.getItemOrFluid(itemName, itemType)
 		local itemTier = resolveTierWithDependency(
 			itemName, itemPrototype, dependencies, blocked
@@ -508,9 +508,26 @@ tierSwitch["injected"] = function (RecipeID, _)
 	return blockedOrDependency(recipeTier, dependencies, blockedBy)
 end
 
+---@param filter EntityIDFilter|ItemIDFilter
+---@return data.QualityID
+local function getQualityFromFilter(filter)
+	local quality = filter.quality or "normal"
+	local next_quality = lib.getQuality(quality).next
+	local comparator = filter.comparator or "="
+
+	if comparator == ">" or comparator == "≠" and quality == "normal" then
+		if not next_quality then error("How is there a comparator of an invalid quality?") end
+		return next_quality.name
+	elseif comparator == "<" or comparator == "≤" or comparator == "≠" then
+		return "normal"
+	end
+	return quality
+end
+
 ---Determine the tier of the given technology
 ---@type fun(technologyID:data.TechnologyID,technology:LuaTechnologyPrototype):tier,blockedReason[]|dependency[]
 tierSwitch["LuaTechnologyPrototype"] = function (technologyID, technology)
+	---MARK: LuaTechnologyPrototype
 	---@type dependency[]
 	local dependencies = {}
 	---@type blockedReason[]
@@ -520,6 +537,62 @@ tierSwitch["LuaTechnologyPrototype"] = function (technologyID, technology)
 	local ingredientsTier = getIngredientsTier(ingredients, dependencies, blockedBy)
 	if ingredientsTier < 0 then
 		return ingredientsTier, blockedBy
+	end
+
+	local trigger = technology.research_trigger
+	local trigger_tier = 0
+	if trigger then --FIXME: Check if triggers and units are an and or an or
+		local trigger_item = trigger.item
+		local trigger_quality = trigger.item_quality
+		local trigger_fluid = trigger.fluid
+		local trigger_entity = trigger.entity
+
+		if type(trigger_item) == "table" then
+			trigger_quality = getQualityFromFilter(trigger_item)
+			trigger_item = trigger_item.name
+		elseif type(trigger_entity) == "table" then
+			trigger_quality = getQualityFromFilter(trigger_entity)
+			trigger_entity = trigger_entity.name
+		end
+		---@cast trigger_item data.ItemID
+		---@cast trigger_entity data.ItemID
+
+		---@type Ingredient[]
+		local item_list = {}
+		if trigger_item then
+			item_list = quick_ingredients(trigger_item)
+		elseif trigger_fluid then
+			item_list = {{type = "fluid", name = trigger_fluid, amount = trigger.amount}}
+		elseif trigger_entity then
+			--[[ FIXME: make an actual switch step.
+				Entities can be obtained by capturing entities
+				And we should fully support autoplace checking now
+			]]
+			local items = lib.getEntityItem(trigger_entity)
+			local count = 0
+			item_list = {}
+			for _, item in pairs(items) do
+				count = count + 1
+				item_list[count] = {
+					type = "item",
+					name = item.name,
+					amount = item.count,
+				}
+			end
+		end
+
+		trigger_tier = getIngredientsTier(item_list, dependencies, blockedBy)
+		if trigger_tier < 0 then
+			return trigger_tier, blockedBy
+		end
+
+		if trigger_quality then
+			local quality_tier = resolveTierWithDependency(trigger_quality, lib.getQuality(trigger_quality), dependencies, blockedBy)
+			if quality_tier < 0 then
+				return quality_tier, blockedBy
+			end
+			trigger_tier = math.max(trigger_tier, quality_tier)
+		end
 	end
 
 	local prereqTier = 0;
@@ -538,10 +611,7 @@ tierSwitch["LuaTechnologyPrototype"] = function (technologyID, technology)
 		-- now the opposite of the setting determines if we undo it
 		ingredientsTier = ingredientsTier + 1
 	end
-	local tier = math.max(ingredientsTier, prereqTier)
-	if tier == 0 then
-		lib.log("I don't think a technology should ever be t0: "..technologyID)
-	end
+	local tier = math.max(ingredientsTier, trigger_tier, prereqTier)
 	return tier, dependencies
 end
 
@@ -630,7 +700,10 @@ tierSwitch["LuaRecipePrototype"] = function (recipeID, recipe)
 	---@type (fun(p1:dependency[]):tier)?
 	local considerTechnology
 	if lib.getSetting("tiergen-consider-technology") and not recipe.enabled then
-		local technologies = lookup.RecipeTechnology[recipeID] or rawget(recipe, "technologies")
+		local technologies = lookup.RecipeTechnology[recipeID]
+		if not technologies and type(recipe) ~= "userdata" then
+			technologies = recipe.technologies
+		end
 		if not technologies then
 			print("\t"..recipeID.." is not an unlockable recipe.")
 			return invalidReason.not_unlockable, {}
@@ -741,7 +814,11 @@ local function calculateTier(itemID, type)
 	end
 	if tier < 0 then
 		lib.log("Failed to calculate "..itemID.."'s tier: "..invalidReason[tier])
-		lib.debug(serpent.dump(incalculable))
+		if __DebugAdapter then
+			__DebugAdapter.print(incalculable)
+		else
+			lib.debug(serpent.dump(incalculable))
+		end
 	else
 		lib.debug("\t"..itemID..": Tier "..tier)
 	end

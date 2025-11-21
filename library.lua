@@ -311,9 +311,12 @@ end
 
 ---Gets the placable item that results in the entity
 ---@param EntityID data.EntityID
----@param entityPrototype LuaEntityPrototype
+---@param entityPrototype? LuaEntityPrototype
 ---@return ItemStackDefinition[]
 function library.getEntityItem(EntityID, entityPrototype)
+	if not entityPrototype then
+		entityPrototype = getGeneric(EntityID, prototypes.entity)--[[@as LuaEntityPrototype]]
+	end
 	local items = entityPrototype.items_to_place_this
 	if not items then
 		library.log("\t\t"..EntityID.." isn't placable. Ignoring...")
